@@ -1,0 +1,201 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { MediaSlot, type ExistingMedia } from "./MediaSlot";
+import type { MediaKind } from "@/lib/media/validate";
+
+export type MediaRow = {
+  id: string;
+  kind: MediaKind;
+  storage_path: string;
+  duration_seconds: number | null;
+};
+
+type Props = {
+  userId: string;
+  profileId: string;
+  media: MediaRow[];
+};
+
+export function MediaManager({ userId, profileId, media }: Props) {
+  const router = useRouter();
+  const refresh = () => router.refresh();
+
+  const [toast, setToast] = useState<string | null>(null);
+  const [showBannerHelp, setShowBannerHelp] = useState(false);
+
+  // Auto-dismiss toast after 2.5 seconds
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 2500);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const handleSuccess = (message: string) => setToast(message);
+
+  const avatar = findOne(media, "avatar");
+  const banner = findOne(media, "banner");
+  const video = findOne(media, "video");
+  const gallery = media.filter((m) => m.kind === "gallery");
+
+  const gallerySlots: ExistingMedia[] = [0, 1, 2].map((i) =>
+    gallery[i]
+      ? {
+          id: gallery[i].id,
+          kind: "gallery" as const,
+          storage_path: gallery[i].storage_path,
+          duration_seconds: null,
+        }
+      : null,
+  );
+
+  const profileViewHref = `/profile/${profileId}`;
+
+  return (
+    <div className="space-y-12">
+      {/* Banner with avatar overlapping */}
+      <section>
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
+            Banner & profile photo
+          </h2>
+          <button
+            type="button"
+            onClick={() => setShowBannerHelp((v) => !v)}
+            aria-label="What sizes work best?"
+            className="flex h-5 w-5 items-center justify-center rounded-full border border-white/15 text-[10px] font-semibold text-brand-gray-300 transition hover:border-brand-orange/50 hover:text-white"
+          >
+            ?
+          </button>
+        </div>
+
+        {showBannerHelp ? (
+          <div className="mb-4 rounded-lg border border-white/10 bg-white/5 p-3 text-xs leading-relaxed text-brand-gray-300">
+            <p>
+              <span className="font-medium text-white">Banner</span> is wide
+              (3:1). For zero cropping, design at <strong>2400×800</strong>.
+              Otherwise we crop the top and bottom — same as Twitter, LinkedIn,
+              and Facebook.
+            </p>
+            <p className="mt-2">
+              <span className="font-medium text-white">Profile photo</span>:
+              square works best (we resize to 800×800).
+            </p>
+            <p className="mt-2">
+              JPG / PNG / WebP, up to 25 MB. We compress automatically.
+            </p>
+          </div>
+        ) : null}
+
+        <div className="relative">
+          <MediaSlot
+            kind="banner"
+            userId={userId}
+            profileId={profileId}
+            existing={banner}
+            shape="wide"
+            label="Add banner"
+            compact
+            onChange={refresh}
+            onSuccess={handleSuccess}
+          />
+
+          <div className="absolute -bottom-12 left-4 w-24 sm:left-8 sm:w-28">
+            <div className="rounded-full ring-4 ring-black">
+              <MediaSlot
+                kind="avatar"
+                userId={userId}
+                profileId={profileId}
+                existing={avatar}
+                shape="circle"
+                label="Photo"
+                compact
+                onChange={refresh}
+                onSuccess={handleSuccess}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-16 sm:mt-20" />
+      </section>
+
+      {/* Gallery */}
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
+          Gallery (up to 3)
+        </h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {gallerySlots.map((slot, i) => (
+            <MediaSlot
+              key={slot?.id ?? `empty-${i}`}
+              kind="gallery"
+              userId={userId}
+              profileId={profileId}
+              existing={slot}
+              shape="square"
+              label={`Photo ${i + 1}`}
+              hint="JPG / PNG / WebP, up to 25 MB."
+              onChange={refresh}
+              onSuccess={handleSuccess}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Video */}
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
+          Intro video (15 sec max)
+        </h2>
+        <div className="max-w-md">
+          <MediaSlot
+            kind="video"
+            userId={userId}
+            profileId={profileId}
+            existing={video}
+            shape="square"
+            label="Add video"
+            hint="MP4, MOV, or WebM. Max 15 seconds, max 25 MB."
+            onChange={refresh}
+            onSuccess={handleSuccess}
+          />
+        </div>
+      </section>
+
+      {/* Done bar */}
+      <div className="sticky bottom-4 mt-12 flex flex-col-reverse items-stretch gap-3 rounded-xl border border-white/10 bg-black/80 p-4 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs leading-relaxed text-brand-gray-400 sm:max-w-md">
+          Photos and video save automatically as you upload.
+        </p>
+        <Link href={profileViewHref} className="btn-primary text-center">
+          Done — view my profile →
+        </Link>
+      </div>
+
+      {/* Success toast */}
+      {toast ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className="pointer-events-none fixed bottom-24 left-1/2 z-50 -translate-x-1/2 animate-fade-in rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30"
+        >
+          {toast}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function findOne(media: MediaRow[], kind: MediaKind): ExistingMedia {
+  const row = media.find((m) => m.kind === kind);
+  if (!row) return null;
+  return {
+    id: row.id,
+    kind: row.kind,
+    storage_path: row.storage_path,
+    duration_seconds: row.duration_seconds,
+  };
+}
