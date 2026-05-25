@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 /**
@@ -39,13 +40,12 @@ export function SearchBox() {
   }, [value, urlQuery, searchParams, pathname, router]);
 
   return (
-    <div className="relative">
-      <span
+    <div className="relative max-w-xl">
+      <Search
         aria-hidden="true"
-        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand-gray-400"
-      >
-        🔍
-      </span>
+        strokeWidth={2}
+        className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-orange"
+      />
       <input
         type="search"
         value={value}

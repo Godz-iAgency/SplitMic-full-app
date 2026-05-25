@@ -23,7 +23,7 @@ export default async function AdminLayout({
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black">
-      <header className="flex items-center justify-between border-b border-white/5 bg-black/40 px-5 py-4 sm:px-8">
+      <header className="flex items-center justify-between border-b border-white/10 shadow-sm shadow-black/40 bg-black/40 px-5 py-4 sm:px-8">
         <div className="flex items-center gap-4">
           <Link href="/admin">
             <Logo className="text-2xl" />

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Calendar, Clock, MapPin, DollarSign } from "lucide-react";
 import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
 import {
   formatPostDate,
@@ -7,136 +8,166 @@ import {
   type MarketplaceCard,
 } from "@/lib/supabase/marketplace";
 
-// Post-type badge (Event / Opportunity)
-const TYPE_BADGE: Record<string, { label: string; className: string }> = {
-  event: {
-    label: "Event",
-    className: "bg-brand-orange/20 text-brand-orange",
-  },
-  opportunity: {
-    label: "Opportunity",
-    className: "bg-blue-500/20 text-blue-300",
-  },
+// Post-type label
+const TYPE_LABEL: Record<string, string> = {
+  event: "Event",
+  opportunity: "Opportunity",
 };
 
-// Player-type chip color per player kind — makes the feed scannable.
-const PLAYER_TYPE_CHIP: Record<PlayerType, string> = {
-  band: "bg-orange-500/15 text-orange-300 border-orange-500/30",
-  venue: "bg-purple-500/15 text-purple-300 border-purple-500/30",
-  talent_buyer: "bg-amber-500/15 text-amber-300 border-amber-500/30",
-  festival: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-  record_label: "bg-pink-500/15 text-pink-300 border-pink-500/30",
+// Post-type color (subtle accent)
+const TYPE_ACCENT: Record<string, string> = {
+  event: "text-brand-orange",
+  opportunity: "text-blue-300",
 };
 
 export function OpportunityCard({ card }: { card: MarketplaceCard }) {
-  const badge = TYPE_BADGE[card.post_type];
+  const typeLabel = TYPE_LABEL[card.post_type] ?? card.post_type;
+  const typeAccent = TYPE_ACCENT[card.post_type] ?? "text-brand-orange";
   const playerOption = PLAYER_TYPE_OPTIONS.find(
     (o) => o.value === card.poster_player_type,
   );
-  const playerChip = PLAYER_TYPE_CHIP[card.poster_player_type];
+  const playerLabel = playerOption?.label ?? card.poster_player_type;
 
   return (
     <Link
       href={`/opportunities/${card.id}`}
-      className="group block rounded-2xl border border-white/5 bg-white/5 p-5 transition hover:border-brand-orange/30 hover:bg-white/[.07] sm:p-6"
+      className="group relative block overflow-hidden rounded-lg border border-white/15 bg-gradient-to-br from-white/[.05] via-white/[.03] to-transparent p-6 shadow-md shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:border-brand-orange/50 hover:shadow-xl hover:shadow-brand-orange/20 sm:p-7"
     >
-      {/* ── Header: poster identity + relative time ─────────────────── */}
-      <div className="mb-4 flex items-start gap-3">
-        {/* Avatar */}
-        {card.poster_avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={card.poster_avatar_url}
-            alt={card.poster_name}
-            className="h-12 w-12 flex-shrink-0 rounded-full object-cover ring-2 ring-white/5"
-          />
-        ) : (
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-brand-gray-800 text-lg font-bold text-brand-orange ring-2 ring-white/5">
-            {card.poster_name.charAt(0)}
-          </div>
-        )}
+      {/* ── Subtle orange glow accent in corner ─────────────────────── */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-brand-orange/10 blur-3xl transition-opacity duration-300 group-hover:bg-brand-orange/20"
+      />
 
-        {/* Name + player type + time */}
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate text-base font-bold text-white">
-              {card.poster_name}
-            </p>
-            <span
-              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${playerChip}`}
-            >
-              {playerOption?.label ?? card.poster_player_type}
-            </span>
-          </div>
-          <p className="mt-0.5 text-xs text-brand-gray-400">
-            posted {formatRelativeTime(card.created_at)}
-          </p>
-        </div>
-
-        {/* Post-type badge — right side */}
+      {/* ── Header row: poster name (left) + post type (right) ──────── */}
+      <div className="relative mb-6 flex items-center justify-between gap-3">
+        <p className="truncate text-base font-bold tracking-tight text-white">
+          {card.poster_name}
+        </p>
         <span
-          className={`flex-shrink-0 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider ${badge.className}`}
+          className={`flex-shrink-0 text-[11px] font-bold uppercase tracking-[0.15em] ${typeAccent}`}
         >
-          {badge.label}
+          {typeLabel}
         </span>
       </div>
 
-      {/* ── Body: title + description ───────────────────────────────── */}
-      <h3 className="text-lg font-bold text-white transition group-hover:text-brand-orange sm:text-xl">
-        {card.title}
-      </h3>
+      {/* ── Two-column grid: 1/3 image panel + 2/3 content panel ────── */}
+      <div className="relative grid grid-cols-3 gap-6">
+        {/* ── LEFT (col-span-1): Inset image + player-type label ───── */}
+        <div className="col-span-1 flex flex-col items-center justify-center gap-3">
+          <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-brand-gray-800 ring-1 ring-white/15 shadow-lg shadow-black/40">
+            {card.poster_avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={card.poster_avatar_url}
+                alt={card.poster_name}
+                className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-orange/30 via-brand-gray-800 to-black text-5xl font-black text-brand-orange">
+                {card.poster_name.charAt(0)}
+              </div>
+            )}
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-bold uppercase tracking-wider text-white">
+              {playerLabel}
+            </p>
+            <p className="mt-1 text-[10px] font-medium text-brand-gray-400">
+              posted {formatRelativeTime(card.created_at)}
+            </p>
+          </div>
+        </div>
 
-      {card.description ? (
-        <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-brand-gray-300">
-          {card.description}
-        </p>
-      ) : null}
+        {/* ── RIGHT (col-span-2): Centered content panel ───────────── */}
+        <div className="col-span-2 flex flex-col items-center justify-center rounded-lg border border-white/10 bg-gradient-to-br from-black/60 via-black/40 to-black/60 p-6 text-center shadow-inner shadow-black/40">
+          {/* Title */}
+          <h3 className="text-xl font-bold leading-tight tracking-tight text-white transition group-hover:text-brand-orange sm:text-2xl">
+            {card.title}
+          </h3>
 
-      {/* ── Meta row: date + location + pay ─────────────────────────── */}
-      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-        {card.post_type === "event" && card.event_date ? (
-          <span className="font-medium text-brand-gray-200">
-            📅 {formatEventDateRange(card.event_date, card.event_end_date)}
-          </span>
-        ) : null}
-        {card.post_type === "opportunity" && card.open_until ? (
-          <span className="font-medium text-brand-gray-200">
-            ⏳ Open until {formatPostDate(card.open_until)}
-          </span>
-        ) : null}
-        {card.event_location ? (
-          <span className="text-brand-gray-400">📍 {card.event_location}</span>
-        ) : null}
-        {card.pay_info ? (
-          <span className="font-semibold text-emerald-300">
-            💵 {card.pay_info}
-          </span>
-        ) : null}
-      </div>
+          {/* Description */}
+          {card.description ? (
+            <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-brand-gray-300">
+              {card.description}
+            </p>
+          ) : null}
 
-      {/* ── Genre chips ─────────────────────────────────────────────── */}
-      {card.genres.length > 0 ? (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {card.genres.slice(0, 5).map((g) => (
-            <span
-              key={g}
-              className="rounded-full bg-white/5 px-2.5 py-0.5 text-[11px] font-medium text-brand-gray-300"
-            >
-              {g}
-            </span>
-          ))}
-          {card.genres.length > 5 ? (
-            <span className="rounded-full px-2.5 py-0.5 text-[11px] font-medium text-brand-gray-400">
-              +{card.genres.length - 5}
-            </span>
+          {/* Divider */}
+          <div className="my-4 h-px w-12 bg-gradient-to-r from-transparent via-brand-orange/60 to-transparent" />
+
+          {/* Meta row: date + location + pay */}
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs">
+            {card.post_type === "event" && card.event_date ? (
+              <span className="inline-flex items-center gap-1.5 font-semibold text-white">
+                <Calendar
+                  className="h-3.5 w-3.5 text-brand-orange"
+                  strokeWidth={2.25}
+                  aria-hidden="true"
+                />
+                {formatEventDateRange(card.event_date, card.event_end_date)}
+              </span>
+            ) : null}
+            {card.post_type === "opportunity" && card.open_until ? (
+              <span className="inline-flex items-center gap-1.5 font-semibold text-white">
+                <Clock
+                  className="h-3.5 w-3.5 text-brand-orange"
+                  strokeWidth={2.25}
+                  aria-hidden="true"
+                />
+                Open until {formatPostDate(card.open_until)}
+              </span>
+            ) : null}
+            {card.event_location ? (
+              <span className="inline-flex items-center gap-1.5 text-brand-gray-300">
+                <MapPin
+                  className="h-3.5 w-3.5"
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
+                {card.event_location}
+              </span>
+            ) : null}
+            {card.pay_info ? (
+              <span className="inline-flex items-center gap-1.5 font-bold text-emerald-300">
+                <DollarSign
+                  className="h-3.5 w-3.5"
+                  strokeWidth={2.5}
+                  aria-hidden="true"
+                />
+                {card.pay_info}
+              </span>
+            ) : null}
+          </div>
+
+          {/* Genre chips */}
+          {card.genres.length > 0 ? (
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {card.genres.slice(0, 5).map((g) => (
+                <span
+                  key={g}
+                  className="rounded-full border border-white/15 bg-white/[.07] px-3 py-1 text-[11px] font-semibold text-brand-gray-100"
+                >
+                  {g}
+                </span>
+              ))}
+              {card.genres.length > 5 ? (
+                <span className="rounded-full px-3 py-1 text-[11px] font-medium text-brand-gray-400">
+                  +{card.genres.length - 5}
+                </span>
+              ) : null}
+            </div>
           ) : null}
         </div>
-      ) : null}
+      </div>
 
-      {/* ── Footer CTA hint ─────────────────────────────────────────── */}
-      <div className="mt-4 flex items-center justify-end border-t border-white/5 pt-3">
-        <span className="text-xs font-semibold text-brand-gray-400 transition group-hover:text-brand-orange">
-          View &amp; respond →
+      {/* ── Footer: centered CTA with arrow animation ──────────────── */}
+      <div className="relative mt-6 flex items-center justify-center">
+        <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-brand-gray-300 transition group-hover:text-brand-orange">
+          View and Respond
+          <span className="transition-transform duration-300 group-hover:translate-x-1">
+            →
+          </span>
         </span>
       </div>
     </Link>

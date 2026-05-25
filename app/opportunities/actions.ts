@@ -203,6 +203,118 @@ export async function createMarketplacePost(
   return { postId: inserted.id };
 }
 
+// ─── Update post ────────────────────────────────────────────────────────────
+
+export type UpdatePostPayload = {
+  postId: string;
+  title: string;
+  description: string;
+  // Event fields
+  event_date?: string;
+  event_end_date?: string;
+  event_location?: string;
+  // Opportunity fields
+  open_until?: string;
+  // Common
+  genres: string[];
+  pay_info: string;
+  player_types_wanted: string[];
+};
+
+export async function updateMarketplacePost(
+  payload: UpdatePostPayload,
+): Promise<{ error?: string }> {
+  const supabase = createServerSupabaseClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  // Load the existing post — we need post_type and to verify ownership.
+  const { data: existing } = await supabase
+    .from("marketplace_posts")
+    .select("id, poster_user_id, post_type")
+    .eq("id", payload.postId)
+    .maybeSingle();
+
+  if (!existing) return { error: "Post not found." };
+  if (existing.poster_user_id !== user.id) {
+    return { error: "You can only edit your own posts." };
+  }
+
+  const postType = existing.post_type as PostType;
+
+  // Look up the user's profile (for the festival check on multi-day events).
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("player_type")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const playerType = (profile?.player_type as PlayerType) ?? "venue";
+
+  // Validate basics
+  const title = payload.title.trim();
+  if (!title) return { error: "Title is required." };
+  if (title.length > 120) return { error: "Title is too long (max 120)." };
+
+  if (postType === "event") {
+    if (!payload.event_date)
+      return { error: "Event date is required for event posts." };
+    if (payload.event_end_date) {
+      if (playerType !== "festival") {
+        return { error: "Only festivals can post multi-day events." };
+      }
+      if (payload.event_end_date < payload.event_date) {
+        return { error: "End date must be on or after the start date." };
+      }
+    }
+  }
+  if (postType === "opportunity") {
+    if (!payload.open_until)
+      return { error: "An 'Open until' date is required." };
+  }
+
+  // Recompute expires_at since dates may have changed.
+  const eventExpiryAnchor =
+    payload.event_end_date ?? payload.event_date;
+  const expiresAt =
+    postType === "event"
+      ? addDays(eventExpiryAnchor!, 7)
+      : addDays(payload.open_until!, 7);
+
+  const { error: updateError } = await supabase
+    .from("marketplace_posts")
+    .update({
+      title,
+      description: payload.description.trim() || null,
+      event_date: postType === "event" ? payload.event_date : null,
+      event_end_date:
+        postType === "event" ? payload.event_end_date ?? null : null,
+      event_location:
+        postType === "event"
+          ? payload.event_location?.trim() || null
+          : null,
+      open_until: postType === "opportunity" ? payload.open_until : null,
+      genres: payload.genres,
+      pay_info: payload.pay_info.trim() || null,
+      player_types_wanted: payload.player_types_wanted,
+      expires_at: expiresAt,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", payload.postId)
+    .eq("poster_user_id", user.id);
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  revalidatePath("/opportunities");
+  revalidatePath(`/opportunities/${payload.postId}`);
+  return {};
+}
+
 // ─── Delete post ────────────────────────────────────────────────────────────
 
 export async function deleteMarketplacePost(

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PLAYER_TYPE_OPTIONS } from "@/lib/types";
 import type { SearchCard } from "@/lib/supabase/search";
+import { PlayerTypeIcon } from "@/components/landing/PlayerTypeIcon";
 
 type Props = {
   card: SearchCard;
@@ -14,10 +15,21 @@ export function ProfileCard({ card }: Props) {
   return (
     <Link
       href={`/profile/${card.profile_id}`}
-      className="group flex h-full flex-col rounded-xl border border-white/5 bg-white/5 p-4 transition hover:border-brand-orange/40 hover:bg-brand-gray-900/80"
+      className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-brand-gray-900 to-black p-5 transition-all duration-200 hover:-translate-y-1 hover:border-brand-orange/40 hover:shadow-lg hover:shadow-brand-orange/20"
     >
+      {/* Player type pill at top */}
+      <div className="mb-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-brand-orange/30 bg-brand-orange/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand-orange">
+        <PlayerTypeIcon
+          type={card.player_type}
+          className="h-3 w-3"
+          strokeWidth={2.5}
+        />
+        {typeLabel}
+      </div>
+
+      {/* Avatar + name row */}
       <div className="flex items-center gap-3">
-        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-brand-gray-900 ring-1 ring-white/10">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-brand-gray-800 to-brand-gray-900 ring-2 ring-white/10 transition group-hover:ring-brand-orange/40">
           {card.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -27,24 +39,21 @@ export function ProfileCard({ card }: Props) {
               loading="lazy"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-xl font-bold text-brand-orange">
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-orange/20 to-brand-orange/5 text-2xl font-bold text-brand-orange">
               {initial}
             </div>
           )}
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-brand-orange">
-            {typeLabel}
-          </p>
-          <h3 className="truncate text-base font-semibold text-white group-hover:text-brand-orange">
+          <h3 className="line-clamp-2 text-lg font-bold leading-snug text-white transition group-hover:text-brand-orange">
             {card.display_name}
           </h3>
         </div>
       </div>
 
       {card.one_liner ? (
-        <p className="mt-3 line-clamp-2 text-sm text-brand-gray-300">
+        <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-brand-gray-300">
           {card.one_liner}
         </p>
       ) : null}

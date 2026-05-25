@@ -25,7 +25,7 @@ export function SortDropdown() {
         value={currentSort}
         onChange={(e) => handleChange(e.target.value)}
         aria-label="Sort results"
-        className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
+        className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40 [color-scheme:dark]"
       >
         <option value="newest">Recently updated</option>
         <option value="recent">Recently joined</option>

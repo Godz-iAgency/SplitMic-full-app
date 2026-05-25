@@ -1,5 +1,15 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import {
+  Calendar,
+  MapPin,
+  DollarSign,
+  Music,
+  Users,
+  Pencil,
+  Info,
+  Clock,
+} from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingStatus } from "@/lib/supabase/profile";
 import {
@@ -70,9 +80,14 @@ export default async function OpportunityDetailPage({
 
   const acceptedBands = taggedBands.filter((t) => t.status === "accepted");
 
+  const typeBg =
+    post.post_type === "event"
+      ? "bg-brand-orange/20 text-brand-orange border-brand-orange/30"
+      : "bg-blue-500/20 text-blue-300 border-blue-500/30";
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-20">
-      <header className="flex items-center justify-between border-b border-white/5 px-5 py-4 sm:px-8">
+      <header className="flex items-center justify-between border-b border-white/10 shadow-sm shadow-black/40 px-5 py-4 sm:px-8">
         <Link href="/opportunities">
           <Logo className="text-2xl" />
         </Link>
@@ -87,128 +102,142 @@ export default async function OpportunityDetailPage({
         </div>
       </header>
 
-      <section className="mx-auto max-w-4xl px-5 py-10 sm:px-8 sm:py-14">
-        {/* Post type + dates header */}
-        <div className="mb-4 flex flex-wrap items-center gap-3">
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider ${
-              post.post_type === "event"
-                ? "bg-brand-orange/20 text-brand-orange"
-                : "bg-blue-500/20 text-blue-300"
-            }`}
-          >
-            {post.post_type === "event" ? "Event" : "Opportunity"}
-          </span>
-          {post.event_date ? (
-            <span className="text-sm font-semibold text-white">
-              📅 {formatEventDateRange(post.event_date, post.event_end_date)}
-            </span>
-          ) : null}
-          {post.open_until ? (
-            <span className="text-sm font-semibold text-white">
-              Open until {formatPostDate(post.open_until)}
-            </span>
-          ) : null}
-          <span className="text-xs text-brand-gray-400">
-            Removes {formatPostDate(post.expires_at)}
-          </span>
-        </div>
+      <section className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
+        {/* ── HERO CARD: Post type, dates, title, poster ─────────────── */}
+        <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-white/[.05] via-white/[.03] to-transparent p-6 shadow-lg shadow-black/40 sm:p-8">
+          {/* Subtle orange glow accent */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-brand-orange/10 blur-3xl"
+          />
 
-        <h1 className="text-3xl font-bold text-white sm:text-4xl">
-          {post.title}
-        </h1>
+          {/* Top row: post type badge + dates */}
+          <div className="relative mb-5 flex flex-wrap items-center gap-3">
+            <span
+              className={`rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] ${typeBg}`}
+            >
+              {post.post_type === "event" ? "Event" : "Opportunity"}
+            </span>
+            {post.event_date ? (
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-white">
+                <Calendar
+                  className="h-4 w-4 text-brand-orange"
+                  strokeWidth={2.25}
+                  aria-hidden="true"
+                />
+                {formatEventDateRange(post.event_date, post.event_end_date)}
+              </span>
+            ) : null}
+            {post.open_until ? (
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-white">
+                <Clock
+                  className="h-4 w-4 text-brand-orange"
+                  strokeWidth={2.25}
+                  aria-hidden="true"
+                />
+                Open until {formatPostDate(post.open_until)}
+              </span>
+            ) : null}
+            <span className="ml-auto text-xs text-brand-gray-400">
+              Removes {formatPostDate(post.expires_at)}
+            </span>
+          </div>
 
-        {/* Poster card */}
-        <div className="mt-4 flex items-center gap-3">
+          {/* Title */}
+          <h1 className="relative text-3xl font-bold leading-tight tracking-tight text-white sm:text-5xl">
+            {post.title}
+          </h1>
+
+          {/* Poster identity card */}
           <Link
             href={`/profile/${post.poster_profile_id}`}
-            className="flex items-center gap-3 transition hover:opacity-80"
+            className="relative mt-6 inline-flex items-center gap-4 rounded-xl border border-white/10 bg-black/40 p-3 pr-5 transition hover:border-brand-orange/40 hover:bg-black/60"
           >
             {post.poster_avatar_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={post.poster_avatar_url}
                 alt=""
-                className="h-10 w-10 rounded-full object-cover"
+                className="h-14 w-14 rounded-lg object-cover ring-2 ring-white/10"
               />
             ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-gray-800 text-sm font-bold text-brand-orange">
+              <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-gradient-to-br from-brand-orange/30 to-brand-gray-900 text-xl font-bold text-brand-orange ring-2 ring-white/10">
                 {post.poster_name.charAt(0)}
               </div>
             )}
             <div>
-              <p className="font-semibold text-white">{post.poster_name}</p>
-              <p className="text-xs text-brand-gray-400">
+              <p className="text-base font-bold text-white">
+                {post.poster_name}
+              </p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-gray-400">
                 {playerOption?.label ?? post.poster_player_type}
               </p>
             </div>
           </Link>
         </div>
 
-        {/* Two-column layout: details left, action right */}
+        {/* ── Two-column layout: details left, action right ──────────── */}
         <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <div className="space-y-6 lg:col-span-2">
+          <div className="space-y-5 lg:col-span-2">
             {post.description ? (
-              <section>
-                <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
-                  About
-                </h2>
+              <SectionCard icon={<Info className="h-4 w-4" />} title="About">
                 <p className="whitespace-pre-line text-base leading-relaxed text-brand-gray-100">
                   {post.description}
                 </p>
-              </section>
+              </SectionCard>
             ) : null}
 
             {post.event_location ? (
-              <section>
-                <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
-                  Location
-                </h2>
-                <p className="text-base text-white">📍 {post.event_location}</p>
-              </section>
+              <SectionCard
+                icon={<MapPin className="h-4 w-4" />}
+                title="Location"
+              >
+                <p className="text-base text-white">{post.event_location}</p>
+              </SectionCard>
             ) : null}
 
             {post.pay_info ? (
-              <section>
-                <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
-                  Pay / deal
-                </h2>
-                <p className="text-base font-semibold text-emerald-300">
-                  💵 {post.pay_info}
+              <SectionCard
+                icon={<DollarSign className="h-4 w-4" />}
+                title="Pay / Deal"
+                accent="emerald"
+              >
+                <p className="text-lg font-bold text-emerald-300">
+                  {post.pay_info}
                 </p>
-              </section>
+              </SectionCard>
             ) : null}
 
             {post.genres.length > 0 ? (
-              <section>
-                <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
-                  Genres
-                </h2>
+              <SectionCard
+                icon={<Music className="h-4 w-4" />}
+                title="Genres"
+              >
                 <div className="flex flex-wrap gap-2">
                   {post.genres.map((g) => (
                     <span
                       key={g}
-                      className="rounded-full bg-white/5 px-3 py-1 text-xs font-medium text-white"
+                      className="rounded-full border border-white/15 bg-white/[.07] px-3 py-1 text-xs font-semibold text-white"
                     >
                       {g}
                     </span>
                   ))}
                 </div>
-              </section>
+              </SectionCard>
             ) : null}
 
             {post.player_types_wanted.length > 0 ? (
-              <section>
-                <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
-                  Looking for
-                </h2>
+              <SectionCard
+                icon={<Users className="h-4 w-4" />}
+                title="Looking for"
+              >
                 <div className="flex flex-wrap gap-2">
                   {post.player_types_wanted.map((t) => {
                     const opt = PLAYER_TYPE_OPTIONS.find((p) => p.value === t);
                     return (
                       <span
                         key={t}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-medium text-white"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-brand-orange/30 bg-brand-orange/10 px-3 py-1 text-xs font-semibold text-brand-orange"
                       >
                         <span>{opt?.icon ?? ""}</span>
                         {opt?.label ?? t}
@@ -216,75 +245,75 @@ export default async function OpportunityDetailPage({
                     );
                   })}
                 </div>
-              </section>
+              </SectionCard>
             ) : null}
 
             {/* Lineup (event posts) */}
             {post.post_type === "event" && acceptedBands.length > 0 ? (
-              <section>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
-                  Lineup
-                </h2>
+              <SectionCard
+                icon={<Music className="h-4 w-4" />}
+                title="Lineup"
+              >
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {acceptedBands.map((b) => (
                     <Link
                       key={b.tag_id}
                       href={`/profile/${b.band_profile_id}`}
-                      className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/5 p-3 transition hover:border-brand-orange/40 hover:bg-white/10"
+                      className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/40 p-3 transition hover:border-brand-orange/40 hover:bg-black/60"
                     >
                       {b.band_avatar_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={b.band_avatar_url}
                           alt=""
-                          className="h-8 w-8 rounded-full object-cover"
+                          className="h-9 w-9 rounded-lg object-cover ring-1 ring-white/10"
                         />
                       ) : (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-gray-800 text-xs font-bold text-brand-orange">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-gray-800 text-xs font-bold text-brand-orange ring-1 ring-white/10">
                           {b.band_name.charAt(0)}
                         </div>
                       )}
-                      <span className="truncate text-sm font-medium text-white">
+                      <span className="truncate text-sm font-semibold text-white">
                         {b.band_name}
                       </span>
                     </Link>
                   ))}
                 </div>
-              </section>
+              </SectionCard>
             ) : null}
 
             {/* Owner-only: pending tags status */}
             {isOwner && post.post_type === "event" && taggedBands.length > 0 ? (
-              <section>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
-                  Tagged bands
-                </h2>
+              <SectionCard
+                icon={<Users className="h-4 w-4" />}
+                title="Tagged bands"
+              >
                 <ul className="space-y-2">
                   {taggedBands.map((b) => (
                     <li
                       key={b.tag_id}
-                      className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 p-3"
+                      className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/40 p-3"
                     >
                       {b.band_avatar_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={b.band_avatar_url}
                           alt=""
-                          className="h-7 w-7 rounded-full object-cover"
+                          className="h-9 w-9 rounded-lg object-cover ring-1 ring-white/10"
                         />
                       ) : (
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-gray-800 text-[11px] font-bold text-brand-orange">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-gray-800 text-xs font-bold text-brand-orange ring-1 ring-white/10">
                           {b.band_name.charAt(0)}
                         </div>
                       )}
-                      <span className="flex-1 text-sm text-white">
+                      <span className="flex-1 text-sm font-semibold text-white">
                         {b.band_name}
                       </span>
                       <TagStatusBadge status={b.status} />
                     </li>
                   ))}
                 </ul>
-              </section>
+              </SectionCard>
             ) : null}
           </div>
 
@@ -305,19 +334,40 @@ export default async function OpportunityDetailPage({
             />
 
             {isOwner ? (
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-brand-gray-400">
-                  Owner tools
-                </p>
-                <p className="mt-2 text-sm text-white">
-                  {pendingResponseCount} pending response
-                  {pendingResponseCount === 1 ? "" : "s"}
-                </p>
-                <p className="mt-1 text-xs text-brand-gray-400">
-                  Connection requests appear in your inbox (built in Step 5).
-                </p>
-                <div className="mt-4">
-                  <DeletePostButton postId={post.id} />
+              <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-white/[.05] via-white/[.03] to-transparent p-5 shadow-md shadow-black/30">
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-brand-orange/10 blur-2xl"
+                />
+                <div className="relative">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-brand-orange">
+                    Owner tools
+                  </p>
+                  <p className="mt-3 text-2xl font-bold text-white">
+                    {pendingResponseCount}
+                    <span className="ml-2 text-sm font-medium text-brand-gray-400">
+                      pending response
+                      {pendingResponseCount === 1 ? "" : "s"}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-xs text-brand-gray-400">
+                    Responses appear in your inbox.
+                  </p>
+
+                  <div className="mt-5 space-y-2">
+                    <Link
+                      href={`/opportunities/${post.id}/edit`}
+                      className="flex w-full items-center justify-center gap-2 rounded-full border border-brand-orange/40 bg-brand-orange/10 px-4 py-2.5 text-sm font-bold text-brand-orange transition hover:bg-brand-orange hover:text-white"
+                    >
+                      <Pencil
+                        className="h-3.5 w-3.5"
+                        strokeWidth={2.5}
+                        aria-hidden="true"
+                      />
+                      Edit post
+                    </Link>
+                    <DeletePostButton postId={post.id} />
+                  </div>
                 </div>
               </div>
             ) : null}
@@ -328,6 +378,35 @@ export default async function OpportunityDetailPage({
   );
 }
 
+// ────────────────────────────────────────────────────────────────────
+// Section card — wraps each content block (About, Location, etc.)
+// ────────────────────────────────────────────────────────────────────
+function SectionCard({
+  icon,
+  title,
+  children,
+  accent = "orange",
+}: {
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+  accent?: "orange" | "emerald";
+}) {
+  const accentColor =
+    accent === "emerald" ? "text-emerald-300" : "text-brand-orange";
+  return (
+    <section className="rounded-xl border border-white/10 bg-white/[.03] p-5 transition hover:border-white/20 sm:p-6">
+      <h2
+        className={`mb-3 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.15em] ${accentColor}`}
+      >
+        <span>{icon}</span>
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
 function TagStatusBadge({
   status,
 }: {
@@ -335,10 +414,10 @@ function TagStatusBadge({
 }) {
   const className =
     status === "accepted"
-      ? "bg-emerald-500/20 text-emerald-300"
+      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
       : status === "declined"
-        ? "bg-red-500/20 text-red-300"
-        : "bg-white/10 text-brand-gray-300";
+        ? "bg-red-500/20 text-red-300 border-red-500/30"
+        : "bg-white/10 text-brand-gray-300 border-white/15";
   const label =
     status === "accepted"
       ? "Accepted"
@@ -347,7 +426,7 @@ function TagStatusBadge({
         : "Pending";
   return (
     <span
-      className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${className}`}
+      className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${className}`}
     >
       {label}
     </span>

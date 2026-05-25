@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Tag } from "lucide-react";
 import {
   respondToBandTag,
   toggleShareTaggedEvent,
@@ -43,8 +44,9 @@ export function BandTagActions({
 
   return (
     <div className="rounded-2xl border border-brand-orange/30 bg-brand-orange/5 p-5">
-      <h3 className="text-sm font-semibold text-brand-orange">
-        🎯 You&apos;re tagged on this event
+      <h3 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-orange">
+        <Tag className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
+        You&apos;re tagged on this event
       </h3>
 
       {status === "pending" ? (

@@ -16,8 +16,16 @@ body {
 
 body {
   min-height: 100vh;
-  font-family: var(--font-sans, Inter), system-ui, -apple-system, "Segoe UI",
+  font-family: var(--font-sans, "DM Sans"), system-ui, -apple-system, "Segoe UI",
     Roboto, sans-serif;
+  letter-spacing: -0.005em;
+}
+
+/* Tighten heading tracking for the DM Sans look */
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
 }
 
 @layer components {

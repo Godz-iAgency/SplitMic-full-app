@@ -42,7 +42,7 @@ export default async function ThreadPage({
     <main className="flex min-h-screen flex-col bg-gradient-to-b from-black via-brand-gray-900 to-black">
       <MarkReadOnMount threadId={detail.thread_id} />
 
-      <header className="flex items-center justify-between border-b border-white/5 px-5 py-4 sm:px-8">
+      <header className="flex items-center justify-between border-b border-white/10 shadow-sm shadow-black/40 px-5 py-4 sm:px-8">
         <Link href="/search">
           <Logo className="text-2xl" />
         </Link>

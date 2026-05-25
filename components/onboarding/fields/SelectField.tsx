@@ -33,7 +33,7 @@ export function SelectField({
         value={value}
         required={required}
         onChange={(event) => onChange(event.target.value)}
-        className="input-field appearance-none bg-[length:14px] bg-[right_1rem_center] bg-no-repeat pr-10"
+        className="input-field appearance-none bg-[length:14px] bg-[right_1rem_center] bg-no-repeat pr-10 [color-scheme:dark]"
         style={{
           backgroundImage:
             "url(\"data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23cccccc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e\")",

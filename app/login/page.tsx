@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingStatus } from "@/lib/supabase/profile";
 import { isAdminEmail } from "@/lib/supabase/admin";
@@ -22,7 +23,16 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-black via-brand-gray-900 to-black px-6 py-12">
+    <main className="relative flex min-h-screen items-center justify-center bg-gradient-to-b from-black via-brand-gray-900 to-black px-6 py-12">
+      {/* Back to landing page */}
+      <Link
+        href="/"
+        className="absolute left-5 top-5 flex items-center gap-1.5 text-sm font-semibold text-brand-gray-400 transition hover:text-white sm:left-8 sm:top-8"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
+      </Link>
+
       <div className="w-full max-w-md animate-fade-in">
         <div className="mb-8 text-center">
           <Logo className="text-4xl sm:text-5xl" />

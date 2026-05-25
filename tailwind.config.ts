@@ -21,7 +21,15 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        sans: [
+          "var(--font-sans)",
+          "DM Sans",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Roboto",
+          "sans-serif",
+        ],
       },
       animation: {
         "fade-in": "fadeIn 0.4s ease-out",

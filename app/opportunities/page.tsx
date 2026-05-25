@@ -60,20 +60,21 @@ export default async function OpportunitiesPage({
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-20">
       {/* Header */}
-      <header className="flex items-center justify-between border-b border-white/5 px-5 py-4 sm:px-8">
+      <header className="flex items-center justify-between border-b border-white/10 shadow-sm shadow-black/40 px-5 py-4 sm:px-8">
         <Link href="/search">
           <Logo className="text-2xl" />
         </Link>
         <nav className="hidden items-center gap-2 sm:flex">
           <Link
             href="/search"
-            className="rounded-full px-4 py-2 text-sm font-semibold text-brand-gray-300 transition hover:text-white"
+            className="rounded-full px-4 py-2 text-sm font-semibold text-brand-gray-400 transition hover:text-white"
           >
             Discover
           </Link>
           <Link
             href="/opportunities"
-            className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white"
+            aria-current="page"
+            className="rounded-full bg-brand-orange px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-brand-orange/30"
           >
             Feed
           </Link>
@@ -84,7 +85,7 @@ export default async function OpportunitiesPage({
           {profile.profile_id ? (
             <Link
               href={`/profile/${profile.profile_id}`}
-              className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+              className="rounded-full border border-brand-orange/50 px-4 py-2 text-sm font-semibold text-brand-orange transition hover:bg-brand-orange hover:text-white"
             >
               My profile
             </Link>

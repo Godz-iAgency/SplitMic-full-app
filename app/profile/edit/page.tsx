@@ -87,7 +87,7 @@ export default async function ProfileEditPage({
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black">
-      <header className="flex items-center justify-between border-b border-white/5 px-5 py-4 sm:px-8">
+      <header className="flex items-center justify-between border-b border-white/10 shadow-sm shadow-black/40 px-5 py-4 sm:px-8">
         <Logo className="text-2xl" />
         <Link
           href="/search"
