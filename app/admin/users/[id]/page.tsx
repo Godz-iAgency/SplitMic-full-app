@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Ban } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getAdminUserDetail } from "@/lib/supabase/admin";
 import { PLAYER_TYPE_OPTIONS } from "@/lib/types";
@@ -38,8 +39,9 @@ export default async function AdminUserDetailPage({
           <h1 className="mt-2 text-3xl font-bold">{user.display_name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {user.is_suspended && (
-              <span className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-bold text-red-300">
-                🚫 Suspended
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-3 py-1 text-xs font-bold text-red-300">
+                <Ban className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
+                Suspended
               </span>
             )}
             {user.is_published ? (

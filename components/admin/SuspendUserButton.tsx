@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Ban } from "lucide-react";
 import { adminSuspendUser } from "@/app/admin/actions";
 
 export function SuspendUserButton({ profileId }: { profileId: string }) {
@@ -25,9 +26,10 @@ export function SuspendUserButton({ profileId }: { profileId: string }) {
     return (
       <button
         onClick={() => setShowForm(true)}
-        className="w-full rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/20"
+        className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/20"
       >
-        🚫 Suspend user
+        <Ban className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
+        Suspend user
       </button>
     );
   }

@@ -3,7 +3,6 @@ import type { PlayerTypeDetail } from "./PlayerTypeModal";
 export const PLAYER_TYPE_DETAILS: PlayerTypeDetail[] = [
   {
     type: "band",
-    emoji: "🎸",
     name: "Bands",
     headline: "Stop chasing gigs. Start landing them.",
     copy:
@@ -17,7 +16,6 @@ export const PLAYER_TYPE_DETAILS: PlayerTypeDetail[] = [
   },
   {
     type: "venue",
-    emoji: "🏛️",
     name: "Venues",
     headline: "Fill your calendar with the right acts.",
     copy:
@@ -31,7 +29,6 @@ export const PLAYER_TYPE_DETAILS: PlayerTypeDetail[] = [
   },
   {
     type: "talent_buyer",
-    emoji: "🎤",
     name: "Talent Buyers",
     headline: "Source talent without the grind.",
     copy:
@@ -45,7 +42,6 @@ export const PLAYER_TYPE_DETAILS: PlayerTypeDetail[] = [
   },
   {
     type: "festival",
-    emoji: "🎪",
     name: "Festivals",
     headline: "Curate lineups that sell tickets.",
     copy:
@@ -59,7 +55,6 @@ export const PLAYER_TYPE_DETAILS: PlayerTypeDetail[] = [
   },
   {
     type: "record_label",
-    emoji: "💿",
     name: "Record Labels",
     headline: "Scout the Austin scene from your laptop.",
     copy:

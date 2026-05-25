@@ -90,7 +90,7 @@ export default async function ThreadPage({
         <div className="flex-1 space-y-3 overflow-y-auto px-5 py-6 sm:px-0">
           {detail.messages.length === 0 ? (
             <p className="rounded-2xl border border-white/5 bg-white/5 p-6 text-center text-sm text-brand-gray-400">
-              No messages yet. Say hi 👋
+              No messages yet. Say hi.
             </p>
           ) : (
             detail.messages.map((m) => {

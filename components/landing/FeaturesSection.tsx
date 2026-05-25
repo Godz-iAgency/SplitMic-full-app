@@ -1,12 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import {
+  Search,
+  Newspaper,
+  Users,
+  MessageCircle,
+  UserCircle,
+  Bell,
+} from "lucide-react";
 import { FeatureModal, type FeatureDetail } from "./FeatureModal";
 
 const FEATURES: FeatureDetail[] = [
   {
     id: "find-anyone",
-    icon: "🔍",
+    Icon: Search,
     title: "Find Anyone",
     description:
       "Search by player type, genre, location, or name. Discover who's in the Austin music ecosystem instantly.",
@@ -16,7 +24,7 @@ const FEATURES: FeatureDetail[] = [
   },
   {
     id: "opportunities",
-    icon: "💼",
+    Icon: Newspaper,
     title: "Community Feed",
     description:
       "See every gig, show, and opportunity Austin is posting — live and in one stream.",
@@ -26,7 +34,7 @@ const FEATURES: FeatureDetail[] = [
   },
   {
     id: "connections",
-    icon: "🔗",
+    Icon: Users,
     title: "Industry Connections",
     description:
       "Build real relationships with verified industry pros. No fans, no spam — just business.",
@@ -36,7 +44,7 @@ const FEATURES: FeatureDetail[] = [
   },
   {
     id: "messaging",
-    icon: "💬",
+    Icon: MessageCircle,
     title: "Direct Messaging",
     description:
       "Talk to venues, bands, and buyers directly. No more chasing DMs across 5 apps.",
@@ -46,7 +54,7 @@ const FEATURES: FeatureDetail[] = [
   },
   {
     id: "profiles",
-    icon: "🎯",
+    Icon: UserCircle,
     title: "Tailored Profiles",
     description:
       "Each player type gets a profile built for what matters in their role.",
@@ -56,7 +64,7 @@ const FEATURES: FeatureDetail[] = [
   },
   {
     id: "notifications",
-    icon: "⚡",
+    Icon: Bell,
     title: "Real-Time Notifications",
     description:
       "Never miss a connection request, message, or opportunity — get notified the moment it happens.",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Check } from "lucide-react";
 import { respondToPost } from "@/app/opportunities/actions";
 
 type Props = {
@@ -27,8 +28,9 @@ export function RespondPanel({ postId, alreadyResponded, isOwnPost }: Props) {
   if (alreadyResponded || submitted) {
     return (
       <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-center">
-        <p className="text-sm font-semibold text-emerald-300">
-          ✓ Response sent
+        <p className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-emerald-300">
+          <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
+          Response sent
         </p>
         <p className="mt-1 text-xs text-emerald-200/70">
           The poster will review your request. You&apos;ll be notified when

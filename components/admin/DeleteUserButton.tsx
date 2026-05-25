@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Trash2, AlertTriangle } from "lucide-react";
 import { adminDeleteUser } from "@/app/admin/actions";
 
 export function DeleteUserButton({
@@ -31,18 +32,22 @@ export function DeleteUserButton({
     return (
       <button
         onClick={() => setShowForm(true)}
-        className="w-full rounded-full border border-red-500/40 bg-transparent px-4 py-2.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/10"
+        className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-red-500/40 bg-transparent px-4 py-2.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/10"
       >
-        🗑 Delete user permanently
+        <Trash2 className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
+        Delete user permanently
       </button>
     );
   }
 
   return (
     <div className="space-y-2 rounded-xl border border-red-500/60 bg-red-500/10 p-3">
-      <p className="text-xs font-bold text-red-300">
-        ⚠ This permanently deletes <b>{displayName}</b> and all their data
-        (profile, posts, messages). This cannot be undone.
+      <p className="inline-flex items-start gap-1.5 text-xs font-bold text-red-300">
+        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" strokeWidth={2.5} aria-hidden="true" />
+        <span>
+          This permanently deletes <b>{displayName}</b> and all their data
+          (profile, posts, messages). This cannot be undone.
+        </span>
       </p>
       <p className="text-xs text-red-200">
         Type <b>DELETE</b> to confirm:

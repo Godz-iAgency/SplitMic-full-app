@@ -2,13 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  Link2,
+  ScrollText,
+  type LucideIcon,
+} from "lucide-react";
 
-const items = [
-  { href: "/admin", label: "Dashboard", icon: "📊" },
-  { href: "/admin/users", label: "Users", icon: "👥" },
-  { href: "/admin/posts", label: "Posts", icon: "📋" },
-  { href: "/admin/connections", label: "Connections", icon: "🔗" },
-  { href: "/admin/log", label: "Action log", icon: "📜" },
+const items: Array<{ href: string; label: string; Icon: LucideIcon }> = [
+  { href: "/admin", label: "Dashboard", Icon: LayoutDashboard },
+  { href: "/admin/users", label: "Users", Icon: Users },
+  { href: "/admin/posts", label: "Posts", Icon: FileText },
+  { href: "/admin/connections", label: "Connections", Icon: Link2 },
+  { href: "/admin/log", label: "Action log", Icon: ScrollText },
 ];
 
 export function AdminNav() {
@@ -31,7 +39,11 @@ export function AdminNav() {
                 : "text-brand-gray-300 hover:bg-white/10 hover:text-white"
             }`}
           >
-            <span>{item.icon}</span>
+            <item.Icon
+              className="h-4 w-4"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
             <span>{item.label}</span>
           </Link>
         );

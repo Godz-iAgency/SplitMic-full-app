@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "lucide-react";
 import type { PlayerType } from "@/lib/types";
 import { CommonFields, type CommonFieldValues } from "@/components/onboarding/forms/CommonFields";
 import { BandForm, type BandFormValues } from "@/components/onboarding/forms/BandForm";
@@ -157,8 +158,9 @@ export function EditInfoForm({
         </button>
 
         {saved ? (
-          <span className="text-sm font-medium text-green-400">
-            ✓ Profile updated
+          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-300">
+            <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
+            Profile updated
           </span>
         ) : null}
       </div>

@@ -2,12 +2,12 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { Check } from "lucide-react";
 import type { PlayerType } from "@/lib/types";
 import { PlayerTypeIcon } from "./PlayerTypeIcon";
 
 export type PlayerTypeDetail = {
   type: PlayerType;
-  emoji: string;
   name: string;
   headline: string;
   copy: string;
@@ -110,10 +110,10 @@ export function PlayerTypeModal({ detail, onClose }: Props) {
                 className="flex items-start gap-3 text-sm text-brand-gray-200 sm:text-base"
               >
                 <span
-                  className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-orange text-xs font-bold text-white"
+                  className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-orange text-white"
                   aria-hidden="true"
                 >
-                  ✓
+                  <Check className="h-3 w-3" strokeWidth={3} />
                 </span>
                 <span>{benefit}</span>
               </li>

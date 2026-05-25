@@ -299,13 +299,13 @@ export function MediaSlot({
 function successMessageFor(kind: MediaKind): string {
   switch (kind) {
     case "avatar":
-      return "Profile photo uploaded ✓";
+      return "Profile photo uploaded";
     case "banner":
-      return "Banner uploaded ✓";
+      return "Banner uploaded";
     case "video":
-      return "Video uploaded ✓";
+      return "Video uploaded";
     default:
-      return "Photo uploaded ✓";
+      return "Photo uploaded";
   }
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition, useState } from "react";
+import { Check } from "lucide-react";
 import { adminUnsuspendUser } from "@/app/admin/actions";
 
 export function UnsuspendUserButton({ profileId }: { profileId: string }) {
@@ -20,9 +21,16 @@ export function UnsuspendUserButton({ profileId }: { profileId: string }) {
       <button
         onClick={go}
         disabled={pending}
-        className="w-full rounded-full bg-emerald-500/20 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/30 disabled:opacity-50"
+        className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-emerald-500/20 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/30 disabled:opacity-50"
       >
-        {pending ? "Unsuspending..." : "✓ Unsuspend user"}
+        {pending ? (
+          "Unsuspending..."
+        ) : (
+          <>
+            <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
+            Unsuspend user
+          </>
+        )}
       </button>
       {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
     </div>

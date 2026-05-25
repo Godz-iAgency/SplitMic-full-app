@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { MessageCircle, Clock, Mail, Handshake } from "lucide-react";
 import { initiateConnection } from "@/app/inbox/actions";
 
 type Props = {
@@ -37,7 +38,8 @@ export function ConnectButton({
         href={`/inbox/${threadId}`}
         className="inline-flex items-center gap-2 rounded-full bg-brand-orange px-5 py-2.5 text-sm font-bold text-black transition hover:bg-brand-orange/90"
       >
-        💬 Message
+        <MessageCircle className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
+        Message
       </Link>
     );
   }
@@ -45,8 +47,9 @@ export function ConnectButton({
   // Outbound pending → waiting
   if (state === "pending_outbound") {
     return (
-      <div className="rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-brand-gray-300">
-        ⏱ Request sent — waiting for response
+      <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-brand-gray-300">
+        <Clock className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+        Request sent — waiting for response
       </div>
     );
   }
@@ -58,7 +61,8 @@ export function ConnectButton({
         href="/inbox?tab=requests"
         className="inline-flex items-center gap-2 rounded-full bg-brand-orange px-5 py-2.5 text-sm font-bold text-black transition hover:bg-brand-orange/90"
       >
-        ✉ Respond to their request
+        <Mail className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
+        Respond to their request
       </Link>
     );
   }
@@ -90,7 +94,17 @@ export function ConnectButton({
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 rounded-full bg-brand-orange px-5 py-2.5 text-sm font-bold text-black transition hover:bg-brand-orange/90"
       >
-        {myMode === "industry" ? "💬 Send message" : "🤝 Connect"}
+        {myMode === "industry" ? (
+          <>
+            <MessageCircle className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
+            Send message
+          </>
+        ) : (
+          <>
+            <Handshake className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
+            Connect
+          </>
+        )}
       </button>
     );
   }

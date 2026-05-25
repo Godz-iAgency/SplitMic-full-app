@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { MessageCircle, Mail, Check } from "lucide-react";
 import {
   adminSendInAppMessage,
   adminLogEmailSent,
@@ -29,16 +30,18 @@ export function AdminContactPanel({
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => setMode("message")}
-            className="rounded-full bg-brand-orange px-3 py-2 text-xs font-bold text-black transition hover:bg-brand-orange/90"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-orange px-3 py-2 text-xs font-bold text-black transition hover:bg-brand-orange/90"
           >
-            💬 Send in-app message
+            <MessageCircle className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
+            Send in-app message
           </button>
           <button
             onClick={() => setMode("email")}
             disabled={!email}
-            className="rounded-full border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10 disabled:opacity-40"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10 disabled:opacity-40"
           >
-            📧 Send email
+            <Mail className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
+            Send email
           </button>
         </div>
       )}
@@ -101,7 +104,10 @@ function InAppMessageForm({
       />
       {error && <p className="text-xs text-red-300">{error}</p>}
       {success && (
-        <p className="text-xs text-emerald-300">✓ Message sent.</p>
+        <p className="inline-flex items-center gap-1.5 text-xs text-emerald-300">
+          <Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
+          Message sent.
+        </p>
       )}
       <div className="flex gap-2">
         <button

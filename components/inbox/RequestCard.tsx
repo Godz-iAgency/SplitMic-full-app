@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Check } from "lucide-react";
 import { respondToConnectionRequest } from "@/app/inbox/actions";
 import { PLAYER_TYPE_OPTIONS } from "@/lib/types";
 import type { IncomingRequest } from "@/lib/supabase/messaging";
@@ -47,8 +48,9 @@ export function RequestCard({ request }: { request: IncomingRequest }) {
   if (done === "accepted") {
     return (
       <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-center">
-        <p className="text-sm font-semibold text-emerald-300">
-          ✓ Connected — opening conversation…
+        <p className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-emerald-300">
+          <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
+          Connected — opening conversation…
         </p>
       </div>
     );

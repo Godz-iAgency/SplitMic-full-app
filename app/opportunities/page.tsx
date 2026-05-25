@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Lightbulb, Search, Inbox } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingStatus } from "@/lib/supabase/profile";
 import {
@@ -116,10 +117,17 @@ export default async function OpportunitiesPage({
 
         {/* Bands: subtle note instead of taking up space at the top */}
         {!canPost ? (
-          <p className="mb-6 rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-xs text-brand-gray-300">
-            💡 Bands browse the feed but don&apos;t post directly. Send a
-            Connect request to a venue, label, talent buyer, or festival to
-            start a conversation.
+          <p className="mb-6 inline-flex items-start gap-2 rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-xs text-brand-gray-300">
+            <Lightbulb
+              className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-orange"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+            <span>
+              Bands browse the feed but don&apos;t post directly. Send a
+              Connect request to a venue, label, talent buyer, or festival to
+              start a conversation.
+            </span>
           </p>
         ) : null}
 
@@ -154,7 +162,9 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }) {
   if (hasFilters) {
     return (
       <div className="rounded-2xl border border-white/5 bg-white/5 p-10 text-center">
-        <p className="text-2xl">🔍</p>
+        <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-brand-orange/10 text-brand-orange">
+          <Search className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+        </div>
         <h2 className="mt-3 text-lg font-semibold text-white">
           No matching posts
         </h2>
@@ -167,7 +177,9 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }) {
 
   return (
     <div className="rounded-2xl border border-white/5 bg-white/5 p-10 text-center">
-      <p className="text-2xl">📭</p>
+      <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-brand-orange/10 text-brand-orange">
+        <Inbox className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+      </div>
       <h2 className="mt-3 text-lg font-semibold text-white">
         The feed is quiet right now
       </h2>

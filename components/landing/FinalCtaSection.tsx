@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Lock } from "lucide-react";
 
 export function FinalCtaSection() {
   return (
@@ -24,8 +25,9 @@ export function FinalCtaSection() {
           </Link>
         </div>
 
-        <p className="mt-6 text-sm text-brand-gray-400">
-          🔒 Your data is private and never shared.
+        <p className="mt-6 inline-flex items-center justify-center gap-1.5 text-sm text-brand-gray-400">
+          <Lock className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
+          Your data is private and never shared.
         </p>
       </div>
     </section>

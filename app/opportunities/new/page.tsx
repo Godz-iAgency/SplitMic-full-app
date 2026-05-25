@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Ban } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingStatus } from "@/lib/supabase/profile";
 import {
@@ -98,7 +99,9 @@ function BlockNotice({
 }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
-      <p className="text-3xl">🛑</p>
+      <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-red-500/15 text-red-300">
+        <Ban className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+      </div>
       <h2 className="mt-4 text-lg font-semibold text-white">{title}</h2>
       <p className="mt-2 text-sm text-brand-gray-300">{body}</p>
       <Link

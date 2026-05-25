@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Ban } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getAdminUsers } from "@/lib/supabase/admin";
 import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
@@ -75,7 +76,10 @@ export default async function AdminUsersPage({
             href={`/admin/users?type=${type}&status=suspended`}
             active={status === "suspended"}
           >
-            🚫 Suspended
+            <span className="inline-flex items-center gap-1.5">
+              <Ban className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
+              Suspended
+            </span>
           </FilterPill>
         </div>
       </div>

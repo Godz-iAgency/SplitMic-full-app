@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Mic, Briefcase } from "lucide-react";
 import { createMarketplacePost } from "@/app/opportunities/actions";
 import { GenreMultiSelect } from "./GenreMultiSelect";
 import { PlayerTypeMultiSelect } from "./PlayerTypeMultiSelect";
@@ -56,7 +57,9 @@ function PostTypeChooser({
           onClick={() => onPick("event")}
           className="rounded-2xl border border-white/10 bg-white/5 p-6 text-left transition hover:border-brand-orange/50 hover:bg-white/10"
         >
-          <div className="mb-3 text-3xl">🎤</div>
+          <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-brand-orange/15 text-brand-orange">
+            <Mic className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+          </div>
           <h3 className="text-lg font-bold text-white">Post an Event</h3>
           <p className="mt-1 text-sm text-brand-gray-300">
             A specific show, performance slot, or booking date.
@@ -72,7 +75,9 @@ function PostTypeChooser({
         onClick={() => onPick("opportunity")}
         className="rounded-2xl border border-white/10 bg-white/5 p-6 text-left transition hover:border-brand-orange/50 hover:bg-white/10"
       >
-        <div className="mb-3 text-3xl">📋</div>
+        <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/15 text-blue-300">
+          <Briefcase className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+        </div>
         <h3 className="text-lg font-bold text-white">Post an Opportunity</h3>
         <p className="mt-1 text-sm text-brand-gray-300">
           An ongoing need — A&amp;R search, casting, collaboration, callout.

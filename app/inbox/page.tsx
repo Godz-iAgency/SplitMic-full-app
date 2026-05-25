@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Inbox, MessageCircle, type LucideIcon } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingStatus } from "@/lib/supabase/profile";
 import {
@@ -96,7 +97,7 @@ export default async function InboxPage({
           {tab === "requests" ? (
             requests.length === 0 ? (
               <EmptyState
-                emoji="📭"
+                icon={Inbox}
                 title="No pending requests"
                 body="When someone sends you a Connect request or responds to a post you created, it'll show up here."
               />
@@ -107,7 +108,7 @@ export default async function InboxPage({
             )
           ) : threads.length === 0 ? (
             <EmptyState
-              emoji="💬"
+              icon={MessageCircle}
               title="No conversations yet"
               body="Accept a connection request to start chatting. Or, if you're an industry player, send someone a direct message from their profile."
             />
@@ -123,17 +124,19 @@ export default async function InboxPage({
 }
 
 function EmptyState({
-  emoji,
+  icon: Icon,
   title,
   body,
 }: {
-  emoji: string;
+  icon: LucideIcon;
   title: string;
   body: string;
 }) {
   return (
     <div className="rounded-2xl border border-white/5 bg-white/5 p-10 text-center">
-      <p className="text-2xl">{emoji}</p>
+      <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-brand-orange/10 text-brand-orange">
+        <Icon className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+      </div>
       <h2 className="mt-3 text-lg font-semibold text-white">{title}</h2>
       <p className="mt-2 text-sm text-brand-gray-300">{body}</p>
     </div>

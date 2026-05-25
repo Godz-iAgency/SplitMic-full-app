@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { X } from "lucide-react";
 import { searchBandsForTaggingAction } from "@/app/opportunities/actions";
 import { MAX_TAGGED_BANDS_PER_EVENT } from "@/lib/supabase/marketplace";
 
@@ -80,10 +81,10 @@ export function BandTagPicker({ selected, onChange }: Props) {
               <button
                 type="button"
                 onClick={() => removeBand(b.profile_id)}
-                className="ml-1 text-brand-orange hover:text-white"
+                className="ml-1 inline-flex h-4 w-4 items-center justify-center text-brand-orange hover:text-white"
                 aria-label={`Remove ${b.band_name}`}
               >
-                ✕
+                <X className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
               </button>
             </span>
           ))}
