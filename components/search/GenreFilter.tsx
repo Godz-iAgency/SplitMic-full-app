@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { GENRES } from "@/lib/genres";
 
 export function GenreFilter() {
@@ -19,22 +20,17 @@ export function GenreFilter() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
+  const options = [
+    { value: "", label: "All genres" },
+    ...GENRES.map((g) => ({ value: g, label: g })),
+  ];
+
   return (
-    <label className="flex items-center gap-2">
-      <span className="sr-only">Genre</span>
-      <select
-        value={currentGenre}
-        onChange={(e) => handleChange(e.target.value)}
-        aria-label="Filter by genre"
-        className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40 [color-scheme:dark]"
-      >
-        <option value="">All genres</option>
-        {GENRES.map((g) => (
-          <option key={g} value={g}>
-            {g}
-          </option>
-        ))}
-      </select>
-    </label>
+    <Dropdown
+      value={currentGenre}
+      onChange={handleChange}
+      options={options}
+      ariaLabel="Filter by genre"
+    />
   );
 }

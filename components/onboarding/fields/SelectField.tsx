@@ -1,5 +1,7 @@
 "use client";
 
+import { Dropdown } from "@/components/ui/Dropdown";
+
 type Option = { value: string; label: string };
 
 type Props = {
@@ -11,6 +13,10 @@ type Props = {
   required?: boolean;
   hint?: string;
 };
+
+// Match the input-field utility class look — full-width with same border/bg.
+const FIELD_TRIGGER =
+  "input-field flex w-full items-center justify-between gap-2 pr-3 text-left";
 
 export function SelectField({
   id,
@@ -27,27 +33,26 @@ export function SelectField({
         {label}
         {required ? <span className="ml-1 text-brand-orange">*</span> : null}
       </label>
-      <select
+      <Dropdown
         id={id}
+        value={value}
+        onChange={onChange}
+        options={options}
+        placeholder="Select…"
+        triggerClassName={FIELD_TRIGGER}
+        fullWidth
+      />
+      {/* Hidden mirror preserves native browser form validation (required, name). */}
+      <input
+        type="text"
         name={id}
         value={value}
         required={required}
-        onChange={(event) => onChange(event.target.value)}
-        className="input-field appearance-none bg-[length:14px] bg-[right_1rem_center] bg-no-repeat pr-10 [color-scheme:dark]"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23cccccc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e\")",
-        }}
-      >
-        <option value="" disabled>
-          Select…
-        </option>
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+        onChange={() => {}}
+        tabIndex={-1}
+        aria-hidden="true"
+        className="pointer-events-none absolute h-0 w-0 opacity-0"
+      />
       {hint ? <p className="mt-1 text-xs text-brand-gray-400">{hint}</p> : null}
     </div>
   );
