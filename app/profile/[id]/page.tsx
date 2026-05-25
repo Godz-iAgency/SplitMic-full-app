@@ -454,16 +454,18 @@ export default async function ProfilePage({
         {/* Intro video */}
         {videoUrl ? (
           <section className="mt-12">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-orange">
               Intro video
             </h2>
-            <video
-              src={videoUrl}
-              controls
-              playsInline
-              preload="metadata"
-              className="aspect-video w-full max-w-4xl rounded-xl bg-black"
-            />
+            <div className="relative max-w-4xl overflow-hidden rounded-2xl ring-1 ring-white/10 shadow-lg shadow-black/50">
+              <video
+                src={videoUrl}
+                controls
+                playsInline
+                preload="metadata"
+                className="aspect-video w-full bg-black"
+              />
+            </div>
           </section>
         ) : null}
 

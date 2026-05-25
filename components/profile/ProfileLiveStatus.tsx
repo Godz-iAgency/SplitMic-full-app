@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Check } from "lucide-react";
 import { publishProfile, unpublishProfile } from "@/app/profile/[id]/actions";
 
 type Props = {
@@ -63,16 +64,16 @@ export function ProfileLiveStatus({ profileId }: Props) {
   }
 
   return (
-    <div className="mt-12 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-5">
+    <div className="mt-12 rounded-2xl border border-brand-orange/40 bg-gradient-to-br from-brand-orange/[.08] via-white/[.03] to-transparent p-5 shadow-lg shadow-black/30">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           {/* Pulsing live dot */}
           <span className="relative mt-1 flex h-2.5 w-2.5 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-orange opacity-70" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-brand-orange" />
           </span>
           <div>
-            <p className="text-sm font-semibold text-emerald-300">
+            <p className="text-sm font-bold uppercase tracking-wider text-brand-orange">
               Your profile is live
             </p>
             <p className="mt-0.5 text-xs text-brand-gray-400">
@@ -90,13 +91,22 @@ export function ProfileLiveStatus({ profileId }: Props) {
             type="button"
             onClick={handleUpdate}
             disabled={busy}
-            className="rounded-full border border-emerald-400/40 bg-emerald-500/15 px-5 py-2 text-sm font-bold uppercase tracking-wider text-emerald-200 transition hover:bg-emerald-500/30 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-full border border-brand-orange/50 bg-brand-orange/15 px-5 py-2 text-sm font-bold uppercase tracking-wider text-white shadow-sm shadow-brand-orange/20 transition hover:bg-brand-orange hover:shadow-md hover:shadow-brand-orange/40 disabled:opacity-50"
           >
-            {busy && !confirmingUnpublish
-              ? "Updating…"
-              : showSuccess
-                ? "Updated ✓"
-                : "Update"}
+            {busy && !confirmingUnpublish ? (
+              "Updating…"
+            ) : showSuccess ? (
+              <>
+                Updated
+                <Check
+                  className="h-4 w-4"
+                  strokeWidth={3}
+                  aria-hidden="true"
+                />
+              </>
+            ) : (
+              "Update"
+            )}
           </button>
         </div>
       </div>
