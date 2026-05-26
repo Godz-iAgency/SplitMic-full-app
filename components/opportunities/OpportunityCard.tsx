@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Calendar, Clock, MapPin, DollarSign } from "lucide-react";
+import { Calendar, Clock, MapPin, DollarSign, Repeat2 } from "lucide-react";
 import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
 import {
   formatPostDate,
@@ -28,6 +28,8 @@ export function OpportunityCard({ card }: { card: MarketplaceCard }) {
   );
   const playerLabel = playerOption?.label ?? card.poster_player_type;
 
+  const isShared = Boolean(card.shared_by_name);
+
   return (
     <Link
       href={`/opportunities/${card.id}`}
@@ -38,6 +40,38 @@ export function OpportunityCard({ card }: { card: MarketplaceCard }) {
         aria-hidden="true"
         className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-brand-orange/10 blur-3xl transition-opacity duration-300 group-hover:bg-brand-orange/20"
       />
+
+      {/* ── Shared-by banner (band re-share attribution) ───────────── */}
+      {isShared ? (
+        <div className="relative mb-4 flex items-center gap-2.5 rounded-md border border-brand-orange/25 bg-brand-orange/10 px-3 py-2">
+          <Repeat2
+            className="h-4 w-4 flex-shrink-0 text-brand-orange"
+            strokeWidth={2.25}
+            aria-hidden="true"
+          />
+          <div className="flex min-w-0 items-center gap-2">
+            {card.shared_by_avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={card.shared_by_avatar_url}
+                alt={card.shared_by_name}
+                className="h-5 w-5 flex-shrink-0 rounded-full object-cover ring-1 ring-brand-orange/40"
+              />
+            ) : (
+              <span
+                aria-hidden="true"
+                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-brand-orange/30 text-[10px] font-bold text-brand-orange"
+              >
+                {card.shared_by_name?.charAt(0)}
+              </span>
+            )}
+            <p className="truncate text-xs font-semibold text-white">
+              <span className="text-brand-orange">Shared by</span>{" "}
+              {card.shared_by_name}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       {/* ── Header row: poster name (left) + post type (right) ──────── */}
       <div className="relative mb-6 flex items-center justify-between gap-3">

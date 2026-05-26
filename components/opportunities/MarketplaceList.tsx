@@ -55,7 +55,7 @@ export function MarketplaceList({
     <>
       <div className="flex flex-col gap-4">
         {cards.map((c) => (
-          <OpportunityCard key={c.id} card={c} />
+          <OpportunityCard key={c.feed_key ?? c.id} card={c} />
         ))}
       </div>
 

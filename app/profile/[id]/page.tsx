@@ -14,6 +14,9 @@ import {
   AtSign,
   DollarSign,
   ZoomIn,
+  Calendar,
+  Repeat2,
+  ArrowRight,
 } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { tableForPlayerType } from "@/lib/supabase/profile";
@@ -21,6 +24,10 @@ import {
   getConnectionState,
   isIndustryPlayerType,
 } from "@/lib/supabase/messaging";
+import {
+  getEventTagsForBand,
+  formatEventDateRange,
+} from "@/lib/supabase/marketplace";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
 import { InboxBell } from "@/components/inbox/InboxBell";
@@ -149,6 +156,14 @@ export default async function ProfilePage({
 
   const media = mediaRows ?? [];
   const links = linkRows ?? [];
+
+  // Bands only: fetch accepted event tags ("Upcoming shows") + which ones the
+  // band has shared to the marketplace feed (used for the small share badge).
+  const eventTags =
+    playerType === "band"
+      ? await getEventTagsForBand(supabase, profile.id)
+      : [];
+  const acceptedShows = eventTags.filter((t) => t.status === "accepted");
 
   const banner = media.find((m) => m.kind === "banner");
   const avatar = media.find((m) => m.kind === "avatar");
@@ -448,6 +463,78 @@ export default async function ProfilePage({
                 );
               })}
             </div>
+          </section>
+        ) : null}
+
+        {/* Upcoming shows (bands only) — events the band has been tagged on and accepted */}
+        {playerType === "band" && acceptedShows.length > 0 ? (
+          <section className="mt-12">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-orange">
+              Upcoming shows
+            </h2>
+            <ul className="flex flex-col gap-3">
+              {acceptedShows.map((t) => (
+                <li key={t.tag_id}>
+                  <Link
+                    href={`/opportunities/${t.post.id}`}
+                    className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.05] via-white/[.03] to-transparent p-4 shadow-md shadow-black/30 transition hover:-translate-y-0.5 hover:border-brand-orange/40 hover:shadow-lg hover:shadow-brand-orange/10"
+                  >
+                    {/* Date block */}
+                    <div className="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-xl border border-brand-orange/30 bg-brand-orange/10 text-brand-orange">
+                      <Calendar
+                        className="h-4 w-4"
+                        strokeWidth={2.25}
+                        aria-hidden="true"
+                      />
+                    </div>
+                    {/* Title + venue + date */}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-base font-bold text-white transition group-hover:text-brand-orange">
+                        {t.post.title}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-brand-gray-300">
+                        {t.post.poster_name}
+                        {t.post.event_location ? (
+                          <span className="text-brand-gray-500">
+                            {" "}
+                            · {t.post.event_location}
+                          </span>
+                        ) : null}
+                      </p>
+                      {t.post.event_date ? (
+                        <p className="mt-1 text-xs font-semibold text-brand-gray-100">
+                          {formatEventDateRange(
+                            t.post.event_date,
+                            t.post.event_end_date,
+                          )}
+                        </p>
+                      ) : null}
+                    </div>
+                    {/* Right side: share badge + chevron */}
+                    <div className="flex flex-shrink-0 items-center gap-3">
+                      {t.shared_to_feed ? (
+                        <span
+                          title="Shared to your feed"
+                          className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300"
+                        >
+                          <Repeat2
+                            className="h-3 w-3"
+                            strokeWidth={2.5}
+                            aria-hidden="true"
+                          />
+                          Shared
+                        </span>
+                      ) : null}
+                      <ArrowRight
+                        className="h-4 w-4 text-brand-gray-400 transition group-hover:translate-x-1 group-hover:text-brand-orange"
+                        strokeWidth={2}
+                        aria-hidden="true"
+                      />
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </section>
         ) : null}
 

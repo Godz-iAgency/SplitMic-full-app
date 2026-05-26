@@ -50,6 +50,16 @@ export type MarketplaceCard = MarketplacePost & {
   poster_name: string;
   poster_player_type: PlayerType;
   poster_avatar_url: string | null;
+  /** When set, this card is a band's re-share of a venue/festival event. */
+  shared_by_profile_id?: string;
+  shared_by_name?: string;
+  shared_by_avatar_url?: string | null;
+  /**
+   * Unique key for rendering. Direct posts use the post `id`; shared posts use
+   * `${id}::${shared_by_profile_id}` to allow the same event to appear both as
+   * the venue's direct post and one or more band re-shares.
+   */
+  feed_key?: string;
 };
 
 export type BrowseFilters = {
@@ -67,7 +77,16 @@ export type BrowseResult = {
 
 /**
  * Browse marketplace posts. Always filters out expired/inactive posts.
- * Sort: newest first.
+ *
+ * Sources merged into one feed:
+ *   1. Direct posts authored by venues/labels/festivals/talent buyers.
+ *   2. Band re-shares: `event_band_tags` rows with status='accepted' AND
+ *      shared_to_feed=true, joined back to their underlying event post.
+ *      Attribution flips to the band (avatar + "Shared by …" banner).
+ *
+ * Sort: newest first (by post created_at — bands sharing inherits this ordering).
+ * Pagination is in-memory across the merged set. The active+unexpired marketplace
+ * is bounded enough that this is fine for current scale.
  */
 export async function browseMarketplace(
   supabase: SupabaseClient,
@@ -77,45 +96,79 @@ export async function browseMarketplace(
   const limit = MARKETPLACE_PAGE_SIZE;
   const today = new Date().toISOString().slice(0, 10);
 
-  let query = supabase
+  // ── 1. Direct posts ────────────────────────────────────────────────
+  let directQuery = supabase
     .from("marketplace_posts")
     .select(
       "id, poster_profile_id, poster_user_id, post_type, title, description, event_date, event_end_date, event_location, open_until, genres, pay_info, player_types_wanted, expires_at, is_active, created_at, updated_at",
     )
     .eq("is_active", true)
     .gte("expires_at", today)
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit);
+    .order("created_at", { ascending: false });
 
   if (filters.postType && filters.postType !== "all") {
-    query = query.eq("post_type", filters.postType);
+    directQuery = directQuery.eq("post_type", filters.postType);
   }
-
   if (filters.genre) {
-    query = query.overlaps("genres", [filters.genre]);
+    directQuery = directQuery.overlaps("genres", [filters.genre]);
   }
-
   if (filters.query?.trim()) {
-    query = query.ilike("title", `%${filters.query.trim()}%`);
+    directQuery = directQuery.ilike("title", `%${filters.query.trim()}%`);
   }
 
-  const { data: posts, error } = await query;
-  if (error || !posts || posts.length === 0) {
-    return { cards: [], hasMore: false };
+  const { data: directPosts } = await directQuery;
+
+  // ── 2. Shared event tags (only when feed includes events) ──────────
+  // Bands only share EVENTS, so skip this fetch when filtered to opportunities only.
+  const includeShared =
+    !filters.postType || filters.postType === "all" || filters.postType === "event";
+
+  const sharedCards: MarketplaceCard[] = includeShared
+    ? await fetchSharedEventCards(supabase, {
+        today,
+        genre: filters.genre,
+        query: filters.query,
+      })
+    : [];
+
+  // ── 3. Hydrate direct posts ───────────────────────────────────────
+  const directCards = await hydrateDirectCards(supabase, directPosts ?? []);
+
+  // ── 4. Merge, filter by playerType, sort, paginate ─────────────────
+  let merged: MarketplaceCard[] = [...directCards, ...sharedCards];
+
+  if (filters.playerType && filters.playerType !== "all") {
+    merged = merged.filter((c) => {
+      // Shared cards represent a band re-share; treat their player_type as "band"
+      // for filter purposes even though the underlying post is by a venue/festival.
+      const effectiveType = c.shared_by_profile_id ? "band" : c.poster_player_type;
+      return effectiveType === filters.playerType;
+    });
   }
 
-  const hasMore = posts.length > limit;
-  const trimmed = hasMore ? posts.slice(0, limit) : posts;
+  merged.sort((a, b) => {
+    // Newest first. Direct + shared use post created_at as the unified clock.
+    return b.created_at.localeCompare(a.created_at);
+  });
 
-  // Optional poster player_type filter — apply after fetch since it lives on profiles.
-  const posterIds = Array.from(new Set(trimmed.map((p) => p.poster_profile_id)));
+  const page = merged.slice(offset, offset + limit);
+  const hasMore = merged.length > offset + limit;
+
+  return { cards: page, hasMore };
+}
+
+/** Hydrate raw marketplace_posts rows with poster name + avatar + type. */
+async function hydrateDirectCards(
+  supabase: SupabaseClient,
+  posts: MarketplacePost[],
+): Promise<MarketplaceCard[]> {
+  if (posts.length === 0) return [];
+
+  const posterIds = Array.from(new Set(posts.map((p) => p.poster_profile_id)));
 
   const [{ data: posterProfiles }, posterDetailMap, posterAvatarMap] =
     await Promise.all([
-      supabase
-        .from("profiles")
-        .select("id, player_type")
-        .in("id", posterIds),
+      supabase.from("profiles").select("id, player_type").in("id", posterIds),
       fetchPosterNames(supabase, posterIds),
       fetchPosterAvatars(supabase, posterIds),
     ]);
@@ -125,19 +178,96 @@ export async function browseMarketplace(
     posterTypeById.set(p.id, p.player_type as PlayerType);
   }
 
-  let cards: MarketplaceCard[] = trimmed.map((p) => ({
+  return posts.map((p) => ({
     ...(p as MarketplacePost),
     poster_name: posterDetailMap.get(p.poster_profile_id) ?? "Austin player",
     poster_player_type:
       (posterTypeById.get(p.poster_profile_id) as PlayerType) ?? "venue",
     poster_avatar_url: posterAvatarMap.get(p.poster_profile_id) ?? null,
+    feed_key: p.id,
   }));
+}
 
-  if (filters.playerType && filters.playerType !== "all") {
-    cards = cards.filter((c) => c.poster_player_type === filters.playerType);
+/**
+ * Fetch band-shared event cards: tags with status='accepted' and shared_to_feed,
+ * joined to active+unexpired marketplace posts, attributed to the band.
+ */
+async function fetchSharedEventCards(
+  supabase: SupabaseClient,
+  opts: { today: string; genre?: string; query?: string },
+): Promise<MarketplaceCard[]> {
+  const { data: tags } = await supabase
+    .from("event_band_tags")
+    .select("id, marketplace_post_id, band_profile_id, responded_at")
+    .eq("status", "accepted")
+    .eq("shared_to_feed", true);
+
+  if (!tags || tags.length === 0) return [];
+
+  const postIds = Array.from(new Set(tags.map((t) => t.marketplace_post_id)));
+
+  let postsQuery = supabase
+    .from("marketplace_posts")
+    .select(
+      "id, poster_profile_id, poster_user_id, post_type, title, description, event_date, event_end_date, event_location, open_until, genres, pay_info, player_types_wanted, expires_at, is_active, created_at, updated_at",
+    )
+    .in("id", postIds)
+    .eq("is_active", true)
+    .gte("expires_at", opts.today);
+
+  if (opts.genre) {
+    postsQuery = postsQuery.overlaps("genres", [opts.genre]);
+  }
+  if (opts.query?.trim()) {
+    postsQuery = postsQuery.ilike("title", `%${opts.query.trim()}%`);
   }
 
-  return { cards, hasMore };
+  const { data: posts } = await postsQuery;
+  if (!posts || posts.length === 0) return [];
+
+  const postById = new Map(posts.map((p) => [p.id, p as MarketplacePost]));
+
+  // Need poster identities (still attribute the original venue inside the card)
+  // and band identities (for the "Shared by" banner).
+  const posterIds = Array.from(new Set(posts.map((p) => p.poster_profile_id)));
+  const bandIds = Array.from(new Set(tags.map((t) => t.band_profile_id)));
+
+  const [
+    { data: posterProfiles },
+    posterDetailMap,
+    posterAvatarMap,
+    bandNameMap,
+    bandAvatarMap,
+  ] = await Promise.all([
+    supabase.from("profiles").select("id, player_type").in("id", posterIds),
+    fetchPosterNames(supabase, posterIds),
+    fetchPosterAvatars(supabase, posterIds),
+    fetchPosterNames(supabase, bandIds),
+    fetchPosterAvatars(supabase, bandIds),
+  ]);
+
+  const posterTypeById = new Map<string, PlayerType>();
+  for (const p of posterProfiles ?? []) {
+    posterTypeById.set(p.id, p.player_type as PlayerType);
+  }
+
+  const cards: MarketplaceCard[] = [];
+  for (const tag of tags) {
+    const post = postById.get(tag.marketplace_post_id);
+    if (!post) continue; // post expired, deleted, or filtered out
+    cards.push({
+      ...post,
+      poster_name: posterDetailMap.get(post.poster_profile_id) ?? "Austin player",
+      poster_player_type:
+        (posterTypeById.get(post.poster_profile_id) as PlayerType) ?? "venue",
+      poster_avatar_url: posterAvatarMap.get(post.poster_profile_id) ?? null,
+      shared_by_profile_id: tag.band_profile_id,
+      shared_by_name: bandNameMap.get(tag.band_profile_id) ?? "Band",
+      shared_by_avatar_url: bandAvatarMap.get(tag.band_profile_id) ?? null,
+      feed_key: `${post.id}::${tag.band_profile_id}`,
+    });
+  }
+  return cards;
 }
 
 /** Fetch the display name for each poster profile (per-type detail row). */
