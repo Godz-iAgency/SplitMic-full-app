@@ -99,7 +99,7 @@ export default async function OpportunitiesPage({
         {/* ── Header: title + create CTA ───────────────────────────── */}
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold sm:text-4xl">Feed</h1>
+            <h1 className="text-2xl font-bold sm:text-3xl">Feed</h1>
             <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
               What Austin&apos;s music scene is posting right now.
             </p>

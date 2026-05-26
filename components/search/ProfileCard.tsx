@@ -18,7 +18,7 @@ export function ProfileCard({ card }: Props) {
       className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-brand-gray-900 to-black p-5 transition-all duration-200 hover:-translate-y-1 hover:border-brand-orange/40 hover:shadow-lg hover:shadow-brand-orange/20"
     >
       {/* Player type pill at top */}
-      <div className="mb-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-brand-orange/30 bg-brand-orange/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand-orange">
+      <div className="mb-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-brand-orange/30 bg-brand-orange/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-brand-orange">
         <PlayerTypeIcon
           type={card.player_type}
           className="h-3 w-3"

@@ -79,7 +79,7 @@ export function OpportunityCard({ card }: { card: MarketplaceCard }) {
           {card.poster_name}
         </p>
         <span
-          className={`flex-shrink-0 text-[11px] font-bold uppercase tracking-[0.15em] ${typeAccent}`}
+          className={`flex-shrink-0 text-xs font-bold uppercase tracking-[0.15em] ${typeAccent}`}
         >
           {typeLabel}
         </span>
@@ -107,7 +107,7 @@ export function OpportunityCard({ card }: { card: MarketplaceCard }) {
             <p className="text-sm font-bold uppercase tracking-wider text-white">
               {playerLabel}
             </p>
-            <p className="mt-1 text-[10px] font-medium text-brand-gray-400">
+            <p className="mt-1 text-[11px] font-medium text-brand-gray-400">
               posted {formatRelativeTime(card.created_at)}
             </p>
           </div>
@@ -116,7 +116,7 @@ export function OpportunityCard({ card }: { card: MarketplaceCard }) {
         {/* ── RIGHT (col-span-2): Centered content panel ───────────── */}
         <div className="col-span-2 flex flex-col items-center justify-center rounded-lg border border-white/10 bg-gradient-to-br from-black/60 via-black/40 to-black/60 p-6 text-center shadow-inner shadow-black/40">
           {/* Title */}
-          <h3 className="text-xl font-bold leading-tight tracking-tight text-white transition group-hover:text-brand-orange sm:text-2xl">
+          <h3 className="text-lg font-bold leading-tight tracking-tight text-white transition group-hover:text-brand-orange sm:text-xl">
             {card.title}
           </h3>
 
@@ -131,7 +131,7 @@ export function OpportunityCard({ card }: { card: MarketplaceCard }) {
           <div className="my-4 h-px w-12 bg-gradient-to-r from-transparent via-brand-orange/60 to-transparent" />
 
           {/* Meta row: date + location + pay */}
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[13px]">
             {card.post_type === "event" && card.event_date ? (
               <span className="inline-flex items-center gap-1.5 font-semibold text-white">
                 <Calendar
@@ -180,13 +180,13 @@ export function OpportunityCard({ card }: { card: MarketplaceCard }) {
               {card.genres.slice(0, 5).map((g) => (
                 <span
                   key={g}
-                  className="rounded-full border border-white/15 bg-white/[.07] px-3 py-1 text-[11px] font-semibold text-brand-gray-100"
+                  className="rounded-full border border-white/15 bg-white/[.07] px-3 py-1 text-xs font-semibold text-brand-gray-100"
                 >
                   {g}
                 </span>
               ))}
               {card.genres.length > 5 ? (
-                <span className="rounded-full px-3 py-1 text-[11px] font-medium text-brand-gray-400">
+                <span className="rounded-full px-3 py-1 text-xs font-medium text-brand-gray-400">
                   +{card.genres.length - 5}
                 </span>
               ) : null}

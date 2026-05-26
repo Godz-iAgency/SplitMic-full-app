@@ -183,7 +183,7 @@ export function ProfileStep({
   return (
     <div className="animate-fade-in">
       <header className="mb-6">
-        <h1 className="text-3xl font-bold sm:text-4xl">{TITLES[playerType]}</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">{TITLES[playerType]}</h1>
         <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
           This is how the Austin community will find and recognize you.
         </p>

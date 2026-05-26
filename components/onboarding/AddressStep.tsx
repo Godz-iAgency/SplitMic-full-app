@@ -84,7 +84,7 @@ export function AddressStep({
   return (
     <div className="animate-fade-in">
       <header className="mb-6">
-        <h1 className="text-3xl font-bold sm:text-4xl">Where in Austin?</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Where in Austin?</h1>
         <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
           SplitMic is Austin-only — your ZIP must be in the 78701–78799 range.
         </p>

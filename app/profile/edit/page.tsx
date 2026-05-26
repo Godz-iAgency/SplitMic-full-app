@@ -121,7 +121,7 @@ export default async function ProfileEditPage({
         {/* ── Photos & Video ─────────────────────────────────────────── */}
         <section>
           <div className="mb-8">
-            <h1 className="text-3xl font-bold sm:text-4xl">Photos &amp; video</h1>
+            <h1 className="text-2xl font-bold sm:text-3xl">Photos &amp; video</h1>
             <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
               Add a banner, profile photo, up to 3 gallery photos, and a
               15-second intro video.
@@ -137,7 +137,7 @@ export default async function ProfileEditPage({
         {/* ── Profile Info ────────────────────────────────────────────── */}
         <section>
           <div className="mb-8">
-            <h1 className="text-3xl font-bold sm:text-4xl">Profile info</h1>
+            <h1 className="text-2xl font-bold sm:text-3xl">Profile info</h1>
             <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
               Update your bio, contact details, and player-specific information.
               Changes appear on your public profile immediately.

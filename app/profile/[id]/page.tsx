@@ -300,10 +300,10 @@ export default async function ProfilePage({
 
         {/* Identity + content — pl matches avatar's left offset so name aligns under avatar */}
         <section className="px-5 sm:px-8">
-          <p className="text-xs uppercase tracking-widest text-brand-orange">
+          <p className="text-sm uppercase tracking-wider text-brand-orange">
             {playerOption?.label ?? playerType}
           </p>
-          <h1 className="mt-1 text-3xl font-bold sm:text-4xl">{displayName}</h1>
+          <h1 className="mt-1 text-2xl font-bold sm:text-3xl">{displayName}</h1>
           {addressParts ? (
             <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-brand-gray-400">
               <MapPin
@@ -353,7 +353,7 @@ export default async function ProfilePage({
                 }
                 target="_blank"
                 rel="noreferrer noopener"
-                className="group inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white transition hover:border-brand-orange/40 hover:bg-white/10"
+                className="group inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[13px] font-semibold uppercase tracking-wider text-white transition hover:border-brand-orange/40 hover:bg-white/10"
               >
                 <Globe
                   className="h-3.5 w-3.5 transition group-hover:text-brand-orange"
@@ -367,7 +367,7 @@ export default async function ProfilePage({
               <a
                 href={`tel:${profile.phone_number}`}
                 aria-label={`Call ${profile.phone_number}`}
-                className="group inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white transition hover:border-brand-orange/40 hover:bg-white/10"
+                className="group inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[13px] font-semibold uppercase tracking-wider text-white transition hover:border-brand-orange/40 hover:bg-white/10"
               >
                 <Phone
                   className="h-3.5 w-3.5 transition group-hover:text-brand-orange"
@@ -382,7 +382,7 @@ export default async function ProfilePage({
                 href={`https://instagram.com/${profile.instagram_handle.replace(/^@/, "")}`}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="group inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white transition hover:border-brand-orange/40 hover:bg-white/10"
+                className="group inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[13px] font-semibold uppercase tracking-wider text-white transition hover:border-brand-orange/40 hover:bg-white/10"
               >
                 <Camera
                   className="h-3.5 w-3.5 transition group-hover:text-brand-orange"
@@ -400,7 +400,7 @@ export default async function ProfilePage({
                   href={link.url}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="group inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white transition hover:border-brand-orange/40 hover:bg-white/10"
+                  className="group inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[13px] font-semibold uppercase tracking-wider text-white transition hover:border-brand-orange/40 hover:bg-white/10"
                 >
                   <Icon
                     className="h-3.5 w-3.5 transition group-hover:text-brand-orange"

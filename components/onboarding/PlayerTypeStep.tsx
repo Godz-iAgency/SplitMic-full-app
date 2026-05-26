@@ -14,7 +14,7 @@ export function PlayerTypeStep({ selected, onSelect, onNext, saving, error }: Pr
   return (
     <div className="animate-fade-in">
       <header className="mb-6">
-        <h1 className="text-3xl font-bold sm:text-4xl">Who are you?</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Who are you?</h1>
         <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
           Pick the role that best describes how you&apos;ll use SplitMic.
         </p>

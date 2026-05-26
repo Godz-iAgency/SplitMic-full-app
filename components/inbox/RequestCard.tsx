@@ -85,15 +85,15 @@ export function RequestCard({ request }: { request: IncomingRequest }) {
             >
               {request.requester_name}
             </Link>
-            <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-gray-300">
+            <span className="rounded-full bg-white/5 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-gray-300">
               {playerOption?.label ?? request.requester_player_type}
             </span>
             {request.request_type === "post_response" ? (
-              <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-300">
+              <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-blue-300">
                 Post response
               </span>
             ) : (
-              <span className="rounded-full bg-brand-orange/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-orange">
+              <span className="rounded-full bg-brand-orange/20 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-orange">
                 Connect request
               </span>
             )}
