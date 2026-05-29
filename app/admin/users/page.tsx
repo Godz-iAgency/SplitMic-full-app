@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Ban } from "lucide-react";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getAdminServiceClient } from "@/lib/supabase/admin-guard";
 import { getAdminUsers } from "@/lib/supabase/admin";
 import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
 import { AdminUserSearchBox } from "@/components/admin/AdminUserSearchBox";
@@ -12,7 +12,7 @@ export default async function AdminUsersPage({
 }: {
   searchParams: { type?: string; status?: string; q?: string };
 }) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await getAdminServiceClient();
   const validTypes = new Set([
     "all",
     "band",

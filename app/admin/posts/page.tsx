@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getAdminServiceClient } from "@/lib/supabase/admin-guard";
 import { getAdminPosts } from "@/lib/supabase/admin";
 import { PLAYER_TYPE_OPTIONS } from "@/lib/types";
 import { AdminDeletePostButton } from "@/components/admin/AdminDeletePostButton";
@@ -11,7 +11,7 @@ export default async function AdminPostsPage({
 }: {
   searchParams: { status?: string };
 }) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await getAdminServiceClient();
   const activeOnly = (searchParams.status ?? "active") === "active";
   const rows = await getAdminPosts(supabase, { activeOnly });
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getAdminServiceClient } from "@/lib/supabase/admin-guard";
 import { getAdminRequests } from "@/lib/supabase/admin";
 import { PLAYER_TYPE_OPTIONS } from "@/lib/types";
 
@@ -10,7 +10,7 @@ export default async function AdminConnectionsPage({
 }: {
   searchParams: { status?: string };
 }) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await getAdminServiceClient();
   const validStatuses = new Set(["all", "pending", "accepted", "declined"]);
   const status = (
     validStatuses.has(searchParams.status ?? "") ? searchParams.status : "all"

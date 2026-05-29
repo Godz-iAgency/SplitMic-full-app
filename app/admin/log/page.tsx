@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getAdminServiceClient } from "@/lib/supabase/admin-guard";
 import { getAdminLog } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +33,7 @@ const ACTION_LABEL: Record<string, { label: string; color: string }> = {
 };
 
 export default async function AdminLogPage() {
-  const supabase = createServerSupabaseClient();
+  const supabase = await getAdminServiceClient();
   const entries = await getAdminLog(supabase, 200);
 
   return (

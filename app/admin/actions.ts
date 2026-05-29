@@ -3,18 +3,23 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { isAdminEmail } from "@/lib/supabase/admin";
 
 // ─── Admin guard ────────────────────────────────────────────────────────────
+// Identity is verified with the cookie-based session client. Only AFTER an
+// admin is confirmed do we hand back a service-role client, which bypasses RLS
+// so moderation actions (suspend/delete/publish, audit log) actually take effect.
 
 async function requireAdmin() {
-  const supabase = createServerSupabaseClient();
+  const sessionClient = createServerSupabaseClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await sessionClient.auth.getUser();
   if (!user || !isAdminEmail(user.email)) {
     return { error: "Not authorized." as const };
   }
+  const supabase = createServiceRoleClient();
   return { supabase, user };
 }
 
@@ -27,11 +32,12 @@ async function logAdminAction(
     details?: Record<string, unknown>;
   },
 ) {
-  const supabase = createServerSupabaseClient();
+  const sessionClient = createServerSupabaseClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return;
+  } = await sessionClient.auth.getUser();
+  if (!user || !isAdminEmail(user.email)) return;
+  const supabase = createServiceRoleClient();
   await supabase.from("admin_action_log").insert({
     admin_user_id: user.id,
     admin_email: user.email,

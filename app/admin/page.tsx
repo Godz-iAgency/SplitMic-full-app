@@ -1,11 +1,11 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getAdminServiceClient } from "@/lib/supabase/admin-guard";
 import { getAdminStats } from "@/lib/supabase/admin";
 import { PLAYER_TYPE_OPTIONS } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const supabase = createServerSupabaseClient();
+  const supabase = await getAdminServiceClient();
   const stats = await getAdminStats(supabase);
 
   return (

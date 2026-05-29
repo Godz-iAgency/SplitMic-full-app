@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Ban } from "lucide-react";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getAdminServiceClient } from "@/lib/supabase/admin-guard";
 import { getAdminUserDetail } from "@/lib/supabase/admin";
 import { PLAYER_TYPE_OPTIONS } from "@/lib/types";
 import { SuspendUserButton } from "@/components/admin/SuspendUserButton";
@@ -17,7 +17,7 @@ export default async function AdminUserDetailPage({
 }: {
   params: { id: string };
 }) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await getAdminServiceClient();
   const user = await getAdminUserDetail(supabase, params.id);
   if (!user) notFound();
 
