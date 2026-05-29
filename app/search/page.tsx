@@ -116,7 +116,7 @@ export default async function SearchPage({
       </header>
 
       {/* Search section */}
-      <section className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
+      <section className="mx-auto max-w-7xl px-5 py-10 sm:px-8 sm:py-14">
         <div className="mb-6">
           <h1 className="text-2xl font-bold sm:text-3xl">
             Discover Austin&apos;s music ecosystem

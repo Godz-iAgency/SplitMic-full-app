@@ -223,8 +223,8 @@ export default async function ProfilePage({
         </div>
       </header>
 
-      {/* LinkedIn-style card: banner + content share max-w-5xl wrapper */}
-      <div className="mx-auto max-w-5xl px-4 pt-6 sm:px-6 sm:pt-8">
+      {/* LinkedIn-style card: banner + content share max-w-6xl wrapper */}
+      <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 sm:pt-8">
         {/* Banner card with avatar overlay — locked to 3:1 to match the cropper */}
         <div className="relative mb-20 sm:mb-24">
           <div className="relative aspect-[3/1] w-full overflow-hidden rounded-xl bg-brand-gray-900 shadow-lg shadow-black/50 ring-1 ring-white/10">
@@ -544,7 +544,7 @@ export default async function ProfilePage({
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-orange">
               Intro video
             </h2>
-            <div className="relative max-w-4xl overflow-hidden rounded-2xl ring-1 ring-white/10 shadow-lg shadow-black/50">
+            <div className="relative overflow-hidden rounded-2xl ring-1 ring-white/10 shadow-lg shadow-black/50">
               <video
                 src={videoUrl}
                 controls
