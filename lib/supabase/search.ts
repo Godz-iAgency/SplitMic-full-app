@@ -13,6 +13,7 @@ export type SearchCard = {
   player_type: PlayerType;
   display_name: string;
   one_liner: string;
+  genres: string[];
   avatar_url: string | null;
 };
 
@@ -130,7 +131,10 @@ export async function searchProfiles(
       .in("profile_id", profileIds),
   ]);
 
-  const detailMap = new Map<string, { name: string; oneLiner: string }>();
+  const detailMap = new Map<
+    string,
+    { name: string; oneLiner: string; genres: string[] }
+  >();
   for (const m of detailMaps) {
     for (const [id, data] of m) detailMap.set(id, data);
   }
@@ -148,6 +152,7 @@ export async function searchProfiles(
       player_type: p.player_type as PlayerType,
       display_name: detail?.name ?? "Austin player",
       one_liner: detail?.oneLiner ?? "",
+      genres: detail?.genres ?? [],
       avatar_url: storagePath
         ? supabase.storage.from(BUCKET).getPublicUrl(storagePath).data.publicUrl
         : null,
@@ -155,6 +160,43 @@ export async function searchProfiles(
   });
 
   return { cards, hasMore };
+}
+
+/**
+ * Counts published profiles per player type (plus an "all" total) for the
+ * category browse tiles. One lightweight head+count query per type, run in
+ * parallel — scales fine and never transfers row data.
+ */
+export async function getProfileCountsByType(
+  supabase: SupabaseClient,
+): Promise<Record<PlayerType | "all", number>> {
+  const fetches = ALL_PLAYER_TYPES.map(async (t) => {
+    const { count } = await supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("is_published", true)
+      .eq("player_type", t);
+    return [t, count ?? 0] as const;
+  });
+
+  const results = await Promise.all(fetches);
+
+  const counts = {
+    all: 0,
+    band: 0,
+    venue: 0,
+    talent_buyer: 0,
+    record_label: 0,
+    festival: 0,
+  } as Record<PlayerType | "all", number>;
+
+  let total = 0;
+  for (const [t, c] of results) {
+    counts[t] = c;
+    total += c;
+  }
+  counts.all = total;
+  return counts;
 }
 
 // ── Per-type detail config (which tables/columns hold name + genre) ──────────
@@ -244,20 +286,24 @@ async function fetchDetailsForType(
   supabase: SupabaseClient,
   type: PlayerType,
   ids: string[],
-): Promise<Map<string, { name: string; oneLiner: string }>> {
-  const map = new Map<string, { name: string; oneLiner: string }>();
+): Promise<Map<string, { name: string; oneLiner: string; genres: string[] }>> {
+  const map = new Map<
+    string,
+    { name: string; oneLiner: string; genres: string[] }
+  >();
   if (ids.length === 0) return map;
 
   switch (type) {
     case "band": {
       const { data } = await supabase
         .from("band_details")
-        .select("profile_id, band_name, sound_description")
+        .select("profile_id, band_name, sound_description, genres")
         .in("profile_id", ids);
       for (const d of data ?? []) {
         map.set(d.profile_id, {
           name: d.band_name ?? "Unnamed band",
           oneLiner: d.sound_description ?? "",
+          genres: toGenreList(d.genres),
         });
       }
       break;
@@ -265,12 +311,13 @@ async function fetchDetailsForType(
     case "venue": {
       const { data } = await supabase
         .from("venue_details")
-        .select("profile_id, venue_name, venue_type")
+        .select("profile_id, venue_name, venue_type, genres_hosted")
         .in("profile_id", ids);
       for (const d of data ?? []) {
         map.set(d.profile_id, {
           name: d.venue_name ?? "Unnamed venue",
           oneLiner: labelize(d.venue_type) ?? "Venue",
+          genres: toGenreList(d.genres_hosted),
         });
       }
       break;
@@ -278,12 +325,13 @@ async function fetchDetailsForType(
     case "talent_buyer": {
       const { data } = await supabase
         .from("talent_buyer_details")
-        .select("profile_id, company_name, company_type")
+        .select("profile_id, company_name, company_type, genres_focus")
         .in("profile_id", ids);
       for (const d of data ?? []) {
         map.set(d.profile_id, {
           name: d.company_name ?? "Talent buyer",
           oneLiner: labelize(d.company_type) ?? "Talent buyer",
+          genres: toGenreList(d.genres_focus),
         });
       }
       break;
@@ -291,12 +339,13 @@ async function fetchDetailsForType(
     case "record_label": {
       const { data } = await supabase
         .from("record_label_details")
-        .select("profile_id, label_name, label_type")
+        .select("profile_id, label_name, label_type, genres_focus")
         .in("profile_id", ids);
       for (const d of data ?? []) {
         map.set(d.profile_id, {
           name: d.label_name ?? "Record label",
           oneLiner: labelize(d.label_type) ?? "Record label",
+          genres: toGenreList(d.genres_focus),
         });
       }
       break;
@@ -304,12 +353,13 @@ async function fetchDetailsForType(
     case "festival": {
       const { data } = await supabase
         .from("festival_details")
-        .select("profile_id, festival_name, festival_type")
+        .select("profile_id, festival_name, festival_type, genres_featured")
         .in("profile_id", ids);
       for (const d of data ?? []) {
         map.set(d.profile_id, {
           name: d.festival_name ?? "Festival",
           oneLiner: labelize(d.festival_type) ?? "Festival",
+          genres: toGenreList(d.genres_featured),
         });
       }
       break;
@@ -317,6 +367,12 @@ async function fetchDetailsForType(
   }
 
   return map;
+}
+
+// Normalize a genre column (text[] or null) into a clean string array.
+function toGenreList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((v): v is string => typeof v === "string" && v.length > 0);
 }
 
 // Convert snake_case → "Title Case": "all_ages" → "All ages"

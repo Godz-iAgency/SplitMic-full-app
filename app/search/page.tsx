@@ -2,13 +2,17 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingStatus } from "@/lib/supabase/profile";
-import { searchProfiles, type SortOption } from "@/lib/supabase/search";
+import {
+  searchProfiles,
+  getProfileCountsByType,
+  type SortOption,
+} from "@/lib/supabase/search";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
 import { InboxBell } from "@/components/inbox/InboxBell";
 import { AdminLink } from "@/components/admin/AdminLink";
 import { WelcomeIntro } from "@/components/WelcomeIntro";
-import { FilterPills } from "@/components/search/FilterPills";
+import { CategoryTiles } from "@/components/search/CategoryTiles";
 import { SearchBox } from "@/components/search/SearchBox";
 import { GenreFilter } from "@/components/search/GenreFilter";
 import { SortDropdown } from "@/components/search/SortDropdown";
@@ -60,12 +64,15 @@ export default async function SearchPage({
   const queryText = searchParams.q?.trim() ?? "";
   const genre = searchParams.genre ?? "";
 
-  const { cards, hasMore } = await searchProfiles(supabase, {
-    playerType: activeType,
-    query: queryText,
-    genre,
-    sort: activeSort,
-  });
+  const [{ cards, hasMore }, counts] = await Promise.all([
+    searchProfiles(supabase, {
+      playerType: activeType,
+      query: queryText,
+      genre,
+      sort: activeSort,
+    }),
+    getProfileCountsByType(supabase),
+  ]);
 
   // Build a unique key so SearchResults remounts on any filter change
   const searchKey = `${activeType}|${queryText}|${genre}|${activeSort}`;
@@ -138,9 +145,9 @@ export default async function SearchPage({
           <SortDropdown />
         </div>
 
-        {/* Filter row 3: player-type pills */}
+        {/* Filter row 3: Airbnb-style category browse tiles */}
         <div className="mb-8">
-          <FilterPills active={activeType} />
+          <CategoryTiles active={activeType} counts={counts} />
         </div>
 
         {cards.length === 0 ? (

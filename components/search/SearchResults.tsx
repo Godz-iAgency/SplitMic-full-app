@@ -59,9 +59,21 @@ export function SearchResults({
     }
   }
 
+  // When only a few results exist, cap the grid width + columns so a lone card
+  // doesn't float in a wide empty void — keeps the layout looking deliberate.
+  const count = cards.length;
+  const gridClass =
+    count <= 1
+      ? "mx-auto max-w-sm grid-cols-1"
+      : count === 2
+        ? "mx-auto max-w-2xl grid-cols-1 sm:grid-cols-2"
+        : count === 3
+          ? "mx-auto max-w-5xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4";
+
   return (
     <>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+      <div className={`grid gap-4 ${gridClass}`}>
         {cards.map((card) => (
           <ProfileCard key={card.profile_id} card={card} />
         ))}
