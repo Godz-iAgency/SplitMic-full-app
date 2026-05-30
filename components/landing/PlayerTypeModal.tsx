@@ -51,9 +51,9 @@ export function PlayerTypeModal({ detail, onClose }: Props) {
         aria-hidden="true"
       ></div>
 
-      {/* Modal panel */}
-      <div className="relative z-10 w-full max-w-2xl animate-slide-up overflow-hidden rounded-3xl border border-brand-orange/30 bg-gradient-to-b from-brand-gray-900 to-black shadow-2xl shadow-brand-orange/20">
-        {/* Close button */}
+      {/* Modal panel — max-h keeps it within the viewport; content scrolls inside */}
+      <div className="relative z-10 flex max-h-[90vh] w-full max-w-2xl animate-slide-up flex-col overflow-hidden rounded-3xl border border-brand-orange/30 bg-gradient-to-b from-brand-gray-900 to-black shadow-2xl shadow-brand-orange/20">
+        {/* Close button — anchored to the panel, always visible */}
         <button
           type="button"
           onClick={onClose}
@@ -77,68 +77,70 @@ export function PlayerTypeModal({ detail, onClose }: Props) {
           </svg>
         </button>
 
-        {/* Header */}
-        <div className="border-b border-brand-gray-800 bg-black/40 px-8 py-8 text-center">
-          <div className="mb-3 flex justify-center text-brand-orange">
-            <PlayerTypeIcon
-              type={detail.type}
-              className="h-16 w-16"
-              strokeWidth={1.5}
-            />
-          </div>
-          <p className="text-xs uppercase tracking-[0.3em] text-brand-orange">
-            For {detail.name}
-          </p>
-          <h2
-            id="modal-headline"
-            className="mt-3 text-2xl font-black sm:text-3xl"
-          >
-            {detail.headline}
-          </h2>
-        </div>
-
-        {/* Body */}
-        <div className="px-8 py-8">
-          <p className="text-base leading-relaxed text-brand-gray-200 sm:text-lg">
-            {detail.copy}
-          </p>
-
-          <ul className="mt-6 space-y-3">
-            {detail.benefits.map((benefit) => (
-              <li
-                key={benefit}
-                className="flex items-start gap-3 text-sm text-brand-gray-200 sm:text-base"
-              >
-                <span
-                  className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-orange text-white"
-                  aria-hidden="true"
-                >
-                  <Check className="h-3 w-3" strokeWidth={3} />
-                </span>
-                <span>{benefit}</span>
-              </li>
-            ))}
-          </ul>
-
-          {/* CTA */}
-          <div className="mt-8 flex flex-col items-center">
-            <Link
-              href={`/signup?type=${detail.type}`}
-              onClick={() => {
-                // Persist choice so it survives the email-confirmation auth flow
-                try {
-                  localStorage.setItem("splitmic_pending_type", detail.type);
-                } catch {
-                  // localStorage unavailable — URL param will still carry it
-                }
-              }}
-              className="w-full rounded-xl bg-brand-orange px-8 py-4 text-center text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 sm:w-auto sm:min-w-[300px]"
-            >
-              Sign Up as a {detail.name.replace(/s$/, "")}
-            </Link>
-            <p className="mt-4 text-xs text-brand-gray-400">
-              Free during beta · No credit card required
+        {/* Scrollable content area */}
+        <div className="overflow-y-auto">
+          {/* Header */}
+          <div className="border-b border-brand-gray-800 bg-black/40 px-8 py-6 text-center">
+            <div className="mb-3 flex justify-center text-brand-orange">
+              <PlayerTypeIcon
+                type={detail.type}
+                className="h-12 w-12"
+                strokeWidth={1.5}
+              />
+            </div>
+            <p className="text-xs uppercase tracking-[0.3em] text-brand-orange">
+              For {detail.name}
             </p>
+            <h2
+              id="modal-headline"
+              className="mt-3 text-2xl font-black sm:text-3xl"
+            >
+              {detail.headline}
+            </h2>
+          </div>
+
+          {/* Body */}
+          <div className="px-8 py-6">
+            <p className="text-base leading-relaxed text-brand-gray-200 sm:text-lg">
+              {detail.copy}
+            </p>
+
+            <ul className="mt-5 space-y-3">
+              {detail.benefits.map((benefit) => (
+                <li
+                  key={benefit}
+                  className="flex items-start gap-3 text-sm text-brand-gray-200 sm:text-base"
+                >
+                  <span
+                    className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-orange text-white"
+                    aria-hidden="true"
+                  >
+                    <Check className="h-3 w-3" strokeWidth={3} />
+                  </span>
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
+
+            {/* CTA */}
+            <div className="mt-6 flex flex-col items-center pb-2">
+              <Link
+                href={`/signup?type=${detail.type}`}
+                onClick={() => {
+                  try {
+                    localStorage.setItem("splitmic_pending_type", detail.type);
+                  } catch {
+                    // localStorage unavailable — URL param will still carry it
+                  }
+                }}
+                className="w-full rounded-xl bg-brand-orange px-8 py-4 text-center text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 sm:w-auto sm:min-w-[300px]"
+              >
+                Sign Up as a {detail.name.replace(/s$/, "")}
+              </Link>
+              <p className="mt-4 text-xs text-brand-gray-400">
+                Free during beta · No credit card required
+              </p>
+            </div>
           </div>
         </div>
       </div>
