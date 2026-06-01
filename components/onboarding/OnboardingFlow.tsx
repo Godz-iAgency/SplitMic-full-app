@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createClientSupabaseClient } from "@/lib/supabase/client";
 import { tableForPlayerType } from "@/lib/supabase/profile";
+import { normalizeWebsiteUrl } from "@/lib/url";
 import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
 import { PlayerTypeStep } from "./PlayerTypeStep";
 import { AddressStep, type ValidatedAddress } from "./AddressStep";
@@ -199,7 +200,7 @@ export function OnboardingFlow({ initial }: { initial: InitialOnboardingState })
         .update({
           bio: payload.common.bio,
           phone_number: payload.common.phone_number || null,
-          website_url: payload.common.website_url || null,
+          website_url: normalizeWebsiteUrl(payload.common.website_url),
           instagram_handle: payload.common.instagram_handle || null,
           instagram_followers:
             payload.common.instagram_followers === ""

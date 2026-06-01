@@ -20,7 +20,7 @@ const FEATURES: FeatureDetail[] = [
       "Search by player type, genre, location, or name. Discover who's in the Austin music ecosystem instantly.",
     headline: "The whole scene in one search bar.",
     copy:
-      "Need a band that plays loud? A venue near you? Just type what you want and SplitMic finds it. Filter by genre, player type, or name. No more asking around or scrolling Instagram for hours. The whole Austin music world is right here, ready to find.",
+      "Type what you're after — band, venue, or buyer — and filter by genre, player type, or name. No more asking around.",
   },
   {
     id: "opportunities",
@@ -30,7 +30,7 @@ const FEATURES: FeatureDetail[] = [
       "See every gig, show, and opportunity Austin is posting — live and in one stream.",
     headline: "Where Austin's music scene posts in real time.",
     copy:
-      "Venues post open slots. Festivals list spots. Talent buyers find acts fast. Labels share callouts. Everyone scrolls the same feed. Newest posts float to the top. No phone tag. No lost emails. If you need a show or want to play one, this is where it happens.",
+      "Venues post slots, festivals list spots, bands find shows — all in one live feed, newest first. No phone tag, no lost emails.",
   },
   {
     id: "connections",
@@ -40,7 +40,7 @@ const FEATURES: FeatureDetail[] = [
       "Build real relationships with verified industry pros. No fans, no spam — just business.",
     headline: "Real people. Real roles. Real work.",
     copy:
-      "Every person on SplitMic is here for music business. Bands. Venues. Bookers. Labels. Festivals. No random fans. No spam accounts. When you connect, you know it counts. One good connection can lead to your next big show or your next signed deal.",
+      "Everyone here is in music business — bands, venues, bookers, labels, festivals. No random fans, no spam. Every connection counts.",
   },
   {
     id: "messaging",
@@ -50,7 +50,7 @@ const FEATURES: FeatureDetail[] = [
       "Talk to venues, bands, and buyers directly. No more chasing DMs across 5 apps.",
     headline: "One inbox for all your music business.",
     copy:
-      "Send a message right to any band, venue, or buyer. No jumping between Instagram, email, and texts. No messages that get lost. Just a clean inbox where real deals get made. Ask the question. Get the answer. Book the show. That simple.",
+      "Message any band, venue, or buyer directly — no jumping between Instagram, email, and texts. Ask, get an answer, book the show.",
   },
   {
     id: "profiles",
@@ -60,7 +60,7 @@ const FEATURES: FeatureDetail[] = [
       "Each player type gets a profile built for what matters in their role.",
     headline: "A profile built for your role.",
     copy:
-      "A band's profile is not the same as a venue's profile. That's on purpose. Bands show their sound and set length. Venues show their size and booking info. Each player type fills out what matters for them. Everyone shows up looking sharp and ready.",
+      "Bands show their sound and set length, venues show size and booking info — each player type fills out what actually matters.",
   },
   {
     id: "notifications",
@@ -70,7 +70,7 @@ const FEATURES: FeatureDetail[] = [
       "Never miss a connection request, message, or opportunity — get notified the moment it happens.",
     headline: "Hear about it the moment it happens.",
     copy:
-      "New message? New gig? New connection request? You'll know right away. SplitMic also sends you an email so you stay in the loop even when the app is closed. Big moves happen fast in music. We make sure you never miss yours.",
+      "New message, gig, or connection request — you'll know right away, with email backup so you stay in the loop even when the app is closed.",
   },
 ];
 

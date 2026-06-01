@@ -148,7 +148,7 @@ export function MediaManager({ userId, profileId, media }: Props) {
       {/* Video */}
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
-          Intro video (15 sec max)
+          Intro video (30 sec max)
         </h2>
         <div className="max-w-md">
           <MediaSlot
@@ -158,7 +158,7 @@ export function MediaManager({ userId, profileId, media }: Props) {
             existing={video}
             shape="square"
             label="Add video"
-            hint="MP4, MOV, or WebM. Max 15 seconds, max 25 MB."
+            hint="MP4 recommended. 30 seconds max, 50 MB max."
             onChange={refresh}
             onSuccess={handleSuccess}
           />

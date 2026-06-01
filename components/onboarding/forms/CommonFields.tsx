@@ -55,12 +55,12 @@ export function CommonFields({ values, onChange }: Props) {
       />
       <TextField
         id="website_url"
-        label="Website URL"
-        type="url"
+        label="Website"
+        type="text"
         value={values.website_url}
         onChange={(v) => onChange("website_url", v)}
-        placeholder="https://yoursite.com"
-        hint="Optional"
+        placeholder="yoursite.com"
+        hint="Optional — just type your domain, e.g. yoursite.com"
       />
       <TextField
         id="instagram_handle"

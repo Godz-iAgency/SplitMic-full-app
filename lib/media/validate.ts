@@ -13,8 +13,8 @@ export const VIDEO_MIME_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 
 // Pre-compression upload caps. Compression brings these way down.
 export const IMAGE_MAX_BYTES_BEFORE_COMPRESSION = 25 * 1024 * 1024; // 25 MB
-export const VIDEO_MAX_BYTES = 25 * 1024 * 1024; // 25 MB
-export const VIDEO_MAX_SECONDS = 15;
+export const VIDEO_MAX_BYTES = 50 * 1024 * 1024; // 50 MB
+export const VIDEO_MAX_SECONDS = 30;
 
 export const ACCEPT_IMAGE = IMAGE_MIME_TYPES.join(",");
 export const ACCEPT_VIDEO = VIDEO_MIME_TYPES.join(",");
@@ -43,7 +43,7 @@ export async function validateMedia(
       const mb = (file.size / 1024 / 1024).toFixed(1);
       return {
         code: "video_too_large",
-        message: `Video is ${mb} MB. Maximum is 25 MB.`,
+        message: `Your video is ${mb} MB — max is 50 MB. Export it as MP4 (not MOV or 4K) and try again.`,
       };
     }
     let duration: number;
@@ -58,7 +58,7 @@ export async function validateMedia(
     if (duration > VIDEO_MAX_SECONDS + 0.5) {
       return {
         code: "video_too_long",
-        message: `Video is ${Math.round(duration)}s. Maximum is 15 seconds.`,
+        message: `Your video is ${Math.round(duration)}s — max is 30 seconds. Trim it on your phone or in iMovie/CapCut, then re-upload.`,
       };
     }
     return null;

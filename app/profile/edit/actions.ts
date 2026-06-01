@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { tableForPlayerType } from "@/lib/supabase/profile";
+import { normalizeWebsiteUrl } from "@/lib/url";
 import type { ProfilePayload } from "@/components/onboarding/ProfileStep";
 
 export async function saveProfileInfo(
@@ -32,7 +33,7 @@ export async function saveProfileInfo(
     .update({
       bio: payload.common.bio,
       phone_number: payload.common.phone_number || null,
-      website_url: payload.common.website_url || null,
+      website_url: normalizeWebsiteUrl(payload.common.website_url),
       instagram_handle: payload.common.instagram_handle || null,
       instagram_followers:
         payload.common.instagram_followers === ""

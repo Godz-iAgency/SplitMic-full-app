@@ -59,36 +59,54 @@ export function MediaSlot({
   const [error, setError] = useState<string | null>(null);
   const [pendingBannerFile, setPendingBannerFile] = useState<File | null>(null);
 
+  function showError(message: string) {
+    setError(message);
+  }
+
+  function clearError() {
+    setError(null);
+  }
+
   const accept = kind === "video" ? ACCEPT_VIDEO : ACCEPT_IMAGE;
   const currentUrl = existing
     ? publicUrlFor(supabase, existing.storage_path)
     : null;
 
   function openPicker() {
-    setError(null); // Auto-clear any prior error the moment they retry
+    clearError(); // Auto-clear any prior error the moment they retry
     inputRef.current?.click();
   }
 
   /** Routes a freshly-picked file. Banner files open the crop modal first. */
   async function handlePickedFile(file: File) {
-    setError(null);
+    clearError();
 
     if (kind === "banner") {
       // Pre-validate so users don't crop a file we'd reject afterward
       const validationError = await validateMedia(file, kind);
       if (validationError) {
-        setError(validationError.message);
+        showError(validationError.message);
         return;
       }
       setPendingBannerFile(file);
       return;
     }
 
+    if (kind === "video") {
+      // Pre-validate so a too-long or too-large clip is caught instantly
+      // before a slow upload attempt.
+      const validationError = await validateMedia(file, kind);
+      if (validationError) {
+        showError(validationError.message);
+        return;
+      }
+    }
+
     await handleFile(file);
   }
 
   async function handleFile(file: File) {
-    setError(null); // Auto-clear any prior error when a new file is picked
+    clearError(); // Auto-clear any prior error when a new file is picked
     setBusy(true);
     try {
       const result = await uploadProfileMedia(supabase, {
@@ -98,13 +116,13 @@ export function MediaSlot({
         profileId,
       });
       if (!result.ok) {
-        setError(result.error);
+        showError(result.error);
         return;
       }
       onChange();
       onSuccess?.(successMessageFor(kind));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed.");
+      showError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -115,12 +133,12 @@ export function MediaSlot({
     e?.stopPropagation();
     if (!existing) return;
     if (!confirm(`Remove this ${kind}?`)) return;
-    setError(null);
+    clearError();
     setBusy(true);
     try {
       const result = await deleteProfileMedia(supabase, existing.id);
       if (!result.ok) {
-        setError(result.error ?? "Could not remove.");
+        showError(result.error ?? "Could not remove.");
         return;
       }
       onChange();
@@ -167,7 +185,7 @@ export function MediaSlot({
       </div>
       <button
         type="button"
-        onClick={() => setError(null)}
+        onClick={clearError}
         className="shrink-0 rounded p-1 text-red-300 hover:bg-red-500/20 hover:text-white"
         aria-label="Dismiss"
       >

@@ -10,8 +10,9 @@ export type PlayerTypeDetail = {
   type: PlayerType;
   name: string;
   headline: string;
-  copy: string;
   benefits: string[];
+  /** Public path to the player-type photo, e.g. "/players/band.jpg" */
+  image: string;
 };
 
 type Props = {
@@ -79,12 +80,24 @@ export function PlayerTypeModal({ detail, onClose }: Props) {
 
         {/* Scrollable content area */}
         <div className="overflow-y-auto">
+          {/* Photo banner */}
+          <div className="relative h-40 w-full sm:h-48">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={detail.image}
+              alt={detail.name}
+              className="h-full w-full object-cover"
+            />
+            {/* Gradient so the close button + text stay readable over any photo */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/30" />
+          </div>
+
           {/* Header */}
-          <div className="border-b border-brand-gray-800 bg-black/40 px-8 py-6 text-center">
+          <div className="border-b border-brand-gray-800 bg-black/40 px-8 pb-6 pt-5 text-center">
             <div className="mb-3 flex justify-center text-brand-orange">
               <PlayerTypeIcon
                 type={detail.type}
-                className="h-12 w-12"
+                className="h-10 w-10"
                 strokeWidth={1.5}
               />
             </div>
@@ -101,11 +114,7 @@ export function PlayerTypeModal({ detail, onClose }: Props) {
 
           {/* Body */}
           <div className="px-8 py-6">
-            <p className="text-base leading-relaxed text-brand-gray-200 sm:text-lg">
-              {detail.copy}
-            </p>
-
-            <ul className="mt-5 space-y-3">
+            <ul className="space-y-3">
               {detail.benefits.map((benefit) => (
                 <li
                   key={benefit}

@@ -7,7 +7,7 @@ import {
 } from "./validate";
 
 const BUCKET = "profile-media";
-const UPLOAD_TIMEOUT_MS = 60_000; // 60s hard cap
+const UPLOAD_TIMEOUT_MS = 120_000; // 120s hard cap (allows larger videos on slow connections)
 
 export type UploadResult =
   | { ok: true; url: string; mediaId: string; storagePath: string }
