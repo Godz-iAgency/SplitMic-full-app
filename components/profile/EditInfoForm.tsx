@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type { PlayerType } from "@/lib/types";
 import { CommonFields, type CommonFieldValues } from "@/components/onboarding/forms/CommonFields";
 import { BandForm, type BandFormValues } from "@/components/onboarding/forms/BandForm";
@@ -32,11 +32,11 @@ export function EditInfoForm({
   initialCommon,
   initialSpecific,
 }: Props) {
+  const router = useRouter();
   const [common, setCommon] = useState<CommonFieldValues>(initialCommon);
   const [specific, setSpecific] = useState<SpecificValues>(initialSpecific);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
 
   function updateCommon<K extends keyof CommonFieldValues>(
     key: K,
@@ -49,7 +49,6 @@ export function EditInfoForm({
     e.preventDefault();
     setSaving(true);
     setError(null);
-    setSaved(false);
 
     const payload = {
       kind: playerType,
@@ -63,8 +62,8 @@ export function EditInfoForm({
     if (result.error) {
       setError(result.error);
     } else {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      // Redirect straight to their profile — no second click needed
+      router.push(`/profile/${profileId}`);
     }
   }
 
@@ -154,15 +153,9 @@ export function EditInfoForm({
           disabled={saving}
           className="btn-primary sm:min-w-[180px]"
         >
-          {saving ? "Saving…" : "Save changes"}
+          {saving ? "Saving…" : "Save & view profile"}
         </button>
 
-        {saved ? (
-          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-300">
-            <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
-            Profile updated
-          </span>
-        ) : null}
       </div>
     </form>
   );
