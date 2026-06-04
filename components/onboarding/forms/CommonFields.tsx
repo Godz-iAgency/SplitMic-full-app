@@ -3,6 +3,7 @@
 import { TextField } from "@/components/onboarding/fields/TextField";
 import { TextareaField } from "@/components/onboarding/fields/TextareaField";
 import { NumberField } from "@/components/onboarding/fields/NumberField";
+import { formatPhone } from "@/lib/format";
 
 export type CommonFieldValues = {
   full_name: string;
@@ -47,8 +48,8 @@ export function CommonFields({ values, onChange }: Props) {
         id="phone_number"
         label="Contact Phone"
         type="tel"
-        value={values.phone_number}
-        onChange={(v) => onChange("phone_number", v)}
+        value={formatPhone(values.phone_number)}
+        onChange={(v) => onChange("phone_number", formatPhone(v))}
         placeholder="(512) 555-1234"
         autoComplete="tel"
         hint="Optional"
@@ -78,6 +79,7 @@ export function CommonFields({ values, onChange }: Props) {
         value={values.instagram_followers}
         onChange={(v) => onChange("instagram_followers", v)}
         min={0}
+        grouped
         hint="Optional"
       />
       <TextField
