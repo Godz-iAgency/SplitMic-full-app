@@ -2,19 +2,24 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-function fadeUp(delay: number, y = 20) {
-  return {
-    initial: { opacity: 0, y },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.65, delay, ease },
-  };
-}
-
 export function HeroSection() {
+  const reduce = useReducedMotion();
+
+  // When reduced motion is preferred, every entrance becomes a no-op so the
+  // content renders immediately in its final position.
+  const fadeUp = (delay: number, y = 20) =>
+    reduce
+      ? {}
+      : {
+          initial: { opacity: 0, y },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.65, delay, ease },
+        };
+
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-6 py-20">
       {/* Background video */}
@@ -34,19 +39,27 @@ export function HeroSection() {
 
       {/* Hero content */}
       <div className="relative z-10 mx-auto max-w-4xl text-center">
-        {/* Logo — scales in with glow pulse */}
+        {/* Logo — scales in with glow pulse (static glow if reduced motion) */}
         <motion.div
           className="mb-6 flex justify-center"
-          initial={{ opacity: 0, scale: 0.75 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={reduce ? false : { opacity: 0, scale: 0.75 }}
+          animate={reduce ? false : { opacity: 1, scale: 1 }}
           transition={{ duration: 0.75, ease }}
         >
           <div className="relative">
-            {/* Pulsing orange glow behind logo */}
+            {/* Orange glow behind logo — pulses only when motion is allowed */}
             <motion.div
               className="absolute inset-0 rounded-full bg-brand-orange/30 blur-2xl"
-              animate={{ opacity: [0.35, 0.75, 0.35], scale: [0.85, 1.25, 0.85] }}
-              transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+              animate={
+                reduce
+                  ? { opacity: 0.5 }
+                  : { opacity: [0.35, 0.75, 0.35], scale: [0.85, 1.25, 0.85] }
+              }
+              transition={
+                reduce
+                  ? undefined
+                  : { duration: 3.2, repeat: Infinity, ease: "easeInOut" }
+              }
             />
             <Image
               src="/SplitMic Logo image only.png"
@@ -71,7 +84,7 @@ export function HeroSection() {
         {/* Slogan */}
         <motion.p
           className="mt-4 text-xl font-bold uppercase tracking-[0.3em] text-brand-orange sm:text-2xl"
-          {...fadeUp(0.30)}
+          {...fadeUp(0.3)}
         >
           Music Industry Connected
         </motion.p>
@@ -86,23 +99,29 @@ export function HeroSection() {
           Festivals & Record Labels — all in one place.
         </motion.p>
 
-        {/* CTAs — Phase 5: whileTap spring feedback */}
+        {/* CTAs — whileTap spring feedback (Framer skips tap scale under reduced motion automatically via reduce flag) */}
         <motion.div
           className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
           {...fadeUp(0.55, 12)}
         >
-          <motion.div whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
+          <motion.div
+            whileTap={reduce ? undefined : { scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          >
             <Link
               href="/signup"
-              className="rounded-xl bg-brand-orange px-10 py-4 text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50"
+              className="block rounded-xl bg-brand-orange px-10 py-4 text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50"
             >
               Get Early Access
             </Link>
           </motion.div>
-          <motion.div whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
+          <motion.div
+            whileTap={reduce ? undefined : { scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          >
             <Link
               href="/login"
-              className="rounded-xl border-2 border-white/30 bg-black/40 px-10 py-4 text-lg font-bold text-white backdrop-blur transition hover:border-white hover:bg-white/10"
+              className="block rounded-xl border-2 border-white/30 bg-black/40 px-10 py-4 text-lg font-bold text-white backdrop-blur transition hover:border-white hover:bg-white/10"
             >
               Sign In
             </Link>

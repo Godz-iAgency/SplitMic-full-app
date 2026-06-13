@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Check, X } from "lucide-react";
 import { PlayerTypeModal, type PlayerTypeDetail } from "./PlayerTypeModal";
 import { PLAYER_TYPE_DETAILS } from "./playerTypeDetails";
@@ -9,6 +9,7 @@ import { PlayerTypeIcon } from "./PlayerTypeIcon";
 import { Reveal } from "@/components/motion/Reveal";
 
 export function PlayerTypesSection() {
+  const reduce = useReducedMotion();
   const [flipped, setFlipped] = useState<string | null>(null);
   const [selected, setSelected] = useState<PlayerTypeDetail | null>(null);
 
@@ -40,11 +41,14 @@ export function PlayerTypesSection() {
                 <motion.div
                   className="relative w-full [transform-style:preserve-3d]"
                   animate={{ rotateY: flipped === type.type ? 180 : 0 }}
-                  transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{
+                    duration: reduce ? 0 : 0.55,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
                 >
                   {/* Front face — in flow, defines card height */}
                   <div
-                    className="flex min-h-[230px] cursor-pointer flex-col rounded-2xl border border-brand-gray-800 bg-brand-gray-900/50 p-5 text-center [backface-visibility:hidden] transition hover:border-brand-orange hover:bg-brand-gray-900 hover:shadow-lg hover:shadow-brand-orange/20"
+                    className="group flex min-h-[230px] cursor-pointer flex-col rounded-2xl border border-brand-gray-800 bg-brand-gray-900/50 p-5 text-center [backface-visibility:hidden] transition hover:border-brand-orange hover:bg-brand-gray-900 hover:shadow-lg hover:shadow-brand-orange/20"
                     onClick={() => setFlipped(type.type)}
                     role="button"
                     tabIndex={0}
