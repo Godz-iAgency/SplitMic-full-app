@@ -12,6 +12,7 @@
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.45.4",
     "browser-image-compression": "^2.0.2",
+    "framer-motion": "^12.40.0",
     "lucide-react": "^1.16.0",
     "next": "14.2.35",
     "react": "^18.3.1",

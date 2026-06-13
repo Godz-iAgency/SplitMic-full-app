@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { ProfileCard } from "./ProfileCard";
+import { Reveal } from "@/components/motion/Reveal";
 import type { SearchCard, SortOption } from "@/lib/supabase/search";
 import type { PlayerType } from "@/lib/types";
 import { loadMoreSearchResults } from "@/app/search/actions";
@@ -74,8 +75,14 @@ export function SearchResults({
   return (
     <>
       <div className={`grid gap-4 ${gridClass}`}>
-        {cards.map((card) => (
-          <ProfileCard key={card.profile_id} card={card} />
+        {cards.map((card, i) => (
+          <Reveal
+            key={card.profile_id}
+            delay={Math.min(i, 8) * 0.05}
+            className="h-full"
+          >
+            <ProfileCard card={card} />
+          </Reveal>
         ))}
       </div>
 

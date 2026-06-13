@@ -10,6 +10,7 @@ import {
   Bell,
 } from "lucide-react";
 import { FeatureModal, type FeatureDetail } from "./FeatureModal";
+import { Reveal } from "@/components/motion/Reveal";
 
 const FEATURES: FeatureDetail[] = [
   {
@@ -80,7 +81,7 @@ export function FeaturesSection() {
   return (
     <section className="border-t border-brand-gray-800 bg-brand-gray-900/30 px-6 py-20 sm:py-24">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-14 text-center">
+        <Reveal className="mb-14 text-center">
           <h2 className="text-3xl font-black sm:text-5xl">
             Everything you need to do{" "}
             <span className="text-brand-orange">business in music</span>
@@ -88,24 +89,25 @@ export function FeaturesSection() {
           <p className="mx-auto mt-4 max-w-2xl text-lg text-brand-gray-300">
             Stop juggling Instagram DMs, group chats, and spreadsheets.
           </p>
-        </div>
+        </Reveal>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((feature) => (
-            <button
-              key={feature.id}
-              type="button"
-              onClick={() => setSelected(feature)}
-              className="group flex flex-col rounded-2xl border border-brand-gray-800 bg-black p-6 text-left transition hover:-translate-y-1 hover:border-brand-orange hover:bg-brand-gray-900 hover:shadow-lg hover:shadow-brand-orange/20 focus:outline-none focus:ring-2 focus:ring-brand-orange/50"
-            >
-              <h3 className="text-lg font-bold text-white">{feature.title}</h3>
-              <p className="mt-2 flex-1 text-sm text-brand-gray-300">
-                {feature.description}
-              </p>
-              <p className="mt-4 text-xs font-bold uppercase tracking-[0.2em] text-brand-orange opacity-0 transition group-hover:opacity-100">
-                Tap to learn more →
-              </p>
-            </button>
+          {FEATURES.map((feature, i) => (
+            <Reveal key={feature.id} delay={Math.min(i, 8) * 0.06} className="h-full">
+              <button
+                type="button"
+                onClick={() => setSelected(feature)}
+                className="group flex h-full w-full flex-col rounded-2xl border border-brand-gray-800 bg-black p-6 text-left transition hover:-translate-y-1 hover:border-brand-orange hover:bg-brand-gray-900 hover:shadow-lg hover:shadow-brand-orange/20 focus:outline-none focus:ring-2 focus:ring-brand-orange/50"
+              >
+                <h3 className="text-lg font-bold text-white">{feature.title}</h3>
+                <p className="mt-2 flex-1 text-sm text-brand-gray-300">
+                  {feature.description}
+                </p>
+                <p className="mt-4 text-xs font-bold uppercase tracking-[0.2em] text-brand-orange opacity-0 transition group-hover:opacity-100">
+                  Tap to learn more →
+                </p>
+              </button>
+            </Reveal>
           ))}
         </div>
       </div>

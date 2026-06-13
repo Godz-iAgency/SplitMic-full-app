@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import { OpportunityCard } from "./OpportunityCard";
+import { Reveal } from "@/components/motion/Reveal";
 import { loadMoreMarketplace } from "@/app/opportunities/actions";
 import type {
   MarketplaceCard,
@@ -54,8 +55,10 @@ export function MarketplaceList({
   return (
     <>
       <div className="flex flex-col gap-4">
-        {cards.map((c) => (
-          <OpportunityCard key={c.feed_key ?? c.id} card={c} />
+        {cards.map((c, i) => (
+          <Reveal key={c.feed_key ?? c.id} delay={Math.min(i, 6) * 0.05}>
+            <OpportunityCard card={c} />
+          </Reveal>
         ))}
       </div>
 
