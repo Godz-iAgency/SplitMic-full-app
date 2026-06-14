@@ -34,6 +34,11 @@ const config: Config = {
       animation: {
         "fade-in": "fadeIn 0.4s ease-out",
         "slide-up": "slideUp 0.4s ease-out",
+        // Hero entrance — CSS-driven so it plays on first paint without waiting
+        // for JS hydration. `both` fill-mode holds the final (visible) state.
+        "hero-rise": "heroRise 0.6s cubic-bezier(0.22,1,0.36,1) both",
+        "hero-scale": "heroScale 0.7s cubic-bezier(0.22,1,0.36,1) both",
+        "glow-pulse": "glowPulse 3.2s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -43,6 +48,18 @@ const config: Config = {
         slideUp: {
           "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        heroRise: {
+          "0%": { opacity: "0", transform: "translateY(20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        heroScale: {
+          "0%": { opacity: "0", transform: "scale(0.8)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        glowPulse: {
+          "0%, 100%": { opacity: "0.35", transform: "scale(0.85)" },
+          "50%": { opacity: "0.7", transform: "scale(1.2)" },
         },
       },
     },

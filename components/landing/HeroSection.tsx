@@ -1,25 +1,7 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
-
-const ease = [0.22, 1, 0.36, 1] as const;
 
 export function HeroSection() {
-  const reduce = useReducedMotion();
-
-  // When reduced motion is preferred, every entrance becomes a no-op so the
-  // content renders immediately in its final position.
-  const fadeUp = (delay: number, y = 20) =>
-    reduce
-      ? {}
-      : {
-          initial: { opacity: 0, y },
-          animate: { opacity: 1, y: 0 },
-          transition: { duration: 0.65, delay, ease },
-        };
-
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-6 py-20">
       {/* Background video */}
@@ -39,28 +21,11 @@ export function HeroSection() {
 
       {/* Hero content */}
       <div className="relative z-10 mx-auto max-w-4xl text-center">
-        {/* Logo — scales in with glow pulse (static glow if reduced motion) */}
-        <motion.div
-          className="mb-6 flex justify-center"
-          initial={reduce ? false : { opacity: 0, scale: 0.75 }}
-          animate={reduce ? false : { opacity: 1, scale: 1 }}
-          transition={{ duration: 0.75, ease }}
-        >
+        {/* Logo — scales in, with a CSS glow pulse behind it */}
+        <div className="mb-6 flex justify-center animate-hero-scale">
           <div className="relative">
-            {/* Orange glow behind logo — pulses only when motion is allowed */}
-            <motion.div
-              className="absolute inset-0 rounded-full bg-brand-orange/30 blur-2xl"
-              animate={
-                reduce
-                  ? { opacity: 0.5 }
-                  : { opacity: [0.35, 0.75, 0.35], scale: [0.85, 1.25, 0.85] }
-              }
-              transition={
-                reduce
-                  ? undefined
-                  : { duration: 3.2, repeat: Infinity, ease: "easeInOut" }
-              }
-            />
+            {/* Pulsing orange glow (pure CSS — no JS) */}
+            <div className="absolute inset-0 rounded-full bg-brand-orange/30 blur-2xl animate-glow-pulse" />
             <Image
               src="/SplitMic Logo image only.png"
               alt="SplitMic"
@@ -70,71 +35,61 @@ export function HeroSection() {
               priority
             />
           </div>
-        </motion.div>
+        </div>
 
         {/* Wordmark */}
-        <motion.h1
-          className="text-5xl font-black tracking-tight sm:text-7xl"
-          {...fadeUp(0.18)}
+        <h1
+          className="text-5xl font-black tracking-tight animate-hero-rise sm:text-7xl"
+          style={{ animationDelay: "0.15s" }}
         >
           <span className="text-brand-orange">SPLIT</span>
           <span className="text-white">MIC</span>
-        </motion.h1>
+        </h1>
 
         {/* Slogan */}
-        <motion.p
-          className="mt-4 text-xl font-bold uppercase tracking-[0.3em] text-brand-orange sm:text-2xl"
-          {...fadeUp(0.3)}
+        <p
+          className="mt-4 text-xl font-bold uppercase tracking-[0.3em] text-brand-orange animate-hero-rise sm:text-2xl"
+          style={{ animationDelay: "0.27s" }}
         >
           Music Industry Connected
-        </motion.p>
+        </p>
 
         {/* Subheading */}
-        <motion.p
-          className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-brand-gray-200 sm:text-xl"
-          {...fadeUp(0.42)}
+        <p
+          className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-brand-gray-200 animate-hero-rise sm:text-xl"
+          style={{ animationDelay: "0.39s" }}
         >
           Austin&apos;s music industry on one platform.
           <br className="hidden sm:block" /> Bands, Venues, Talent Buyers,
           Festivals & Record Labels — all in one place.
-        </motion.p>
+        </p>
 
-        {/* CTAs — whileTap spring feedback (Framer skips tap scale under reduced motion automatically via reduce flag) */}
-        <motion.div
-          className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
-          {...fadeUp(0.55, 12)}
+        {/* CTAs */}
+        <div
+          className="mt-10 flex flex-col items-center justify-center gap-4 animate-hero-rise sm:flex-row"
+          style={{ animationDelay: "0.51s" }}
         >
-          <motion.div
-            whileTap={reduce ? undefined : { scale: 0.96 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          <Link
+            href="/signup"
+            className="rounded-xl bg-brand-orange px-10 py-4 text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 active:scale-[0.97]"
           >
-            <Link
-              href="/signup"
-              className="block rounded-xl bg-brand-orange px-10 py-4 text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50"
-            >
-              Get Early Access
-            </Link>
-          </motion.div>
-          <motion.div
-            whileTap={reduce ? undefined : { scale: 0.96 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+            Get Early Access
+          </Link>
+          <Link
+            href="/login"
+            className="rounded-xl border-2 border-white/30 bg-black/40 px-10 py-4 text-lg font-bold text-white backdrop-blur transition hover:border-white hover:bg-white/10 active:scale-[0.97]"
           >
-            <Link
-              href="/login"
-              className="block rounded-xl border-2 border-white/30 bg-black/40 px-10 py-4 text-lg font-bold text-white backdrop-blur transition hover:border-white hover:bg-white/10"
-            >
-              Sign In
-            </Link>
-          </motion.div>
-        </motion.div>
+            Sign In
+          </Link>
+        </div>
 
         {/* Privacy reassurance */}
-        <motion.p
-          className="mt-6 text-sm text-brand-gray-400"
-          {...fadeUp(0.68, 8)}
+        <p
+          className="mt-6 text-sm text-brand-gray-400 animate-hero-rise"
+          style={{ animationDelay: "0.63s" }}
         >
           Free during beta · No credit card required
-        </motion.p>
+        </p>
       </div>
     </section>
   );

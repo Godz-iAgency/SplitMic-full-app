@@ -28,6 +28,20 @@ h3 {
   letter-spacing: -0.02em;
 }
 
+/* Accessibility + safety backstop: for users who prefer reduced motion, snap
+   every animation/transition to its final (visible) state instantly. Also
+   guarantees no content can be left stuck mid-animation. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @layer components {
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-orange px-6 py-3 text-base font-semibold text-white transition hover:bg-brand-orange-dark focus:outline-none focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 focus:ring-offset-black disabled:cursor-not-allowed disabled:opacity-60;

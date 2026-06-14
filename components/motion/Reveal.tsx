@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 type Props = {
@@ -14,6 +15,14 @@ type Props = {
 /**
  * Fades + rises its children into view the first time they scroll on screen.
  *
+ * IMPORTANT — fail-safe by design:
+ * The server (and the very first client render) outputs the children as a plain,
+ * fully-visible <div>. We only swap in the animated version AFTER the component
+ * has mounted on the client. This guarantees the page is never shipped with
+ * hidden (opacity:0) HTML, so a slow or failed hydration can't leave sections
+ * blank — the behaviour that previously made content intermittently vanish on
+ * mobile. The scroll animation is a pure enhancement layered on top.
+ *
  * - Animates once, then stays put (no replay on every scroll).
  * - Uses transform + opacity only (GPU-accelerated, 60fps).
  * - Respects prefers-reduced-motion: renders instantly with no movement.
@@ -23,8 +32,15 @@ type Props = {
  */
 export function Reveal({ children, delay = 0, y = 16, className }: Props) {
   const reduceMotion = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
 
-  if (reduceMotion) {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Before mount (SSR + first paint) and for reduced-motion users: render the
+  // content visible and static. Content is always in the HTML, never hidden.
+  if (!mounted || reduceMotion) {
     return <div className={className}>{children}</div>;
   }
 
