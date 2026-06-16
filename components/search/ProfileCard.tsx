@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { PLAYER_TYPE_OPTIONS } from "@/lib/types";
 import type { SearchCard } from "@/lib/supabase/search";
 import { PlayerTypeIcon } from "@/components/landing/PlayerTypeIcon";
+import { ReadinessBadge } from "@/components/profile/ReadinessBadge";
 
 type Props = {
   card: SearchCard;
@@ -45,13 +46,21 @@ export function ProfileCard({ card }: Props) {
             <h3 className="line-clamp-2 text-base font-bold leading-snug text-white transition group-hover:text-brand-orange">
               {card.display_name}
             </h3>
-            <div className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-brand-orange">
-              <PlayerTypeIcon
-                type={card.player_type}
-                className="h-3 w-3"
-                strokeWidth={2.5}
-              />
-              {typeLabel}
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-brand-orange">
+                <PlayerTypeIcon
+                  type={card.player_type}
+                  className="h-3 w-3 flex-shrink-0"
+                  strokeWidth={2.5}
+                />
+                <span className="truncate">{typeLabel}</span>
+              </div>
+              {card.readiness_score != null ? (
+                <ReadinessBadge
+                  score={card.readiness_score}
+                  className="flex-shrink-0"
+                />
+              ) : null}
             </div>
           </div>
         </div>

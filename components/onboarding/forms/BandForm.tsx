@@ -2,7 +2,10 @@
 
 import { TextField } from "@/components/onboarding/fields/TextField";
 import { NumberField } from "@/components/onboarding/fields/NumberField";
+import { SelectField } from "@/components/onboarding/fields/SelectField";
 import { GenreMultiSelect } from "@/components/onboarding/fields/GenreMultiSelect";
+import { Lock } from "lucide-react";
+import { DRAW_OPTIONS, VENUE_OPTIONS } from "@/lib/scoring/bandReadiness";
 
 export type BandFormValues = {
   band_name: string;
@@ -10,6 +13,12 @@ export type BandFormValues = {
   member_count: number | "";
   sound_description: string;
   set_length_minutes: number | "";
+  // Draw & reach (powers the Band Readiness Score)
+  typical_draw: string;
+  email_list_size: number | "";
+  largest_venue_capacity: string;
+  tiktok_followers: number | "";
+  youtube_followers: number | "";
   // Booking contact
   booking_email: string;
   booking_fee_min: number | "";
@@ -75,6 +84,74 @@ export function BandForm({ values, onChange }: Props) {
         placeholder="e.g., 60"
         hint="minutes"
       />
+
+      <div className="pt-2">
+        <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
+          Draw &amp; Reach
+        </h3>
+        <p className="mb-3 inline-flex items-start gap-1.5 text-xs text-brand-gray-400">
+          <Lock
+            className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-brand-orange"
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+          <span>
+            These power your <strong className="text-brand-gray-200">Band
+            Readiness Score</strong>. Your overall score is public, but this
+            breakdown is private — only you can see it.
+          </span>
+        </p>
+        <div className="space-y-4">
+          <SelectField
+            id="typical_draw"
+            label="Typical Draw — how many people you bring"
+            value={values.typical_draw}
+            onChange={(v) => onChange("typical_draw", v)}
+            options={DRAW_OPTIONS}
+            hint="The #1 thing talent buyers ask. A range is fine."
+          />
+          <SelectField
+            id="largest_venue_capacity"
+            label="Largest Venue You've Played"
+            value={values.largest_venue_capacity}
+            onChange={(v) => onChange("largest_venue_capacity", v)}
+            options={VENUE_OPTIONS}
+            hint="By room capacity — your biggest stage so far."
+          />
+          <NumberField
+            id="email_list_size"
+            label="Email List Size"
+            value={values.email_list_size}
+            onChange={(v) => onChange("email_list_size", v)}
+            min={0}
+            grouped
+            placeholder="e.g., 1,200"
+            hint="Optional — direct reach to your fans."
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <NumberField
+              id="tiktok_followers"
+              label="TikTok Followers"
+              value={values.tiktok_followers}
+              onChange={(v) => onChange("tiktok_followers", v)}
+              min={0}
+              grouped
+              placeholder="e.g., 5,000"
+              hint="Optional"
+            />
+            <NumberField
+              id="youtube_followers"
+              label="YouTube Subscribers"
+              value={values.youtube_followers}
+              onChange={(v) => onChange("youtube_followers", v)}
+              min={0}
+              grouped
+              placeholder="e.g., 3,000"
+              hint="Optional"
+            />
+          </div>
+        </div>
+      </div>
 
       <div className="pt-2">
         <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">

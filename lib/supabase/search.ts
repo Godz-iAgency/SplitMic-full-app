@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PlayerType } from "@/lib/types";
+import {
+  computeBandReadiness,
+  type BandScoreInput,
+} from "@/lib/scoring/bandReadiness";
 
 const BUCKET = "profile-media";
 
@@ -15,6 +19,22 @@ export type SearchCard = {
   one_liner: string;
   genres: string[];
   avatar_url: string | null;
+  /** Band Readiness Score (bands only); null for other player types. */
+  readiness_score: number | null;
+};
+
+// The band_details columns needed to score a band card (everything except the
+// fields that live on the profiles row / media, which are merged in separately).
+type BandScoreFields = Omit<
+  BandScoreInput,
+  "bio" | "instagram_followers" | "hasAvatar"
+>;
+
+type DetailValue = {
+  name: string;
+  oneLiner: string;
+  genres: string[];
+  bandScore?: BandScoreFields;
 };
 
 export type SearchFilters = {
@@ -80,10 +100,11 @@ export async function searchProfiles(
     }
   }
 
-  // 1. Fetch matching profiles (id + player_type), 1 extra row to detect hasMore
+  // 1. Fetch matching profiles (id + player_type), 1 extra row to detect hasMore.
+  //    bio + instagram_followers are pulled in for band readiness scoring.
   let query = supabase
     .from("profiles")
-    .select("id, player_type, updated_at, created_at")
+    .select("id, player_type, updated_at, created_at, bio, instagram_followers")
     .eq("is_published", true);
 
   if (filters.playerType !== "all") {
@@ -131,10 +152,7 @@ export async function searchProfiles(
       .in("profile_id", profileIds),
   ]);
 
-  const detailMap = new Map<
-    string,
-    { name: string; oneLiner: string; genres: string[] }
-  >();
+  const detailMap = new Map<string, DetailValue>();
   for (const m of detailMaps) {
     for (const [id, data] of m) detailMap.set(id, data);
   }
@@ -144,9 +162,34 @@ export async function searchProfiles(
     avatarMap.set(a.profile_id, a.storage_path);
   }
 
+  // Per-profile fields needed for band scoring (bio + Instagram reach).
+  const metaMap = new Map<
+    string,
+    { bio: string | null; instagram_followers: number | null }
+  >();
+  for (const p of profiles) {
+    metaMap.set(p.id, {
+      bio: p.bio ?? null,
+      instagram_followers: p.instagram_followers ?? null,
+    });
+  }
+
   const cards: SearchCard[] = profiles.map((p) => {
     const detail = detailMap.get(p.id);
     const storagePath = avatarMap.get(p.id) ?? null;
+
+    // Bands get a public readiness score; everyone else is null.
+    let readiness_score: number | null = null;
+    if (p.player_type === "band" && detail?.bandScore) {
+      const meta = metaMap.get(p.id);
+      readiness_score = computeBandReadiness({
+        bio: meta?.bio ?? null,
+        instagram_followers: meta?.instagram_followers ?? null,
+        hasAvatar: avatarMap.has(p.id),
+        ...detail.bandScore,
+      }).score;
+    }
+
     return {
       profile_id: p.id,
       player_type: p.player_type as PlayerType,
@@ -156,6 +199,7 @@ export async function searchProfiles(
       avatar_url: storagePath
         ? supabase.storage.from(BUCKET).getPublicUrl(storagePath).data.publicUrl
         : null,
+      readiness_score,
     };
   });
 
@@ -286,24 +330,33 @@ async function fetchDetailsForType(
   supabase: SupabaseClient,
   type: PlayerType,
   ids: string[],
-): Promise<Map<string, { name: string; oneLiner: string; genres: string[] }>> {
-  const map = new Map<
-    string,
-    { name: string; oneLiner: string; genres: string[] }
-  >();
+): Promise<Map<string, DetailValue>> {
+  const map = new Map<string, DetailValue>();
   if (ids.length === 0) return map;
 
   switch (type) {
     case "band": {
       const { data } = await supabase
         .from("band_details")
-        .select("profile_id, band_name, sound_description, genres")
+        .select(
+          "profile_id, band_name, sound_description, genres, set_length_minutes, email_list_size, typical_draw, largest_venue_capacity, tiktok_followers, youtube_followers",
+        )
         .in("profile_id", ids);
       for (const d of data ?? []) {
         map.set(d.profile_id, {
           name: d.band_name ?? "Unnamed band",
           oneLiner: d.sound_description ?? "",
           genres: toGenreList(d.genres),
+          bandScore: {
+            genres: toGenreList(d.genres),
+            sound_description: d.sound_description ?? null,
+            set_length_minutes: d.set_length_minutes ?? null,
+            email_list_size: d.email_list_size ?? null,
+            typical_draw: d.typical_draw ?? null,
+            largest_venue_capacity: d.largest_venue_capacity ?? null,
+            tiktok_followers: d.tiktok_followers ?? null,
+            youtube_followers: d.youtube_followers ?? null,
+          },
         });
       }
       break;
