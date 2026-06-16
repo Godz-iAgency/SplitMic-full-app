@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Logo } from "@/components/Logo";
 
 export function LandingFooter() {
@@ -11,9 +12,17 @@ export function LandingFooter() {
           </p>
         </div>
 
-        <p className="text-sm text-brand-gray-400">
-          © {new Date().getFullYear()} SplitMic. Built for Austin&apos;s music scene.
-        </p>
+        <div className="flex flex-col items-center gap-3 sm:items-end">
+          <Link
+            href="/support"
+            className="text-sm font-semibold text-brand-gray-300 transition hover:text-brand-orange"
+          >
+            Support &amp; Contact
+          </Link>
+          <p className="text-sm text-brand-gray-400">
+            © {new Date().getFullYear()} SplitMic. Built for Austin&apos;s music scene.
+          </p>
+        </div>
       </div>
     </footer>
   );

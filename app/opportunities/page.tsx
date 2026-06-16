@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Lightbulb, Search, Inbox } from "lucide-react";
+import { Lightbulb, Search, Inbox, LifeBuoy } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingStatus } from "@/lib/supabase/profile";
 import {
@@ -83,6 +83,14 @@ export default async function OpportunitiesPage({
         <div className="flex items-center gap-3">
           <AdminLink />
           <InboxBell />
+          <Link
+            href="/support"
+            aria-label="Help & Support"
+            title="Help & Support"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-brand-gray-400 transition hover:bg-white/5 hover:text-white"
+          >
+            <LifeBuoy className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+          </Link>
           {profile.profile_id ? (
             <Link
               href={`/profile/${profile.profile_id}`}
