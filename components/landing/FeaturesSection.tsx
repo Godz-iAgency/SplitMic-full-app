@@ -99,6 +99,14 @@ export function FeaturesSection() {
                 onClick={() => setSelected(feature)}
                 className="group flex h-full w-full flex-col rounded-2xl border border-brand-gray-800 bg-black p-6 text-left transition hover:-translate-y-1 hover:border-brand-orange hover:bg-brand-gray-900 hover:shadow-lg hover:shadow-brand-orange/20 focus:outline-none focus:ring-2 focus:ring-brand-orange/50"
               >
+                {/* Same icon as the modal header — orange rounded square */}
+                <div className="mb-4 inline-flex h-12 w-12 shrink-0 items-center justify-center self-start rounded-2xl border border-brand-orange/40 bg-brand-orange/10 text-brand-orange shadow-md shadow-brand-orange/20 transition group-hover:scale-110">
+                  <feature.Icon
+                    className="h-6 w-6"
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  />
+                </div>
                 <h3 className="text-lg font-bold text-white">{feature.title}</h3>
                 <p className="mt-2 flex-1 text-sm text-brand-gray-300">
                   {feature.description}
