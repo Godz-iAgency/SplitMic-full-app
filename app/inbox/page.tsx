@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Inbox, MessageCircle, type LucideIcon } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -7,10 +6,7 @@ import {
   getIncomingRequests,
   getThreadSummaries,
 } from "@/lib/supabase/messaging";
-import { Logo } from "@/components/Logo";
-import { LogoutButton } from "@/components/LogoutButton";
-import { InboxBell } from "@/components/inbox/InboxBell";
-import { AdminLink } from "@/components/admin/AdminLink";
+import { AppHeader } from "@/components/AppHeader";
 import { RequestCard } from "@/components/inbox/RequestCard";
 import { ThreadListItem } from "@/components/inbox/ThreadListItem";
 import { InboxTabs } from "@/components/inbox/InboxTabs";
@@ -40,45 +36,8 @@ export default async function InboxPage({
   ]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-20">
-      <header className="flex items-center justify-between border-b border-white/10 shadow-sm shadow-black/40 px-5 py-4 sm:px-8">
-        <Link href="/search">
-          <Logo className="text-2xl" />
-        </Link>
-        <nav className="hidden items-center gap-2 sm:flex">
-          <Link
-            href="/search"
-            className="rounded-full px-4 py-2 text-sm font-semibold text-brand-gray-300 transition hover:text-white"
-          >
-            Discover
-          </Link>
-          <Link
-            href="/opportunities"
-            className="rounded-full px-4 py-2 text-sm font-semibold text-brand-gray-300 transition hover:text-white"
-          >
-            Feed
-          </Link>
-          <Link
-            href="/inbox"
-            className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white"
-          >
-            Inbox
-          </Link>
-        </nav>
-        <div className="flex items-center gap-3">
-          <AdminLink />
-          <InboxBell />
-          {profile.profile_id ? (
-            <Link
-              href={`/profile/${profile.profile_id}`}
-              className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              My profile
-            </Link>
-          ) : null}
-          <LogoutButton />
-        </div>
-      </header>
+    <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-24 sm:pb-20">
+      <AppHeader active="inbox" profileId={profile.profile_id} />
 
       <section className="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-14">
         <div className="mb-6">

@@ -79,7 +79,10 @@ export function FeaturesSection() {
   const [selected, setSelected] = useState<FeatureDetail | null>(null);
 
   return (
-    <section className="border-t border-brand-gray-800 bg-brand-gray-900/30 px-6 py-20 sm:py-24">
+    <section
+      id="features"
+      className="scroll-mt-20 border-t border-brand-gray-800 bg-brand-gray-900/30 px-6 py-20 sm:py-24"
+    >
       <div className="mx-auto max-w-6xl">
         <Reveal className="mb-14 text-center">
           <h2 className="text-3xl font-black sm:text-5xl">

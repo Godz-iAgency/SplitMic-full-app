@@ -28,9 +28,7 @@ import {
   getEventTagsForBand,
   formatEventDateRange,
 } from "@/lib/supabase/marketplace";
-import { Logo } from "@/components/Logo";
-import { LogoutButton } from "@/components/LogoutButton";
-import { InboxBell } from "@/components/inbox/InboxBell";
+import { AppHeader } from "@/components/AppHeader";
 import { PublishButton } from "@/components/profile/PublishButton";
 import { ProfileLiveStatus } from "@/components/profile/ProfileLiveStatus";
 import { BandReadinessPanel } from "@/components/profile/BandReadinessPanel";
@@ -211,39 +209,18 @@ export default async function ProfilePage({
     .filter(Boolean)
     .join(", ");
 
+  // The viewer's OWN profile id (for the header's profile link / bottom tab).
+  // When viewing your own page it's this profile; otherwise it's the viewer's
+  // profile fetched above (RLS guarantees a non-owner only sees published pages).
+  const viewerOwnProfileId = isOwner ? profile.id : viewerProfile?.id ?? null;
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-20">
-      <header className="flex items-center justify-between border-b border-white/10 shadow-sm shadow-black/40 px-5 py-4 sm:px-8">
-        <Link href="/search">
-          <Logo className="text-2xl" />
-        </Link>
-        <nav className="hidden items-center gap-2 sm:flex">
-          <Link
-            href="/search"
-            className="rounded-full px-4 py-2 text-sm font-semibold text-brand-gray-300 transition hover:text-white"
-          >
-            Discover
-          </Link>
-          <Link
-            href="/opportunities"
-            className="rounded-full px-4 py-2 text-sm font-semibold text-brand-gray-300 transition hover:text-white"
-          >
-            Feed
-          </Link>
-        </nav>
-        <div className="flex items-center gap-3">
-          <InboxBell />
-          {isOwner ? (
-            <Link
-              href="/profile/edit"
-              className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              Edit profile
-            </Link>
-          ) : null}
-          <LogoutButton />
-        </div>
-      </header>
+    <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-24 sm:pb-20">
+      <AppHeader
+        active={isOwner ? "profile" : "discover"}
+        profileId={viewerOwnProfileId}
+        showEdit={isOwner}
+      />
 
       {/* LinkedIn-style card: banner + content share max-w-6xl wrapper */}
       <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 sm:pt-8">

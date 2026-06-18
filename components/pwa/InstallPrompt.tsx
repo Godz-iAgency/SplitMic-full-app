@@ -74,7 +74,7 @@ export function InstallPrompt() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-2xl border border-brand-orange/30 bg-black/95 p-4 shadow-2xl backdrop-blur-xl sm:bottom-6">
+    <div className="fixed bottom-20 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-2xl border border-brand-orange/30 bg-black/95 p-4 shadow-2xl backdrop-blur-xl sm:bottom-6">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-orange/15">
           <Download className="h-5 w-5 text-brand-orange" />

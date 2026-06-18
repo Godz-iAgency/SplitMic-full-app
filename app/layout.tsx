@@ -52,8 +52,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={dmSans.variable}>
-      <body className="min-h-screen bg-black text-white">
+    <html lang="en" className={`${dmSans.variable} scroll-smooth`}>
+      <body className="min-h-screen overflow-x-hidden bg-black text-white">
         {children}
         <ServiceWorkerRegister />
         <InstallPrompt />

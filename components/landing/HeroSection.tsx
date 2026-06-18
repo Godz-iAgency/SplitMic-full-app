@@ -3,7 +3,10 @@ import Image from "next/image";
 
 export function HeroSection() {
   return (
-    <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-6 py-20">
+    <section
+      id="home"
+      className="relative flex min-h-[calc(100dvh-3.5rem)] items-center justify-center overflow-hidden bg-black px-6 py-12 sm:py-20"
+    >
       {/* Background video */}
       <video
         autoPlay
@@ -22,7 +25,7 @@ export function HeroSection() {
       {/* Hero content */}
       <div className="relative z-10 mx-auto max-w-4xl text-center">
         {/* Logo — scales in, with a CSS glow pulse behind it */}
-        <div className="mb-6 flex justify-center animate-hero-scale">
+        <div className="mb-4 flex justify-center animate-hero-scale sm:mb-6">
           <div className="relative">
             {/* Pulsing orange glow (pure CSS — no JS) */}
             <div className="absolute inset-0 rounded-full bg-brand-orange/30 blur-2xl animate-glow-pulse" />
@@ -31,7 +34,7 @@ export function HeroSection() {
               alt="SplitMic"
               width={120}
               height={120}
-              className="relative h-24 w-24 object-contain drop-shadow-[0_0_30px_rgba(255,107,53,0.5)] sm:h-28 sm:w-28"
+              className="relative h-20 w-20 object-contain drop-shadow-[0_0_30px_rgba(255,107,53,0.5)] sm:h-28 sm:w-28"
               priority
             />
           </div>
@@ -39,7 +42,7 @@ export function HeroSection() {
 
         {/* Wordmark */}
         <h1
-          className="text-5xl font-black tracking-tight animate-hero-rise sm:text-7xl"
+          className="text-4xl font-black tracking-tight animate-hero-rise sm:text-7xl"
           style={{ animationDelay: "0.15s" }}
         >
           <span className="text-brand-orange">SPLIT</span>
@@ -48,7 +51,7 @@ export function HeroSection() {
 
         {/* Slogan */}
         <p
-          className="mt-4 text-xl font-bold uppercase tracking-[0.3em] text-brand-orange animate-hero-rise sm:text-2xl"
+          className="mt-3 text-base font-bold uppercase tracking-[0.25em] text-brand-orange animate-hero-rise sm:mt-4 sm:text-2xl sm:tracking-[0.3em]"
           style={{ animationDelay: "0.27s" }}
         >
           Music Industry Connected
@@ -56,7 +59,7 @@ export function HeroSection() {
 
         {/* Subheading */}
         <p
-          className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-brand-gray-200 animate-hero-rise sm:text-xl"
+          className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-brand-gray-200 animate-hero-rise sm:mt-8 sm:text-xl"
           style={{ animationDelay: "0.39s" }}
         >
           Austin&apos;s music industry on one platform.
@@ -66,18 +69,18 @@ export function HeroSection() {
 
         {/* CTAs */}
         <div
-          className="mt-10 flex flex-col items-center justify-center gap-4 animate-hero-rise sm:flex-row"
+          className="mt-7 flex flex-col items-center justify-center gap-3 animate-hero-rise sm:mt-10 sm:flex-row sm:gap-4"
           style={{ animationDelay: "0.51s" }}
         >
           <Link
             href="/signup"
-            className="rounded-xl bg-brand-orange px-10 py-4 text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 active:scale-[0.97]"
+            className="w-full rounded-xl bg-brand-orange px-10 py-3.5 text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 active:scale-[0.97] sm:w-auto sm:py-4"
           >
             Get Early Access
           </Link>
           <Link
             href="/login"
-            className="rounded-xl border-2 border-white/30 bg-black/40 px-10 py-4 text-lg font-bold text-white backdrop-blur transition hover:border-white hover:bg-white/10 active:scale-[0.97]"
+            className="w-full rounded-xl border-2 border-white/30 bg-black/40 px-10 py-3.5 text-lg font-bold text-white backdrop-blur transition hover:border-white hover:bg-white/10 active:scale-[0.97] sm:w-auto sm:py-4"
           >
             Sign In
           </Link>
@@ -85,7 +88,7 @@ export function HeroSection() {
 
         {/* Privacy reassurance */}
         <p
-          className="mt-6 text-sm text-brand-gray-400 animate-hero-rise"
+          className="mt-5 text-sm text-brand-gray-400 animate-hero-rise sm:mt-6"
           style={{ animationDelay: "0.63s" }}
         >
           Free during beta · No credit card required
