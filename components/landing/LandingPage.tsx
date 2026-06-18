@@ -9,7 +9,7 @@ import { ScrollToTopButton } from "./ScrollToTopButton";
 
 export function LandingPage() {
   return (
-    <main className="min-h-screen overflow-x-hidden bg-black text-white">
+    <main className="min-h-screen bg-black text-white">
       <LandingNav />
       <HeroSection />
       <PlayerTypesSection />
