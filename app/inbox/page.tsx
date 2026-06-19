@@ -36,7 +36,7 @@ export default async function InboxPage({
   ]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-24 md:pb-20">
+    <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-24 lg:pb-20">
       <AppHeader active="inbox" profileId={profile.profile_id} />
 
       <section className="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-14">

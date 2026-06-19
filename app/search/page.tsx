@@ -75,7 +75,7 @@ export default async function SearchPage({
   const searchKey = `${activeType}|${queryText}|${genre}|${activeSort}`;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-24 md:pb-20">
+    <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-24 lg:pb-20">
       <WelcomeIntro />
 
       <AppHeader active="discover" profileId={profile.profile_id} showEdit />
