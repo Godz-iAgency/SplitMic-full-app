@@ -39,9 +39,12 @@ export function CategoryTiles({ active, counts }: Props) {
         </Link>
       </div>
 
+      {/* flex-wrap + justify-center keeps every tile the same size and centers
+          the lone 5th tile instead of leaving an empty grid hole. gap-3 = 0.75rem:
+          2-up → basis calc(50% - 0.375rem); 5-up → basis calc(20% - 0.6rem). */}
       <nav
         aria-label="Browse by player type"
-        className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
+        className="flex flex-wrap justify-center gap-3"
       >
         {TILES.map((t) => {
           const isActive = t.value === active;
@@ -56,7 +59,7 @@ export function CategoryTiles({ active, counts }: Props) {
               scroll={false}
               aria-current={isActive ? "page" : undefined}
               className={[
-                "group flex flex-col gap-3 rounded-2xl border p-4 transition-all duration-200",
+                "group flex shrink-0 grow-0 basis-[calc(50%-0.375rem)] flex-col gap-3 rounded-2xl border p-4 transition-all duration-200 lg:basis-[calc(20%-0.6rem)]",
                 isActive
                   ? "border-brand-orange bg-brand-orange/10 shadow-lg shadow-brand-orange/10"
                   : "border-white/10 bg-white/5 hover:-translate-y-0.5 hover:border-brand-orange/40 hover:bg-white/10",

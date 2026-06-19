@@ -17,6 +17,7 @@ import {
   Calendar,
   Repeat2,
   ArrowRight,
+  LifeBuoy,
 } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { tableForPlayerType } from "@/lib/supabase/profile";
@@ -215,7 +216,7 @@ export default async function ProfilePage({
   const viewerOwnProfileId = isOwner ? profile.id : viewerProfile?.id ?? null;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-24 sm:pb-20">
+    <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-24 md:pb-20">
       <AppHeader
         active={isOwner ? "profile" : "discover"}
         profileId={viewerOwnProfileId}
@@ -575,6 +576,34 @@ export default async function ProfilePage({
         {/* Live status + Update button (shown once published) */}
         {isOwner && profile.is_published ? (
           <ProfileLiveStatus profileId={profile.id} />
+        ) : null}
+
+        {/* Contact Support — owner-only. The primary place to reach SplitMic,
+            since the header support icon is desktop-only. */}
+        {isOwner ? (
+          <div className="mt-12 border-t border-white/10 pt-6">
+            <Link
+              href="/support"
+              className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[.03] p-4 transition hover:border-brand-orange/40 hover:bg-white/[.06]"
+            >
+              <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-brand-orange/10 text-brand-orange transition group-hover:bg-brand-orange/20">
+                <LifeBuoy className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-bold text-white">
+                  Contact SplitMic
+                </span>
+                <span className="mt-0.5 block text-xs text-brand-gray-400">
+                  Questions, feedback, or need help? Send us a message.
+                </span>
+              </span>
+              <ArrowRight
+                className="h-4 w-4 flex-shrink-0 text-brand-gray-400 transition group-hover:translate-x-1 group-hover:text-brand-orange"
+                strokeWidth={2}
+                aria-hidden="true"
+              />
+            </Link>
+          </div>
         ) : null}
         </section>
       </div>

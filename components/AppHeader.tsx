@@ -43,18 +43,18 @@ export function AppHeader({
 
   return (
     <>
-      <header className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-3 shadow-sm shadow-black/40 sm:px-8 sm:py-4">
+      <header className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-3 shadow-sm shadow-black/40 md:px-8 md:py-4">
         {/* Left: logo → Home */}
         <Link
           href="/home"
           aria-label="SplitMic home"
           className="flex min-w-0 shrink items-center"
         >
-          <Logo className="text-base sm:text-2xl" />
+          <Logo className="text-base md:text-2xl" />
         </Link>
 
         {/* Center nav — desktop only */}
-        <nav className="hidden items-center gap-1 sm:flex">
+        <nav className="hidden items-center gap-1 md:flex">
           {DESKTOP_NAV.map((item) => {
             const isActive = active === item.key;
             return (
@@ -75,8 +75,8 @@ export function AppHeader({
         </nav>
 
         {/* Right cluster */}
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <span className="hidden sm:inline-flex">
+        <div className="flex shrink-0 items-center gap-2 md:gap-3">
+          <span className="hidden md:inline-flex">
             <AdminLink />
           </span>
           <InboxBell />
@@ -84,14 +84,14 @@ export function AppHeader({
             href="/support"
             aria-label="Help & Support"
             title="Help & Support"
-            className="hidden h-9 w-9 items-center justify-center rounded-full text-brand-gray-400 transition hover:bg-white/5 hover:text-white sm:flex"
+            className="hidden h-9 w-9 items-center justify-center rounded-full text-brand-gray-400 transition hover:bg-white/5 hover:text-white md:flex"
           >
             <LifeBuoy className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
           </Link>
           {profileId ? (
             <Link
               href={profileHref}
-              className="hidden rounded-full border border-brand-orange/50 px-4 py-2 text-sm font-semibold text-brand-orange transition hover:bg-brand-orange hover:text-white sm:block"
+              className="hidden rounded-full border border-brand-orange/50 px-4 py-2 text-sm font-semibold text-brand-orange transition hover:bg-brand-orange hover:text-white md:block"
             >
               My profile
             </Link>
@@ -99,7 +99,7 @@ export function AppHeader({
           {showEdit ? (
             <Link
               href="/profile/edit"
-              className="hidden rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10 sm:block"
+              className="hidden rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10 md:block"
             >
               Edit
             </Link>
@@ -108,10 +108,10 @@ export function AppHeader({
         </div>
       </header>
 
-      {/* Mobile bottom nav — primary destinations, sm:hidden */}
+      {/* Mobile + tablet bottom nav — primary destinations, hidden at md+ */}
       <nav
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-white/10 bg-black/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-white/10 bg-black/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       >
         <BottomTab href="/home" label="Home" icon={Home} active={active === "home"} />
         <BottomTab
