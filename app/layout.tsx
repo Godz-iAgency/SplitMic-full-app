@@ -53,7 +53,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${dmSans.variable} scroll-smooth`}>
-      <body className="min-h-screen overflow-x-hidden bg-black text-white">
+      <body className="min-h-screen overflow-x-clip bg-black text-white">
         {children}
         <ServiceWorkerRegister />
         <InstallPrompt />
