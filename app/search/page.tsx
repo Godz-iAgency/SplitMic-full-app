@@ -49,9 +49,11 @@ export default async function SearchPage({
   const { profile, isComplete } = await getOnboardingStatus(supabase, user.id);
   if (!isComplete || !profile) redirect("/onboarding");
 
-  // Parse + validate URL params
-  const rawType = searchParams.type ?? "band";
-  const activeType = (VALID_TYPES.has(rawType) ? rawType : "band") as
+  // Parse + validate URL params. Default is "all" (the neutral browse state)
+  // so the landing shows the category grid + everyone; picking a category
+  // collapses the grid so results lead.
+  const rawType = searchParams.type ?? "all";
+  const activeType = (VALID_TYPES.has(rawType) ? rawType : "all") as
     | PlayerType
     | "all";
 
@@ -105,7 +107,7 @@ export default async function SearchPage({
 
         {/* Filter row 3: Airbnb-style category browse tiles */}
         <div className="mb-8">
-          <CategoryTiles active={activeType} counts={counts} />
+          <CategoryTiles active={activeType} counts={counts} query={queryText} />
         </div>
 
         {cards.length === 0 ? (
