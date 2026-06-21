@@ -18,11 +18,13 @@ import {
   Repeat2,
   ArrowRight,
   LifeBuoy,
+  Users,
 } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { tableForPlayerType } from "@/lib/supabase/profile";
 import {
   getConnectionState,
+  getConnectionCount,
   isIndustryPlayerType,
 } from "@/lib/supabase/messaging";
 import {
@@ -215,6 +217,11 @@ export default async function ProfilePage({
   // profile fetched above (RLS guarantees a non-owner only sees published pages).
   const viewerOwnProfileId = isOwner ? profile.id : viewerProfile?.id ?? null;
 
+  // Connections count — owner-only, links to the full /connections list.
+  const connectionCount = isOwner
+    ? await getConnectionCount(supabase, viewer.id)
+    : 0;
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-24 lg:pb-20">
       <AppHeader
@@ -314,6 +321,22 @@ export default async function ProfilePage({
               {addressParts}
             </p>
           ) : null}
+
+        {/* Connections count — owner-only, links to the full list */}
+        {isOwner ? (
+          <Link
+            href="/connections"
+            className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-gray-300 transition hover:text-brand-orange"
+          >
+            <Users
+              className="h-[18px] w-[18px] flex-shrink-0 text-brand-orange"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+            <span className="font-bold text-white">{connectionCount}</span>
+            {connectionCount === 1 ? "connection" : "connections"}
+          </Link>
+        ) : null}
 
         {/* Band Readiness Score — public number for visitors */}
         {!isOwner && bandReadiness ? (

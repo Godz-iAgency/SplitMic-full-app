@@ -49,6 +49,15 @@ export type ThreadMessage = {
   read_at: string | null;
 };
 
+export type Connection = {
+  thread_id: string;
+  profile_id: string;
+  name: string;
+  player_type: PlayerType;
+  avatar_url: string | null;
+  connected_at: string;
+};
+
 export type ThreadDetail = {
   thread_id: string;
   other_profile_id: string;
@@ -195,6 +204,61 @@ export async function getTotalUnreadCount(
   }
 
   return (requestCount ?? 0) + unread;
+}
+
+/**
+ * Everyone the user is connected with. A connection IS a message_thread row —
+ * once two profiles have a thread (band accepted a request, or an industry
+ * player DM'd a band), they're connected. Sorted most-recently-active first.
+ */
+export async function getConnections(
+  supabase: SupabaseClient,
+  myUserId: string,
+): Promise<Connection[]> {
+  const { data: threads } = await supabase
+    .from("message_threads")
+    .select(
+      "id, profile_a_id, profile_b_id, user_a_id, user_b_id, last_message_at, created_at",
+    )
+    .or(`user_a_id.eq.${myUserId},user_b_id.eq.${myUserId}`)
+    .order("last_message_at", { ascending: false });
+
+  if (!threads || threads.length === 0) return [];
+
+  const otherIds = threads.map((t) =>
+    t.user_a_id === myUserId ? t.profile_b_id : t.profile_a_id,
+  );
+
+  const [nameMap, avatarMap, typeMap] = await Promise.all([
+    fetchProfileNames(supabase, otherIds),
+    fetchAvatars(supabase, otherIds),
+    fetchPlayerTypes(supabase, otherIds),
+  ]);
+
+  return threads.map((t) => {
+    const otherProfileId =
+      t.user_a_id === myUserId ? t.profile_b_id : t.profile_a_id;
+    return {
+      thread_id: t.id,
+      profile_id: otherProfileId,
+      name: nameMap.get(otherProfileId) ?? "Austin player",
+      player_type: typeMap.get(otherProfileId) ?? "band",
+      avatar_url: avatarMap.get(otherProfileId) ?? null,
+      connected_at: t.last_message_at ?? t.created_at,
+    };
+  });
+}
+
+/** Count of connections (message_threads) for a given user. */
+export async function getConnectionCount(
+  supabase: SupabaseClient,
+  myUserId: string,
+): Promise<number> {
+  const { count } = await supabase
+    .from("message_threads")
+    .select("id", { count: "exact", head: true })
+    .or(`user_a_id.eq.${myUserId},user_b_id.eq.${myUserId}`);
+  return count ?? 0;
 }
 
 /** Full thread: messages + other party info. */
