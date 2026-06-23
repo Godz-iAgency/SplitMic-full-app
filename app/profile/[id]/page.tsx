@@ -19,6 +19,7 @@ import {
   ArrowRight,
   LifeBuoy,
   Users,
+  Pencil,
 } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { tableForPlayerType } from "@/lib/supabase/profile";
@@ -32,6 +33,7 @@ import {
   formatEventDateRange,
 } from "@/lib/supabase/marketplace";
 import { AppHeader } from "@/components/AppHeader";
+import { LogoutButton } from "@/components/LogoutButton";
 import { PublishButton } from "@/components/profile/PublishButton";
 import { ProfileLiveStatus } from "@/components/profile/ProfileLiveStatus";
 import { BandReadinessPanel } from "@/components/profile/BandReadinessPanel";
@@ -307,6 +309,22 @@ export default async function ProfilePage({
 
         {/* Identity + content — pl matches avatar's left offset so name aligns under avatar */}
         <section className="px-5 sm:px-8">
+          {/* Owner actions — Edit + Logout. These live here (not in the header)
+              so logout can't be tapped by accident, and edit is always in the
+              same spot across every player type. Right-aligned to sit opposite
+              the left-pinned avatar. */}
+          {isOwner ? (
+            <div className="mb-5 flex items-center justify-end gap-2.5">
+              <Link
+                href="/profile/edit"
+                className="inline-flex items-center gap-1.5 rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black transition hover:bg-brand-orange/90"
+              >
+                <Pencil className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
+                Edit profile
+              </Link>
+              <LogoutButton />
+            </div>
+          ) : null}
           <p className="text-sm uppercase tracking-wider text-brand-orange">
             {playerOption?.label ?? playerType}
           </p>

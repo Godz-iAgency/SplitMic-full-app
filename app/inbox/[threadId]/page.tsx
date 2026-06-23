@@ -4,7 +4,6 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingStatus } from "@/lib/supabase/profile";
 import { getThreadDetail } from "@/lib/supabase/messaging";
 import { Logo } from "@/components/Logo";
-import { LogoutButton } from "@/components/LogoutButton";
 import { MessageComposer } from "@/components/inbox/MessageComposer";
 import { MarkReadOnMount } from "@/components/inbox/MarkReadOnMount";
 import { PLAYER_TYPE_OPTIONS } from "@/lib/types";
@@ -46,15 +45,12 @@ export default async function ThreadPage({
         <Link href="/search">
           <Logo className="text-2xl" />
         </Link>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/inbox"
-            className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-          >
-            ← Inbox
-          </Link>
-          <LogoutButton />
-        </div>
+        <Link
+          href="/inbox"
+          className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+        >
+          ← Inbox
+        </Link>
       </header>
 
       <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-0 sm:px-8">

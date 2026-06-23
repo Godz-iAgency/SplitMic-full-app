@@ -5,7 +5,7 @@ import {
   Newspaper,
   UserCircle,
   LifeBuoy,
-  Pencil,
+  MessageCircle,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -83,19 +83,20 @@ export function AppHeader({
           <span className="hidden lg:inline-flex">
             <AdminLink />
           </span>
-          {/* Edit — mobile/tablet only (desktop has its own pill below).
-              Sits to the LEFT of the bell. Only rendered on the owner's own
-              profile, where showEdit is passed. */}
-          {showEdit ? (
-            <Link
-              href="/profile/edit"
-              aria-label="Edit profile"
-              className="inline-flex items-center gap-1.5 rounded-full border border-brand-orange/50 px-3 py-1.5 text-sm font-semibold text-brand-orange transition hover:bg-brand-orange hover:text-white lg:hidden"
-            >
-              <Pencil className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-              Edit
-            </Link>
-          ) : null}
+          {/* Messages shortcut — mobile/tablet only. Goes straight to your
+              conversations so you don't have to open the notifications bell
+              first. (Edit + Logout now live on the profile page on mobile.) */}
+          <Link
+            href="/inbox?tab=conversations"
+            aria-label="Messages"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition hover:bg-white/10 hover:text-brand-orange lg:hidden"
+          >
+            <MessageCircle
+              className="h-5 w-5"
+              strokeWidth={1.75}
+              aria-hidden="true"
+            />
+          </Link>
           <InboxBell />
           <Link
             href="/support"
@@ -121,7 +122,11 @@ export function AppHeader({
               Edit
             </Link>
           ) : null}
-          <LogoutButton />
+          {/* Logout — desktop only now; on mobile it lives on the profile page
+              to prevent accidental sign-outs from the header. */}
+          <span className="hidden lg:inline-flex">
+            <LogoutButton />
+          </span>
         </div>
       </header>
 
