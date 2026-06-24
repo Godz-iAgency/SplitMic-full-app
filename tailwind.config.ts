@@ -7,6 +7,19 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // Font scale bumped one step up for dark-mode legibility (white-on-dark
+      // reads smaller than dark-on-white at the same px, so the app needs to
+      // run larger than a light-mode UI like LinkedIn to feel equally crisp).
+      // ONLY font-size + line-height change here — spacing/padding/gap use the
+      // separate `spacing` scale and are untouched, so layouts don't shift.
+      // Page titles (`2xl`+) are intentionally left at Tailwind defaults.
+      fontSize: {
+        xs: ["0.875rem", { lineHeight: "1.25rem" }], // 14px (was 12)
+        sm: ["1rem", { lineHeight: "1.5rem" }], // 16px (was 14)
+        base: ["1.125rem", { lineHeight: "1.75rem" }], // 18px (was 16)
+        lg: ["1.25rem", { lineHeight: "1.875rem" }], // 20px (was 18)
+        xl: ["1.375rem", { lineHeight: "1.875rem" }], // 22px (was 20)
+      },
       colors: {
         brand: {
           orange: "#FF6B35",

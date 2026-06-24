@@ -47,7 +47,7 @@ export function ProfileCard({ card }: Props) {
               {card.display_name}
             </h3>
             <div className="mt-1 flex items-center justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-brand-orange">
+              <div className="flex min-w-0 items-center gap-1.5 text-[13px] font-semibold uppercase tracking-wider text-brand-orange">
                 <PlayerTypeIcon
                   type={card.player_type}
                   className="h-3 w-3 flex-shrink-0"
@@ -78,7 +78,7 @@ export function ProfileCard({ card }: Props) {
             {genres.map((g) => (
               <span
                 key={g}
-                className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[11px] font-medium text-brand-gray-300"
+                className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[13px] font-medium text-brand-gray-300"
               >
                 {g}
               </span>
