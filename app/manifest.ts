@@ -13,6 +13,17 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#000000",
     theme_color: "#FF6B35",
     categories: ["music", "social", "business", "entertainment"],
+    // Self-reference lets navigator.getInstalledRelatedApps() report that THIS
+    // PWA is already installed, so the install prompt can suppress itself even
+    // when the site is opened in a browser tab. prefer_related_applications
+    // stays false so genuinely-uninstalled users still get the install banner.
+    prefer_related_applications: false,
+    related_applications: [
+      {
+        platform: "webapp",
+        url: "https://splitmic.com/manifest.webmanifest",
+      },
+    ],
     icons: [
       {
         src: "/web-app-manifest-192x192.png",

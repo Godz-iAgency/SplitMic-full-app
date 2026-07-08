@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Download, X } from "lucide-react";
 
 const DISMISS_KEY = "splitmic_pwa_install_dismissed_at";
+const INSTALLED_KEY = "splitmic_pwa_installed";
 const DISMISS_DAYS = 14; // re-show prompt every 2 weeks if still not installed
 
 interface BeforeInstallPromptEvent extends Event {
@@ -15,11 +16,21 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
+type NavigatorWithInstall = Navigator & {
+  getInstalledRelatedApps?: () => Promise<Array<{ platform?: string; url?: string }>>;
+  /** iOS Safari legacy standalone flag */
+  standalone?: boolean;
+};
+
 /**
  * Custom install prompt for the SplitMic PWA.
  * - Captures the browser's beforeinstallprompt event so we can show our own UI
  * - Dismissible; remembers dismissal for DISMISS_DAYS days
- * - Hides automatically when the app is already installed
+ * - Hides permanently once the app is installed, even when the site is later
+ *   opened in a normal browser tab (not just standalone). Detection uses three
+ *   signals: a persisted INSTALLED_KEY, the standalone display mode, and
+ *   navigator.getInstalledRelatedApps(). The `appinstalled` event persists the
+ *   flag the moment install completes via any path.
  */
 export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] =
@@ -29,13 +40,38 @@ export function InstallPrompt() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Already installed → never show
+    const nav = window.navigator as NavigatorWithInstall;
+
+    // Installed on a previous visit (persisted) → never show again
+    if (window.localStorage.getItem(INSTALLED_KEY) === "1") return;
+
+    // Currently running as an installed app → record and never show
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
-      // iOS Safari
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window.navigator as any).standalone === true;
-    if (isStandalone) return;
+      nav.standalone === true;
+    if (isStandalone) {
+      window.localStorage.setItem(INSTALLED_KEY, "1");
+      return;
+    }
+
+    let cancelled = false;
+
+    // Detect an already-installed copy even when viewed in a normal browser
+    // tab (Chrome/Android). If found, suppress the prompt permanently. This is
+    // the fix for the app re-prompting on phones where it's already installed.
+    if (typeof nav.getInstalledRelatedApps === "function") {
+      nav
+        .getInstalledRelatedApps()
+        .then((apps) => {
+          if (cancelled) return;
+          if (apps && apps.length > 0) {
+            window.localStorage.setItem(INSTALLED_KEY, "1");
+            setDeferredPrompt(null);
+            setVisible(false);
+          }
+        })
+        .catch(() => {});
+    }
 
     // Recently dismissed → don't nag
     const dismissedAt = window.localStorage.getItem(DISMISS_KEY);
@@ -45,21 +81,39 @@ export function InstallPrompt() {
       if (days < DISMISS_DAYS) return;
     }
 
-    const handler = (e: Event) => {
+    const onBeforeInstall = (e: Event) => {
       e.preventDefault();
+      // If we've learned it's installed since mount, stay hidden.
+      if (window.localStorage.getItem(INSTALLED_KEY) === "1") return;
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setVisible(true);
     };
 
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    // Fires once the app is installed via ANY path (our button, browser menu,
+    // Add to Home Screen). Persist so we never prompt again on this device.
+    const onInstalled = () => {
+      window.localStorage.setItem(INSTALLED_KEY, "1");
+      window.localStorage.removeItem(DISMISS_KEY);
+      setDeferredPrompt(null);
+      setVisible(false);
+    };
+
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
   }, []);
 
   async function handleInstall() {
     if (!deferredPrompt) return;
     await deferredPrompt.prompt();
     const choice = await deferredPrompt.userChoice;
-    if (choice.outcome === "dismissed") {
+    if (choice.outcome === "accepted") {
+      window.localStorage.setItem(INSTALLED_KEY, "1");
+    } else {
       window.localStorage.setItem(DISMISS_KEY, String(Date.now()));
     }
     setDeferredPrompt(null);
