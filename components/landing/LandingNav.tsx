@@ -65,7 +65,7 @@ export function LandingNav() {
             href="/signup"
             className="rounded-full bg-brand-orange px-3 py-1.5 text-sm font-bold text-white shadow-sm shadow-brand-orange/30 transition hover:bg-orange-600 sm:px-4"
           >
-            <span className="hidden sm:inline">Get Early Access</span>
+            <span className="hidden sm:inline">Sign Up Free</span>
             <span className="sm:hidden">Sign up</span>
           </Link>
         </div>

@@ -147,7 +147,7 @@ export function PlayerTypeModal({ detail, onClose }: Props) {
                 Sign Up as a {detail.name.replace(/s$/, "")}
               </Link>
               <p className="mt-4 text-xs text-brand-gray-400">
-                Free during beta · No credit card required
+                Free to join · No credit card required
               </p>
             </div>
           </div>

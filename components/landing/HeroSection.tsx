@@ -24,9 +24,9 @@ export function HeroSection() {
 
       {/* Hero content */}
       <div className="relative z-10 mx-auto max-w-4xl text-center">
-        {/* Logo — scales in, with a CSS glow pulse behind it */}
+        {/* Logo — scales in, then floats gently, with a CSS glow pulse behind it */}
         <div className="mb-4 flex justify-center animate-hero-scale sm:mb-6">
-          <div className="relative">
+          <div className="relative animate-float">
             {/* Pulsing orange glow (pure CSS — no JS) */}
             <div className="absolute inset-0 rounded-full bg-brand-orange/30 blur-2xl animate-glow-pulse" />
             <Image
@@ -74,9 +74,14 @@ export function HeroSection() {
         >
           <Link
             href="/signup"
-            className="w-full rounded-xl bg-brand-orange px-10 py-3.5 text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 active:scale-[0.97] sm:w-auto sm:py-4"
+            className="group relative w-full overflow-hidden rounded-xl bg-brand-orange px-10 py-3.5 text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 active:scale-[0.97] sm:w-auto sm:py-4"
           >
-            Get Early Access
+            <span className="relative z-10">Sign Up Free</span>
+            {/* Periodic light sweep to draw the eye to signup */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"
+            />
           </Link>
           <Link
             href="/login"
@@ -91,7 +96,7 @@ export function HeroSection() {
           className="mt-5 text-sm text-brand-gray-400 animate-hero-rise sm:mt-6"
           style={{ animationDelay: "0.63s" }}
         >
-          Free during beta · No credit card required
+          Free to join · No credit card required
         </p>
       </div>
     </section>

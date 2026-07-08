@@ -52,6 +52,10 @@ const config: Config = {
         "hero-rise": "heroRise 0.6s cubic-bezier(0.22,1,0.36,1) both",
         "hero-scale": "heroScale 0.7s cubic-bezier(0.22,1,0.36,1) both",
         "glow-pulse": "glowPulse 3.2s ease-in-out infinite",
+        // Continuous ambient motion after the entrance settles.
+        float: "float 4s ease-in-out infinite",
+        // Periodic light sweep — draws the eye to the primary CTA.
+        shimmer: "shimmer 3s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -73,6 +77,14 @@ const config: Config = {
         glowPulse: {
           "0%, 100%": { opacity: "0.35", transform: "scale(0.85)" },
           "50%": { opacity: "0.7", transform: "scale(1.2)" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "60%, 100%": { transform: "translateX(100%)" },
         },
       },
     },

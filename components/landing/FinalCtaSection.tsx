@@ -14,15 +14,19 @@ export function FinalCtaSection() {
           <span className="text-brand-orange">music industry network</span>
         </h2>
         <p className="mt-6 text-lg text-brand-gray-200 sm:text-xl">
-          Be a founding member of SplitMic. Free during beta — no credit card required.
+          Be a founding member of SplitMic. Free to join — no credit card required.
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link
             href="/signup"
-            className="rounded-xl bg-brand-orange px-12 py-5 text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 active:scale-[0.97]"
+            className="group relative overflow-hidden rounded-xl bg-brand-orange px-12 py-5 text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 active:scale-[0.97]"
           >
-            Get Early Access
+            <span className="relative z-10">Sign Up Free</span>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"
+            />
           </Link>
         </div>
 
