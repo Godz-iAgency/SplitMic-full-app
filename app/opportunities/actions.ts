@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { notifyByEmail } from "@/lib/notifications/email";
 import {
   POSTING_PLAYER_TYPES,
   EVENT_POSTING_PLAYER_TYPES,
@@ -422,7 +423,7 @@ export async function respondToPost(
   const { data: post } = await supabase
     .from("marketplace_posts")
     .select(
-      "id, poster_profile_id, poster_user_id, is_active, expires_at",
+      "id, title, poster_profile_id, poster_user_id, is_active, expires_at",
     )
     .eq("id", postId)
     .maybeSingle();
@@ -458,6 +459,13 @@ export async function respondToPost(
     }
     return { error: insertError.message };
   }
+
+  await notifyByEmail({
+    recipientUserId: post.poster_user_id,
+    senderProfileId: responderProfile.id,
+    kind: "post_response",
+    postTitle: post.title,
+  });
 
   revalidatePath(`/opportunities/${postId}`);
   return {};

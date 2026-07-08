@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { isIndustryPlayerType } from "@/lib/supabase/messaging";
+import { notifyByEmail } from "@/lib/notifications/email";
 import type { PlayerType } from "@/lib/types";
 
 // ─── Respond to a connection request ─────────────────────────────────────
@@ -100,6 +101,17 @@ export async function sendMessage(
   if (thread.user_a_id !== user.id && thread.user_b_id !== user.id)
     return { error: "Not authorized." };
 
+  // Only email on the FIRST unread message in a run — if the recipient already
+  // has an unread message from me in this thread, they've been notified, so we
+  // don't send an email per chat line. Counted BEFORE inserting the new row.
+  const { count: priorUnreadFromMe } = await supabase
+    .from("dm_messages")
+    .select("id", { count: "exact", head: true })
+    .eq("thread_id", threadId)
+    .eq("sender_profile_id", profile.id)
+    .is("read_at", null);
+  const shouldEmail = (priorUnreadFromMe ?? 0) === 0;
+
   const { error } = await supabase.from("dm_messages").insert({
     thread_id: threadId,
     sender_profile_id: profile.id,
@@ -108,6 +120,17 @@ export async function sendMessage(
   });
 
   if (error) return { error: error.message };
+
+  if (shouldEmail) {
+    const recipientUserId =
+      thread.user_a_id === user.id ? thread.user_b_id : thread.user_a_id;
+    await notifyByEmail({
+      recipientUserId,
+      senderProfileId: profile.id,
+      kind: "message",
+      messagePreview: trimmed,
+    });
+  }
 
   revalidatePath(`/inbox/${threadId}`);
   revalidatePath("/inbox");
@@ -226,6 +249,13 @@ export async function initiateConnection(
         body: trimmed,
       });
       if (msgError) return { error: msgError.message };
+
+      await notifyByEmail({
+        recipientUserId: otherProfile.user_id,
+        senderProfileId: myProfile.id,
+        kind: "message",
+        messagePreview: trimmed,
+      });
     }
 
     revalidatePath("/inbox");
@@ -251,6 +281,12 @@ export async function initiateConnection(
     }
     return { error: insertError.message };
   }
+
+  await notifyByEmail({
+    recipientUserId: otherProfile.user_id,
+    senderProfileId: myProfile.id,
+    kind: "connection_request",
+  });
 
   revalidatePath("/inbox");
   return { mode: "request" };
