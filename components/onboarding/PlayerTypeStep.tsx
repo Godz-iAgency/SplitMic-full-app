@@ -1,6 +1,7 @@
 "use client";
 
 import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
+import { PlayerTypeIcon } from "@/components/landing/PlayerTypeIcon";
 
 type Props = {
   selected: PlayerType | null;
@@ -40,8 +41,17 @@ export function PlayerTypeStep({ selected, onSelect, onNext, saving, error }: Pr
                 onChange={() => onSelect(option.value)}
                 className="sr-only"
               />
-              <span className="text-2xl" aria-hidden="true">
-                {option.icon}
+              <span
+                className={`mt-0.5 shrink-0 ${
+                  isActive ? "text-brand-orange" : "text-brand-gray-300"
+                }`}
+                aria-hidden="true"
+              >
+                <PlayerTypeIcon
+                  type={option.value}
+                  className="h-7 w-7"
+                  strokeWidth={1.75}
+                />
               </span>
               <span className="flex-1">
                 <span className="block text-base font-semibold sm:text-lg">

@@ -5,41 +5,37 @@ export type PlayerType =
   | "record_label"
   | "festival";
 
+// Player-type icons are Lucide components — see components/landing/PlayerTypeIcon.tsx
+// (the single source for which icon maps to which player type).
 export const PLAYER_TYPE_OPTIONS: {
   value: PlayerType;
   label: string;
   description: string;
-  icon: string;
 }[] = [
   {
     value: "band",
     label: "Band / Performer",
     description: "Solo artists, duos, full bands, and DJs based in Austin.",
-    icon: "🎸",
   },
   {
     value: "venue",
     label: "Venue",
     description: "Clubs, bars, theaters, and rooms hosting live music.",
-    icon: "🏛️",
   },
   {
     value: "talent_buyer",
     label: "Talent Buyer / Booking Agent",
     description: "Bookers, promoters, and event planners curating shows.",
-    icon: "📅",
   },
   {
     value: "record_label",
     label: "Record Label",
     description: "Independent and major labels signing Austin artists.",
-    icon: "💿",
   },
   {
     value: "festival",
     label: "Festival",
     description: "Multi-day or single-day festivals booking talent.",
-    icon: "🎪",
   },
 ];
 

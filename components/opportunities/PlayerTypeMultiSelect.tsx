@@ -1,6 +1,7 @@
 "use client";
 
 import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
+import { PlayerTypeIcon } from "@/components/landing/PlayerTypeIcon";
 
 type Props = {
   selected: PlayerType[];
@@ -35,7 +36,11 @@ export function PlayerTypeMultiSelect({ selected, onChange }: Props) {
                   : "border-white/15 bg-white/5 text-white hover:border-brand-orange/40"
               }`}
             >
-              <span>{opt.icon}</span>
+              <PlayerTypeIcon
+                type={opt.value}
+                className="h-3.5 w-3.5"
+                strokeWidth={2}
+              />
               <span>{opt.label}</span>
             </button>
           );

@@ -3,6 +3,7 @@ import { Ban } from "lucide-react";
 import { getAdminServiceClient } from "@/lib/supabase/admin-guard";
 import { getAdminUsers } from "@/lib/supabase/admin";
 import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
+import { PlayerTypeIcon } from "@/components/landing/PlayerTypeIcon";
 import { AdminUserSearchBox } from "@/components/admin/AdminUserSearchBox";
 
 export const dynamic = "force-dynamic";
@@ -58,7 +59,14 @@ export default async function AdminUsersPage({
               href={`/admin/users?type=${opt.value}&status=${status}`}
               active={type === opt.value}
             >
-              {opt.icon} {opt.label}
+              <span className="inline-flex items-center gap-1.5">
+                <PlayerTypeIcon
+                  type={opt.value}
+                  className="h-3.5 w-3.5"
+                  strokeWidth={2}
+                />
+                {opt.label}
+              </span>
             </FilterPill>
           ))}
         </div>

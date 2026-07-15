@@ -1,6 +1,7 @@
 import { getAdminServiceClient } from "@/lib/supabase/admin-guard";
 import { getAdminStats } from "@/lib/supabase/admin";
 import { PLAYER_TYPE_OPTIONS } from "@/lib/types";
+import { PlayerTypeIcon } from "@/components/landing/PlayerTypeIcon";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +51,14 @@ export default async function AdminDashboardPage() {
           {PLAYER_TYPE_OPTIONS.map((opt) => (
             <StatCard
               key={opt.value}
-              label={`${opt.icon} ${opt.label}`}
+              label={opt.label}
+              icon={
+                <PlayerTypeIcon
+                  type={opt.value}
+                  className="h-4 w-4 text-brand-gray-300"
+                  strokeWidth={2}
+                />
+              }
               value={stats.byPlayerType[opt.value] ?? 0}
             />
           ))}
@@ -95,11 +103,13 @@ function StatCard({
   value,
   accent,
   danger,
+  icon,
 }: {
   label: string;
   value: number;
   accent?: boolean;
   danger?: boolean;
+  icon?: React.ReactNode;
 }) {
   const valueColor = danger
     ? "text-red-400"
@@ -108,7 +118,10 @@ function StatCard({
       : "text-white";
   return (
     <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
-      <p className="text-xs font-semibold text-brand-gray-300">{label}</p>
+      <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-gray-300">
+        {icon}
+        {label}
+      </p>
       <p className={`mt-2 text-3xl font-bold ${valueColor}`}>{value}</p>
     </div>
   );
