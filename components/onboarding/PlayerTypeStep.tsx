@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
 import { PlayerTypeIcon } from "@/components/landing/PlayerTypeIcon";
 
@@ -14,6 +16,13 @@ type Props = {
 export function PlayerTypeStep({ selected, onSelect, onNext, saving, error }: Props) {
   return (
     <div className="animate-fade-in">
+      <Link
+        href="/"
+        className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-brand-gray-400 transition hover:text-white"
+      >
+        <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+        Back
+      </Link>
       <header className="mb-6">
         <h1 className="text-2xl font-bold sm:text-3xl">Who are you?</h1>
         <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
