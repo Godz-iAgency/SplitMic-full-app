@@ -6,6 +6,7 @@ import { getOnboardingStatus } from "@/lib/supabase/profile";
 import {
   isPostingPlayerType,
   canPostEvents,
+  canPostOpenMic,
 } from "@/lib/supabase/marketplace";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -78,6 +79,7 @@ export default async function NewOpportunityPage() {
         ) : (
           <PostCreationForm
             canPostEvents={canPostEvents(playerType)}
+            canPostOpenMic={canPostOpenMic(playerType)}
             playerType={playerType}
           />
         )}

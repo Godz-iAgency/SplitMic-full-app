@@ -7,6 +7,7 @@ import { notifyByEmail } from "@/lib/notifications/email";
 import {
   POSTING_PLAYER_TYPES,
   EVENT_POSTING_PLAYER_TYPES,
+  OPEN_MIC_POSTING_PLAYER_TYPES,
   MAX_ACTIVE_EVENT_POSTS,
   MAX_ACTIVE_OPPORTUNITY_POSTS,
   MAX_TAGGED_BANDS_PER_EVENT,
@@ -17,6 +18,9 @@ import {
   type PostType,
 } from "@/lib/supabase/marketplace";
 import type { PlayerType } from "@/lib/types";
+
+// Event and open-mic posts are both anchored to a specific date.
+const DATE_BASED_TYPES: PostType[] = ["event", "open_mic"];
 
 // ─── Browse pagination ───────────────────────────────────────────────────────
 
@@ -92,17 +96,25 @@ export async function createMarketplacePost(
     return { error: "Only venues and festivals can post events." };
   }
 
+  // Only venues run open mics.
+  if (
+    payload.post_type === "open_mic" &&
+    !OPEN_MIC_POSTING_PLAYER_TYPES.includes(playerType)
+  ) {
+    return { error: "Only venues can post open mics." };
+  }
+
   // Validate basics
   const title = payload.title.trim();
   if (!title) return { error: "Title is required." };
   if (title.length > 120) return { error: "Title is too long (max 120)." };
 
-  if (payload.post_type === "event") {
+  if (DATE_BASED_TYPES.includes(payload.post_type)) {
     if (!payload.event_date)
-      return { error: "Event date is required for event posts." };
+      return { error: "A date is required for this post." };
     // Date must be today or in the future
     if (payload.event_date < new Date().toISOString().slice(0, 10))
-      return { error: "Event date must be today or in the future." };
+      return { error: "The date must be today or in the future." };
     // End date (festivals): must be on or after start date. Only festivals can set this.
     if (payload.event_end_date) {
       if (playerType !== "festival") {
@@ -120,23 +132,27 @@ export async function createMarketplacePost(
       return { error: "'Open until' must be today or in the future." };
   }
 
-  // Enforce active-post limits
+  // Enforce active-post limits. Open mics share the event limit (counted
+  // separately from events, since countActivePosts matches an exact post_type).
   const activeCount = await countActivePosts(
     supabase,
     profile.id,
     payload.post_type,
   );
   const limit =
-    payload.post_type === "event"
-      ? MAX_ACTIVE_EVENT_POSTS
-      : MAX_ACTIVE_OPPORTUNITY_POSTS;
+    payload.post_type === "opportunity"
+      ? MAX_ACTIVE_OPPORTUNITY_POSTS
+      : MAX_ACTIVE_EVENT_POSTS;
 
   if (activeCount >= limit) {
+    const noun =
+      payload.post_type === "opportunity"
+        ? "opportunity"
+        : payload.post_type === "open_mic"
+          ? "open mic"
+          : "event";
     return {
-      error:
-        payload.post_type === "event"
-          ? `You've reached your limit of ${MAX_ACTIVE_EVENT_POSTS} active event posts.`
-          : `You've reached your limit of ${MAX_ACTIVE_OPPORTUNITY_POSTS} active opportunity posts.`,
+      error: `You've reached your limit of ${limit} active ${noun} posts.`,
     };
   }
 
@@ -146,10 +162,9 @@ export async function createMarketplacePost(
   // post stays live until 7 days AFTER the festival ends.
   const eventExpiryAnchor =
     payload.event_end_date ?? payload.event_date;
-  const expiresAt =
-    payload.post_type === "event"
-      ? addDays(eventExpiryAnchor!, 7)
-      : addDays(payload.open_until!, 7);
+  const expiresAt = DATE_BASED_TYPES.includes(payload.post_type)
+    ? addDays(eventExpiryAnchor!, 7)
+    : addDays(payload.open_until!, 7);
 
   const { data: inserted, error: insertError } = await supabase
     .from("marketplace_posts")
@@ -159,13 +174,14 @@ export async function createMarketplacePost(
       post_type: payload.post_type,
       title,
       description: payload.description.trim() || null,
-      event_date: payload.post_type === "event" ? payload.event_date : null,
+      event_date: DATE_BASED_TYPES.includes(payload.post_type)
+        ? payload.event_date
+        : null,
       event_end_date:
         payload.post_type === "event" ? payload.event_end_date ?? null : null,
-      event_location:
-        payload.post_type === "event"
-          ? payload.event_location?.trim() || null
-          : null,
+      event_location: DATE_BASED_TYPES.includes(payload.post_type)
+        ? payload.event_location?.trim() || null
+        : null,
       open_until:
         payload.post_type === "opportunity" ? payload.open_until : null,
       genres: payload.genres,
@@ -493,4 +509,214 @@ export async function searchBandsForTaggingAction(
 
   const { searchBandsForTagging } = await import("@/lib/supabase/marketplace");
   return searchBandsForTagging(supabase, query);
+}
+
+// ─── Open mic: band signup / withdraw ───────────────────────────────────────
+
+/** A band signs up for an open mic. sort_order is assigned by DB trigger. */
+export async function signUpForOpenMic(
+  postId: string,
+): Promise<{ error?: string }> {
+  const supabase = createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, player_type, is_published")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!profile) return { error: "Complete your profile first." };
+  if (profile.player_type !== "band")
+    return { error: "Only bands can sign up for an open mic." };
+  if (!profile.is_published)
+    return { error: "Publish your profile before signing up." };
+
+  // Verify the post exists, is an active open mic, and isn't expired.
+  const { data: post } = await supabase
+    .from("marketplace_posts")
+    .select("id, post_type, is_active, expires_at")
+    .eq("id", postId)
+    .maybeSingle();
+
+  if (!post || post.post_type !== "open_mic")
+    return { error: "Open mic not found." };
+  if (!post.is_active) return { error: "This open mic is no longer active." };
+  if (post.expires_at < new Date().toISOString().slice(0, 10))
+    return { error: "This open mic has already passed." };
+
+  const { error: insertError } = await supabase
+    .from("open_mic_signups")
+    .insert({
+      post_id: postId,
+      band_profile_id: profile.id,
+      band_user_id: user.id,
+    });
+
+  if (insertError) {
+    if (insertError.code === "23505") {
+      return { error: "You're already signed up for this open mic." };
+    }
+    return { error: insertError.message };
+  }
+
+  revalidatePath(`/opportunities/${postId}`);
+  return {};
+}
+
+/** A band withdraws its own signup. */
+export async function cancelOpenMicSignup(
+  postId: string,
+): Promise<{ error?: string }> {
+  const supabase = createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const { error } = await supabase
+    .from("open_mic_signups")
+    .delete()
+    .eq("post_id", postId)
+    .eq("band_user_id", user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/opportunities/${postId}`);
+  return {};
+}
+
+// ─── Open mic: venue roster management ──────────────────────────────────────
+
+/** Load the caller's post if they own it — shared guard for venue actions. */
+async function loadOwnedOpenMicPost(
+  supabase: ReturnType<typeof createServerSupabaseClient>,
+  signupId: string,
+  userId: string,
+): Promise<{ postId: string } | { error: string }> {
+  const { data: signup } = await supabase
+    .from("open_mic_signups")
+    .select("post_id")
+    .eq("id", signupId)
+    .maybeSingle();
+
+  if (!signup) return { error: "Signup not found." };
+
+  const { data: post } = await supabase
+    .from("marketplace_posts")
+    .select("id, poster_user_id")
+    .eq("id", signup.post_id)
+    .maybeSingle();
+
+  if (!post || post.poster_user_id !== userId)
+    return { error: "You can only manage your own open mic." };
+
+  return { postId: signup.post_id };
+}
+
+/** Venue reorders a band up, down, or to the top of the running order. */
+export async function reorderOpenMicSignup(
+  signupId: string,
+  direction: "up" | "down" | "top",
+): Promise<{ error?: string }> {
+  const supabase = createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const owned = await loadOwnedOpenMicPost(supabase, signupId, user.id);
+  if ("error" in owned) return { error: owned.error };
+
+  // Load the full roster in order, move the item in-memory, then persist any
+  // rows whose position changed. Rosters are small, so a full pass is cheap
+  // and avoids fragile swap edge cases.
+  const { data: roster } = await supabase
+    .from("open_mic_signups")
+    .select("id, sort_order")
+    .eq("post_id", owned.postId)
+    .order("sort_order", { ascending: true });
+
+  if (!roster || roster.length === 0) return {};
+
+  const index = roster.findIndex((r) => r.id === signupId);
+  if (index === -1) return { error: "Signup not found." };
+
+  const reordered = [...roster];
+  const [moved] = reordered.splice(index, 1);
+  if (direction === "top") {
+    reordered.unshift(moved);
+  } else if (direction === "up") {
+    reordered.splice(Math.max(0, index - 1), 0, moved);
+  } else {
+    reordered.splice(Math.min(reordered.length, index + 1), 0, moved);
+  }
+
+  // Persist only the rows whose sort_order actually changed.
+  const updates = reordered
+    .map((r, i) => ({ id: r.id, oldOrder: r.sort_order, newOrder: i + 1 }))
+    .filter((u) => u.oldOrder !== u.newOrder);
+
+  for (const u of updates) {
+    const { error } = await supabase
+      .from("open_mic_signups")
+      .update({ sort_order: u.newOrder })
+      .eq("id", u.id);
+    if (error) return { error: error.message };
+  }
+
+  revalidatePath(`/opportunities/${owned.postId}/roster`);
+  return {};
+}
+
+/** Venue sets a band's check-in status. */
+export async function setOpenMicSignupStatus(
+  signupId: string,
+  status: "signed_up" | "checked_in" | "no_show",
+): Promise<{ error?: string }> {
+  const supabase = createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const owned = await loadOwnedOpenMicPost(supabase, signupId, user.id);
+  if ("error" in owned) return { error: owned.error };
+
+  const { error } = await supabase
+    .from("open_mic_signups")
+    .update({ status })
+    .eq("id", signupId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/opportunities/${owned.postId}/roster`);
+  return {};
+}
+
+/** Venue removes a band from the open mic. */
+export async function removeOpenMicSignup(
+  signupId: string,
+): Promise<{ error?: string }> {
+  const supabase = createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const owned = await loadOwnedOpenMicPost(supabase, signupId, user.id);
+  if ("error" in owned) return { error: owned.error };
+
+  const { error } = await supabase
+    .from("open_mic_signups")
+    .delete()
+    .eq("id", signupId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/opportunities/${owned.postId}/roster`);
+  return {};
 }

@@ -16,6 +16,9 @@ export const POSTING_PLAYER_TYPES: PlayerType[] = [
 // Only venues + festivals can post events. Everyone else is opportunity-only.
 export const EVENT_POSTING_PLAYER_TYPES: PlayerType[] = ["venue", "festival"];
 
+// Only venues run open mics.
+export const OPEN_MIC_POSTING_PLAYER_TYPES: PlayerType[] = ["venue"];
+
 // Active-post limits, enforced before insert.
 export const MAX_ACTIVE_EVENT_POSTS = 10;
 export const MAX_ACTIVE_OPPORTUNITY_POSTS = 3;
@@ -23,7 +26,7 @@ export const MAX_ACTIVE_OPPORTUNITY_POSTS = 3;
 // Max bands a venue/festival can tag on a single event post.
 export const MAX_TAGGED_BANDS_PER_EVENT = 10;
 
-export type PostType = "event" | "opportunity";
+export type PostType = "event" | "opportunity" | "open_mic";
 
 export type MarketplacePost = {
   id: string;
@@ -60,6 +63,8 @@ export type MarketplaceCard = MarketplacePost & {
    * the venue's direct post and one or more band re-shares.
    */
   feed_key?: string;
+  /** Number of bands signed up — only populated for open_mic posts. */
+  signup_count?: number;
 };
 
 export type BrowseFilters = {
@@ -165,13 +170,21 @@ async function hydrateDirectCards(
   if (posts.length === 0) return [];
 
   const posterIds = Array.from(new Set(posts.map((p) => p.poster_profile_id)));
+  const openMicPostIds = posts
+    .filter((p) => p.post_type === "open_mic")
+    .map((p) => p.id);
 
-  const [{ data: posterProfiles }, posterDetailMap, posterAvatarMap] =
-    await Promise.all([
-      supabase.from("profiles").select("id, player_type").in("id", posterIds),
-      fetchPosterNames(supabase, posterIds),
-      fetchPosterAvatars(supabase, posterIds),
-    ]);
+  const [
+    { data: posterProfiles },
+    posterDetailMap,
+    posterAvatarMap,
+    signupCountMap,
+  ] = await Promise.all([
+    supabase.from("profiles").select("id, player_type").in("id", posterIds),
+    fetchPosterNames(supabase, posterIds),
+    fetchPosterAvatars(supabase, posterIds),
+    fetchSignupCounts(supabase, openMicPostIds),
+  ]);
 
   const posterTypeById = new Map<string, PlayerType>();
   for (const p of posterProfiles ?? []) {
@@ -185,7 +198,30 @@ async function hydrateDirectCards(
       (posterTypeById.get(p.poster_profile_id) as PlayerType) ?? "venue",
     poster_avatar_url: posterAvatarMap.get(p.poster_profile_id) ?? null,
     feed_key: p.id,
+    signup_count:
+      p.post_type === "open_mic"
+        ? signupCountMap.get(p.id) ?? 0
+        : undefined,
   }));
+}
+
+/** Count signups per open-mic post id (one grouped read). */
+async function fetchSignupCounts(
+  supabase: SupabaseClient,
+  postIds: string[],
+): Promise<Map<string, number>> {
+  const map = new Map<string, number>();
+  if (postIds.length === 0) return map;
+
+  const { data } = await supabase
+    .from("open_mic_signups")
+    .select("post_id")
+    .in("post_id", postIds);
+
+  for (const row of data ?? []) {
+    map.set(row.post_id, (map.get(row.post_id) ?? 0) + 1);
+  }
+  return map;
 }
 
 /**
@@ -636,4 +672,55 @@ export function isPostingPlayerType(t: PlayerType): boolean {
 
 export function canPostEvents(t: PlayerType): boolean {
   return EVENT_POSTING_PLAYER_TYPES.includes(t);
+}
+
+export function canPostOpenMic(t: PlayerType): boolean {
+  return OPEN_MIC_POSTING_PLAYER_TYPES.includes(t);
+}
+
+// ── Open mic signups ────────────────────────────────────────────────────────
+
+export type OpenMicSignupStatus = "signed_up" | "checked_in" | "no_show";
+
+export type OpenMicSignup = {
+  id: string;
+  band_profile_id: string;
+  band_user_id: string;
+  sort_order: number;
+  status: OpenMicSignupStatus;
+  band_name: string;
+  band_avatar_url: string | null;
+};
+
+/**
+ * The full signup roster for an open mic, in running order. Used by the venue
+ * dashboard and to show the lineup on the post detail page.
+ */
+export async function getOpenMicRoster(
+  supabase: SupabaseClient,
+  postId: string,
+): Promise<OpenMicSignup[]> {
+  const { data: signups } = await supabase
+    .from("open_mic_signups")
+    .select("id, band_profile_id, band_user_id, sort_order, status")
+    .eq("post_id", postId)
+    .order("sort_order", { ascending: true });
+
+  if (!signups || signups.length === 0) return [];
+
+  const bandIds = signups.map((s) => s.band_profile_id);
+  const [nameMap, avatarMap] = await Promise.all([
+    fetchPosterNames(supabase, bandIds),
+    fetchPosterAvatars(supabase, bandIds),
+  ]);
+
+  return signups.map((s) => ({
+    id: s.id,
+    band_profile_id: s.band_profile_id,
+    band_user_id: s.band_user_id,
+    sort_order: s.sort_order,
+    status: s.status as OpenMicSignupStatus,
+    band_name: nameMap.get(s.band_profile_id) ?? "Band",
+    band_avatar_url: avatarMap.get(s.band_profile_id) ?? null,
+  }));
 }

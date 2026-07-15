@@ -9,11 +9,13 @@ import {
   Pencil,
   Info,
   Clock,
+  ListOrdered,
 } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingStatus } from "@/lib/supabase/profile";
 import {
   getPostDetail,
+  getOpenMicRoster,
   formatPostDate,
   formatEventDateRange,
 } from "@/lib/supabase/marketplace";
@@ -22,6 +24,8 @@ import { LogoutButton } from "@/components/LogoutButton";
 import { RespondPanel } from "@/components/opportunities/RespondPanel";
 import { BandTagActions } from "@/components/opportunities/BandTagActions";
 import { DeletePostButton } from "@/components/opportunities/DeletePostButton";
+import { OpenMicSignupButton } from "@/components/opportunities/OpenMicSignupButton";
+import { PlayerTypeIcon } from "@/components/landing/PlayerTypeIcon";
 import { PLAYER_TYPE_OPTIONS } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -45,6 +49,12 @@ export default async function OpportunityDetailPage({
 
   const isOwner = post.poster_user_id === user.id;
   const myProfileId = profile.profile_id;
+  const isBand = profile.player_type === "band";
+  const isOpenMic = post.post_type === "open_mic";
+
+  // Open mic roster (running order) — public, so everyone sees the lineup.
+  const roster = isOpenMic ? await getOpenMicRoster(supabase, post.id) : [];
+  const mySignup = roster.find((s) => s.band_user_id === user.id);
 
   // Tag for the current viewing user (if they're tagged)
   const myTag = myProfileId
@@ -83,7 +93,14 @@ export default async function OpportunityDetailPage({
   const typeBg =
     post.post_type === "event"
       ? "bg-brand-orange/20 text-brand-orange border-brand-orange/30"
-      : "bg-blue-500/20 text-blue-300 border-blue-500/30";
+      : isOpenMic
+        ? "bg-purple-500/20 text-purple-300 border-purple-500/30"
+        : "bg-blue-500/20 text-blue-300 border-blue-500/30";
+  const typeLabel = isOpenMic
+    ? "Open Mic"
+    : post.post_type === "event"
+      ? "Event"
+      : "Opportunity";
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-20">
@@ -116,7 +133,7 @@ export default async function OpportunityDetailPage({
             <span
               className={`rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] ${typeBg}`}
             >
-              {post.post_type === "event" ? "Event" : "Opportunity"}
+              {typeLabel}
             </span>
             {post.event_date ? (
               <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-white">
@@ -239,7 +256,13 @@ export default async function OpportunityDetailPage({
                         key={t}
                         className="inline-flex items-center gap-1.5 rounded-full border border-brand-orange/30 bg-brand-orange/10 px-3 py-1 text-xs font-semibold text-brand-orange"
                       >
-                        <span>{opt?.icon ?? ""}</span>
+                        {opt ? (
+                          <PlayerTypeIcon
+                            type={opt.value}
+                            className="h-3.5 w-3.5"
+                            strokeWidth={2}
+                          />
+                        ) : null}
                         {opt?.label ?? t}
                       </span>
                     );
@@ -279,6 +302,58 @@ export default async function OpportunityDetailPage({
                     </Link>
                   ))}
                 </div>
+              </SectionCard>
+            ) : null}
+
+            {/* Open mic running order (public lineup) */}
+            {isOpenMic && roster.length > 0 ? (
+              <SectionCard
+                icon={<ListOrdered className="h-4 w-4" />}
+                title={`Running order · ${roster.length} ${
+                  roster.length === 1 ? "band" : "bands"
+                }`}
+              >
+                <ol className="space-y-2">
+                  {roster.map((s, i) => (
+                    <li
+                      key={s.id}
+                      className={`flex items-center gap-3 rounded-xl border p-3 ${
+                        s.band_user_id === user.id
+                          ? "border-purple-400/40 bg-purple-500/10"
+                          : "border-white/10 bg-black/40"
+                      }`}
+                    >
+                      <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-white">
+                        {i + 1}
+                      </span>
+                      <Link
+                        href={`/profile/${s.band_profile_id}`}
+                        className="flex min-w-0 flex-1 items-center gap-2.5"
+                      >
+                        {s.band_avatar_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={s.band_avatar_url}
+                            alt=""
+                            className="h-8 w-8 flex-shrink-0 rounded-lg object-cover ring-1 ring-white/10"
+                          />
+                        ) : (
+                          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-brand-gray-800 text-xs font-bold text-purple-300 ring-1 ring-white/10">
+                            {s.band_name.charAt(0)}
+                          </div>
+                        )}
+                        <span className="truncate text-sm font-semibold text-white">
+                          {s.band_name}
+                        </span>
+                      </Link>
+                      {s.status === "checked_in" ? (
+                        <span className="flex-shrink-0 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+                          Checked in
+                        </span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ol>
               </SectionCard>
             ) : null}
 
@@ -327,11 +402,21 @@ export default async function OpportunityDetailPage({
               />
             ) : null}
 
-            <RespondPanel
-              postId={post.id}
-              alreadyResponded={alreadyResponded}
-              isOwnPost={isOwner}
-            />
+            {isOpenMic ? (
+              !isOwner && isBand ? (
+                <OpenMicSignupButton
+                  postId={post.id}
+                  initialSignedUp={!!mySignup}
+                  position={mySignup?.sort_order ?? null}
+                />
+              ) : null
+            ) : (
+              <RespondPanel
+                postId={post.id}
+                alreadyResponded={alreadyResponded}
+                isOwnPost={isOwner}
+              />
+            )}
 
             {isOwner ? (
               <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-white/[.05] via-white/[.03] to-transparent p-5 shadow-md shadow-black/30">
@@ -343,31 +428,73 @@ export default async function OpportunityDetailPage({
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-brand-orange">
                     Owner tools
                   </p>
-                  <p className="mt-3 text-2xl font-bold text-white">
-                    {pendingResponseCount}
-                    <span className="ml-2 text-sm font-medium text-brand-gray-400">
-                      pending response
-                      {pendingResponseCount === 1 ? "" : "s"}
-                    </span>
-                  </p>
-                  <p className="mt-1 text-xs text-brand-gray-400">
-                    Responses appear in your inbox.
-                  </p>
 
-                  <div className="mt-5 space-y-2">
-                    <Link
-                      href={`/opportunities/${post.id}/edit`}
-                      className="flex w-full items-center justify-center gap-2 rounded-full border border-brand-orange/40 bg-brand-orange/10 px-4 py-2.5 text-sm font-bold text-brand-orange transition hover:bg-brand-orange hover:text-white"
-                    >
-                      <Pencil
-                        className="h-3.5 w-3.5"
-                        strokeWidth={2.5}
-                        aria-hidden="true"
-                      />
-                      Edit post
-                    </Link>
-                    <DeletePostButton postId={post.id} />
-                  </div>
+                  {isOpenMic ? (
+                    <>
+                      <p className="mt-3 text-2xl font-bold text-white">
+                        {roster.length}
+                        <span className="ml-2 text-sm font-medium text-brand-gray-400">
+                          band{roster.length === 1 ? "" : "s"} signed up
+                        </span>
+                      </p>
+                      <p className="mt-1 text-xs text-brand-gray-400">
+                        Manage the running order and check bands in the night of.
+                      </p>
+                      <div className="mt-5 space-y-2">
+                        <Link
+                          href={`/opportunities/${post.id}/roster`}
+                          className="flex w-full items-center justify-center gap-2 rounded-full bg-purple-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-purple-400"
+                        >
+                          <ListOrdered
+                            className="h-3.5 w-3.5"
+                            strokeWidth={2.5}
+                            aria-hidden="true"
+                          />
+                          Manage lineup
+                        </Link>
+                        <Link
+                          href={`/opportunities/${post.id}/edit`}
+                          className="flex w-full items-center justify-center gap-2 rounded-full border border-brand-orange/40 bg-brand-orange/10 px-4 py-2.5 text-sm font-bold text-brand-orange transition hover:bg-brand-orange hover:text-white"
+                        >
+                          <Pencil
+                            className="h-3.5 w-3.5"
+                            strokeWidth={2.5}
+                            aria-hidden="true"
+                          />
+                          Edit post
+                        </Link>
+                        <DeletePostButton postId={post.id} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="mt-3 text-2xl font-bold text-white">
+                        {pendingResponseCount}
+                        <span className="ml-2 text-sm font-medium text-brand-gray-400">
+                          pending response
+                          {pendingResponseCount === 1 ? "" : "s"}
+                        </span>
+                      </p>
+                      <p className="mt-1 text-xs text-brand-gray-400">
+                        Responses appear in your inbox.
+                      </p>
+
+                      <div className="mt-5 space-y-2">
+                        <Link
+                          href={`/opportunities/${post.id}/edit`}
+                          className="flex w-full items-center justify-center gap-2 rounded-full border border-brand-orange/40 bg-brand-orange/10 px-4 py-2.5 text-sm font-bold text-brand-orange transition hover:bg-brand-orange hover:text-white"
+                        >
+                          <Pencil
+                            className="h-3.5 w-3.5"
+                            strokeWidth={2.5}
+                            aria-hidden="true"
+                          />
+                          Edit post
+                        </Link>
+                        <DeletePostButton postId={post.id} />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             ) : null}

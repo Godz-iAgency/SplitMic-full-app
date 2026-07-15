@@ -9,7 +9,7 @@ import { GenreMultiSelect } from "./GenreMultiSelect";
 import { PlayerTypeMultiSelect } from "./PlayerTypeMultiSelect";
 import type { PlayerType } from "@/lib/types";
 
-type PostType = "event" | "opportunity";
+type PostType = "event" | "opportunity" | "open_mic";
 
 type Props = {
   postId: string;
@@ -35,6 +35,9 @@ export function PostEditForm({
   initial,
 }: Props) {
   const router = useRouter();
+  const isEvent = postType === "event";
+  const isOpenMic = postType === "open_mic";
+  const isDateBased = isEvent || isOpenMic;
   const isMultiDayEvent = playerType === "festival" && postType === "event";
 
   const [title, setTitle] = useState(initial.title);
@@ -53,7 +56,7 @@ export function PostEditForm({
 
   const expiryPreview = useMemo(() => {
     let base: string;
-    if (postType === "event") {
+    if (isDateBased) {
       base = isMultiDayEvent && eventEndDate ? eventEndDate : eventDate;
     } else {
       base = openUntil;
@@ -76,8 +79,8 @@ export function PostEditForm({
       setError("Title is required.");
       return;
     }
-    if (postType === "event" && !eventDate) {
-      setError("Event date is required.");
+    if (isDateBased && !eventDate) {
+      setError("A date is required.");
       return;
     }
     if (isMultiDayEvent && eventEndDate && eventEndDate < eventDate) {
@@ -94,10 +97,10 @@ export function PostEditForm({
         postId,
         title: title.trim(),
         description: description.trim(),
-        event_date: postType === "event" ? eventDate : undefined,
+        event_date: isDateBased ? eventDate : undefined,
         event_end_date:
           isMultiDayEvent && eventEndDate ? eventEndDate : undefined,
-        event_location: postType === "event" ? eventLocation.trim() : undefined,
+        event_location: isDateBased ? eventLocation.trim() : undefined,
         open_until: postType === "opportunity" ? openUntil : undefined,
         genres,
         pay_info: payInfo.trim(),
@@ -133,12 +136,14 @@ export function PostEditForm({
           </span>
           <span
             className={`rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] ${
-              postType === "event"
+              isEvent
                 ? "bg-brand-orange/20 text-brand-orange border-brand-orange/30"
-                : "bg-blue-500/20 text-blue-300 border-blue-500/30"
+                : isOpenMic
+                  ? "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                  : "bg-blue-500/20 text-blue-300 border-blue-500/30"
             }`}
           >
-            {postType === "event" ? "Event" : "Opportunity"}
+            {isEvent ? "Event" : isOpenMic ? "Open Mic" : "Opportunity"}
           </span>
         </div>
 
@@ -177,8 +182,8 @@ export function PostEditForm({
           </p>
         </div>
 
-        {/* Event-only fields */}
-        {postType === "event" ? (
+        {/* Date-based fields (events + open mics) */}
+        {isDateBased ? (
           <>
             {isMultiDayEvent ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -221,7 +226,8 @@ export function PostEditForm({
               {!isMultiDayEvent ? (
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-white">
-                    Event date <span className="text-brand-orange">*</span>
+                    {isOpenMic ? "Open mic date" : "Event date"}{" "}
+                    <span className="text-brand-orange">*</span>
                   </label>
                   <input
                     type="date"

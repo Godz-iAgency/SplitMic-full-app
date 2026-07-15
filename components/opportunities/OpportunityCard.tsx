@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { Calendar, Clock, MapPin, DollarSign, Repeat2 } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  DollarSign,
+  Repeat2,
+  Users,
+} from "lucide-react";
 import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
 import {
   formatPostDate,
@@ -12,12 +19,14 @@ import {
 const TYPE_LABEL: Record<string, string> = {
   event: "Event",
   opportunity: "Opportunity",
+  open_mic: "Open Mic",
 };
 
 // Post-type color (subtle accent)
 const TYPE_ACCENT: Record<string, string> = {
   event: "text-brand-orange",
   opportunity: "text-blue-300",
+  open_mic: "text-purple-300",
 };
 
 export function OpportunityCard({ card }: { card: MarketplaceCard }) {
@@ -132,7 +141,8 @@ export function OpportunityCard({ card }: { card: MarketplaceCard }) {
 
           {/* Meta row: date + location + pay */}
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[13px]">
-            {card.post_type === "event" && card.event_date ? (
+            {(card.post_type === "event" || card.post_type === "open_mic") &&
+            card.event_date ? (
               <span className="inline-flex items-center gap-1.5 font-semibold text-white">
                 <Calendar
                   className="h-3.5 w-3.5 text-brand-orange"
@@ -140,6 +150,18 @@ export function OpportunityCard({ card }: { card: MarketplaceCard }) {
                   aria-hidden="true"
                 />
                 {formatEventDateRange(card.event_date, card.event_end_date)}
+              </span>
+            ) : null}
+            {card.post_type === "open_mic" &&
+            card.signup_count !== undefined ? (
+              <span className="inline-flex items-center gap-1.5 font-semibold text-purple-300">
+                <Users
+                  className="h-3.5 w-3.5"
+                  strokeWidth={2.25}
+                  aria-hidden="true"
+                />
+                {card.signup_count}{" "}
+                {card.signup_count === 1 ? "band" : "bands"} signed up
               </span>
             ) : null}
             {card.post_type === "opportunity" && card.open_until ? (

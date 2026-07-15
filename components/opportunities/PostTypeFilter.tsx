@@ -2,12 +2,19 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Mic, Briefcase, LayoutGrid, type LucideIcon } from "lucide-react";
+import {
+  Mic,
+  Briefcase,
+  LayoutGrid,
+  Music2,
+  type LucideIcon,
+} from "lucide-react";
 
 const FILTERS: Array<{ value: string; label: string; Icon: LucideIcon }> = [
   { value: "all", label: "All posts", Icon: LayoutGrid },
   { value: "event", label: "Events", Icon: Mic },
   { value: "opportunity", label: "Opportunities", Icon: Briefcase },
+  { value: "open_mic", label: "Open Mics", Icon: Music2 },
 ];
 
 export function PostTypeFilter({ active }: { active: string }) {

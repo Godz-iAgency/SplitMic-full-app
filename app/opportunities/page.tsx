@@ -17,7 +17,12 @@ import type { PlayerType } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const VALID_POST_TYPES = new Set<string>(["all", "event", "opportunity"]);
+const VALID_POST_TYPES = new Set<string>([
+  "all",
+  "event",
+  "opportunity",
+  "open_mic",
+]);
 
 export default async function OpportunitiesPage({
   searchParams,

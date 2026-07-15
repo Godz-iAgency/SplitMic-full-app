@@ -2,14 +2,14 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Mic, Briefcase } from "lucide-react";
+import { Mic, Briefcase, Music2 } from "lucide-react";
 import { createMarketplacePost } from "@/app/opportunities/actions";
 import { GenreMultiSelect } from "./GenreMultiSelect";
 import { PlayerTypeMultiSelect } from "./PlayerTypeMultiSelect";
 import { BandTagPicker } from "./BandTagPicker";
 import type { PlayerType } from "@/lib/types";
 
-type PostType = "event" | "opportunity";
+type PostType = "event" | "opportunity" | "open_mic";
 
 type Band = {
   profile_id: string;
@@ -19,17 +19,26 @@ type Band = {
 
 type Props = {
   canPostEvents: boolean;
+  canPostOpenMic: boolean;
   playerType: PlayerType;
 };
 
-export function PostCreationForm({ canPostEvents, playerType }: Props) {
+export function PostCreationForm({
+  canPostEvents,
+  canPostOpenMic,
+  playerType,
+}: Props) {
   const router = useRouter();
   const [postType, setPostType] = useState<PostType | null>(null);
 
   return (
     <>
       {!postType ? (
-        <PostTypeChooser canPostEvents={canPostEvents} onPick={setPostType} />
+        <PostTypeChooser
+          canPostEvents={canPostEvents}
+          canPostOpenMic={canPostOpenMic}
+          onPick={setPostType}
+        />
       ) : (
         <PostFields
           postType={postType}
@@ -44,9 +53,11 @@ export function PostCreationForm({ canPostEvents, playerType }: Props) {
 
 function PostTypeChooser({
   canPostEvents,
+  canPostOpenMic,
   onPick,
 }: {
   canPostEvents: boolean;
+  canPostOpenMic: boolean;
   onPick: (t: PostType) => void;
 }) {
   return (
@@ -86,6 +97,26 @@ function PostTypeChooser({
           You set the deadline. Removes 7 days after.
         </p>
       </button>
+
+      {canPostOpenMic ? (
+        <button
+          type="button"
+          onClick={() => onPick("open_mic")}
+          className="rounded-2xl border border-white/10 bg-white/5 p-6 text-left transition hover:border-purple-400/50 hover:bg-white/10"
+        >
+          <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-purple-500/15 text-purple-300">
+            <Music2 className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+          </div>
+          <h3 className="text-lg font-bold text-white">Post an Open Mic</h3>
+          <p className="mt-1 text-sm text-brand-gray-300">
+            Bands sign up on the platform — you get a running order you can
+            manage the night of.
+          </p>
+          <p className="mt-3 text-xs text-brand-gray-400">
+            Stays up until 7 days after the date.
+          </p>
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -101,6 +132,10 @@ function PostFields({
   onBack: () => void;
   onCreated: (id: string) => void;
 }) {
+  const isEvent = postType === "event";
+  const isOpenMic = postType === "open_mic";
+  // Events and open mics are both anchored to a specific date + location.
+  const isDateBased = isEvent || isOpenMic;
   // Festivals run multi-day. Everyone else (venue, talent_buyer, record_label) is single-day.
   const isMultiDayEvent = playerType === "festival" && postType === "event";
 
@@ -121,7 +156,7 @@ function PostFields({
   // after the festival ENDS, not 7 days after it starts).
   const expiryPreview = useMemo(() => {
     let base: string;
-    if (postType === "event") {
+    if (isDateBased) {
       base = isMultiDayEvent && eventEndDate ? eventEndDate : eventDate;
     } else {
       base = openUntil;
@@ -144,8 +179,8 @@ function PostFields({
       setError("Title is required.");
       return;
     }
-    if (postType === "event" && !eventDate) {
-      setError("Event date is required.");
+    if (isDateBased && !eventDate) {
+      setError("A date is required.");
       return;
     }
     if (isMultiDayEvent && eventEndDate && eventEndDate < eventDate) {
@@ -162,18 +197,17 @@ function PostFields({
         post_type: postType,
         title: title.trim(),
         description: description.trim(),
-        event_date: postType === "event" ? eventDate : undefined,
+        event_date: isDateBased ? eventDate : undefined,
         event_end_date:
           isMultiDayEvent && eventEndDate ? eventEndDate : undefined,
-        event_location: postType === "event" ? eventLocation.trim() : undefined,
+        event_location: isDateBased ? eventLocation.trim() : undefined,
         open_until: postType === "opportunity" ? openUntil : undefined,
         genres,
         pay_info: payInfo.trim(),
         player_types_wanted: playerTypesWanted,
-        tagged_band_profile_ids:
-          postType === "event"
-            ? taggedBands.map((b) => b.profile_id)
-            : undefined,
+        tagged_band_profile_ids: isEvent
+          ? taggedBands.map((b) => b.profile_id)
+          : undefined,
       });
 
       if (serverError) {
@@ -201,12 +235,14 @@ function PostFields({
         </button>
         <span
           className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider ${
-            postType === "event"
+            isEvent
               ? "bg-brand-orange/20 text-brand-orange"
-              : "bg-blue-500/20 text-blue-300"
+              : isOpenMic
+                ? "bg-purple-500/20 text-purple-300"
+                : "bg-blue-500/20 text-blue-300"
           }`}
         >
-          {postType === "event" ? "Event" : "Opportunity"}
+          {isEvent ? "Event" : isOpenMic ? "Open Mic" : "Opportunity"}
         </span>
       </div>
 
@@ -222,9 +258,11 @@ function PostFields({
           maxLength={120}
           required
           placeholder={
-            postType === "event"
+            isEvent
               ? "Live Music Night — Friday Headliner Slot"
-              : "Looking for Austin indie bands for label showcase"
+              : isOpenMic
+                ? "Tuesday Night Open Mic"
+                : "Looking for Austin indie bands for label showcase"
           }
           className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-white placeholder:text-brand-gray-500 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
         />
@@ -251,8 +289,8 @@ function PostFields({
         </p>
       </div>
 
-      {/* Event-only fields */}
-      {postType === "event" ? (
+      {/* Date-based fields (events + open mics) */}
+      {isDateBased ? (
         <>
           {isMultiDayEvent ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -297,7 +335,8 @@ function PostFields({
             {!isMultiDayEvent ? (
               <div>
                 <label className="mb-2 block text-sm font-semibold text-white">
-                  Event date <span className="text-brand-orange">*</span>
+                  {isOpenMic ? "Open mic date" : "Event date"}{" "}
+                  <span className="text-brand-orange">*</span>
                 </label>
                 <input
                   type="date"
@@ -323,7 +362,9 @@ function PostFields({
             </div>
           </div>
 
-          <BandTagPicker selected={taggedBands} onChange={setTaggedBands} />
+          {isEvent ? (
+            <BandTagPicker selected={taggedBands} onChange={setTaggedBands} />
+          ) : null}
         </>
       ) : (
         <div>
