@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/supabase/admin";
 import { Logo } from "@/components/Logo";
@@ -23,21 +24,23 @@ export default async function AdminLayout({
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black">
-      <header className="flex items-center justify-between border-b border-white/10 shadow-sm shadow-black/40 bg-black/40 px-5 py-4 sm:px-8">
-        <div className="flex items-center gap-4">
-          <Link href="/admin">
-            <Logo className="text-2xl" />
+      <header className="flex items-center justify-between gap-3 border-b border-white/10 shadow-sm shadow-black/40 bg-black/40 px-5 py-4 sm:px-8">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <Link href="/admin" className="shrink-0">
+            <Logo className="text-lg sm:text-2xl" />
           </Link>
-          <span className="rounded-full bg-brand-orange/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-orange">
+          <span className="shrink-0 rounded-full bg-brand-orange/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand-orange sm:px-3 sm:text-xs">
             Admin
           </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-3">
           <Link
             href="/search"
-            className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+            aria-label="Back to app"
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10 sm:px-4"
           >
-            Back to app
+            <ArrowLeft className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+            <span className="hidden sm:inline">Back to app</span>
           </Link>
           <LogoutButton />
         </div>

@@ -90,8 +90,8 @@ export default async function AdminUsersPage({
           <p className="text-sm text-brand-gray-300">No users match.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-white/5 bg-white/5">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-2xl border border-white/5 bg-white/5">
+          <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="bg-white/5 text-xs uppercase tracking-wider text-brand-gray-300">
               <tr>
                 <th className="px-4 py-3">Name</th>
