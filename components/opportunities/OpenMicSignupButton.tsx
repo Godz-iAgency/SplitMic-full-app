@@ -13,12 +13,15 @@ type Props = {
   initialSignedUp: boolean;
   /** The band's current position in the running order (1-based), if signed up. */
   position: number | null;
+  /** How many bands are already in line (for the not-yet-signed-up framing). */
+  queueLength?: number;
 };
 
 export function OpenMicSignupButton({
   postId,
   initialSignedUp,
   position,
+  queueLength = 0,
 }: Props) {
   const router = useRouter();
   const [signedUp, setSignedUp] = useState(initialSignedUp);
@@ -96,8 +99,20 @@ export function OpenMicSignupButton({
         ) : (
           <>
             <p className="mt-3 text-sm text-brand-gray-300">
-              Sign up to get on the running order. First come, first served —
-              the venue finalizes the lineup the night of.
+              {queueLength > 0 ? (
+                <>
+                  <span className="font-bold text-white">
+                    {queueLength} {queueLength === 1 ? "band is" : "bands are"}{" "}
+                    already in line.
+                  </span>{" "}
+                  Sign up to lock your spot — first come, first served.
+                </>
+              ) : (
+                <>
+                  Be first on the running order. First come, first served —
+                  the venue finalizes the lineup the night of.
+                </>
+              )}
             </p>
             <button
               type="button"

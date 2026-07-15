@@ -144,10 +144,11 @@ export function PlayerTypeModal({ detail, onClose }: Props) {
                 }}
                 className="w-full rounded-xl bg-brand-orange px-8 py-4 text-center text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 sm:w-auto sm:min-w-[300px]"
               >
-                Sign Up as a {detail.name.replace(/s$/, "")}
+                Start My {detail.name.replace(/s$/, "")} Profile
               </Link>
               <p className="mt-4 text-xs text-brand-gray-400">
-                Free to join · No credit card required
+                Your pick carries into your profile — step one is already done.
+                Free · No credit card.
               </p>
             </div>
           </div>

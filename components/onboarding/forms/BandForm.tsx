@@ -82,7 +82,7 @@ export function BandForm({ values, onChange }: Props) {
         required
         min={1}
         placeholder="e.g., 60"
-        hint="minutes"
+        hint="minutes — 45 is the typical Austin support slot"
       />
 
       <div className="pt-2">

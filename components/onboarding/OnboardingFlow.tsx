@@ -29,7 +29,15 @@ export type InitialOnboardingState = {
   full_name: string | null;
 };
 
-const STEP_LABELS = ["Player type", "Austin address", "Your profile"];
+// Account creation counts as step 1 — users arrive with visible progress
+// instead of an empty bar (goal-gradient: never start anyone at 0%).
+const STEP_LABELS = [
+  "Account created",
+  "Player type",
+  "Austin address",
+  "Your profile",
+  "Photos & publish",
+];
 
 const VALID_PLAYER_TYPES = new Set<string>(
   PLAYER_TYPE_OPTIONS.map((o) => o.value),
@@ -264,9 +272,17 @@ export function OnboardingFlow({ initial }: { initial: InitialOnboardingState })
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col px-5 py-10 sm:px-8 sm:py-14">
-      <ProgressIndicator currentStep={step} totalSteps={4} labels={STEP_LABELS} />
+      {/* step+1: account creation is the already-completed first step */}
+      <ProgressIndicator
+        currentStep={step + 1}
+        totalSteps={5}
+        labels={STEP_LABELS}
+      />
       <p className="mb-6 text-xs text-brand-gray-400">
-        Step 4 (photos) unlocks next week.
+        <span className="font-semibold text-brand-orange">
+          ✓ Account created.
+        </span>{" "}
+        About 3 minutes to a live profile.
       </p>
 
       {step === 1 ? (

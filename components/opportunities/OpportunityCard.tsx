@@ -32,6 +32,16 @@ const TYPE_ACCENT: Record<string, string> = {
 export function OpportunityCard({ card }: { card: MarketplaceCard }) {
   const typeLabel = TYPE_LABEL[card.post_type] ?? card.post_type;
   const typeAccent = TYPE_ACCENT[card.post_type] ?? "text-brand-orange";
+
+  // Honest urgency: posts really are auto-removed at expires_at.
+  const daysLeft = Math.max(
+    0,
+    Math.ceil(
+      (new Date(card.expires_at + "T12:00:00").getTime() - Date.now()) /
+        86_400_000,
+    ),
+  );
+  const expiringSoon = daysLeft <= 3;
   const playerOption = PLAYER_TYPE_OPTIONS.find(
     (o) => o.value === card.poster_player_type,
   );
@@ -87,10 +97,18 @@ export function OpportunityCard({ card }: { card: MarketplaceCard }) {
         <p className="truncate text-base font-bold tracking-tight text-white">
           {card.poster_name}
         </p>
-        <span
-          className={`flex-shrink-0 text-xs font-bold uppercase tracking-[0.15em] ${typeAccent}`}
-        >
-          {typeLabel}
+        <span className="flex flex-shrink-0 items-center gap-2">
+          {expiringSoon ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300">
+              <Clock className="h-3 w-3" strokeWidth={2.5} aria-hidden="true" />
+              {daysLeft === 0 ? "Last day" : `Ends in ${daysLeft}d`}
+            </span>
+          ) : null}
+          <span
+            className={`text-xs font-bold uppercase tracking-[0.15em] ${typeAccent}`}
+          >
+            {typeLabel}
+          </span>
         </span>
       </div>
 

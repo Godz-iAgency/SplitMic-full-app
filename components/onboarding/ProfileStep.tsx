@@ -64,12 +64,14 @@ const EMPTY_COMMON: CommonFieldValues = {
   twitter_handle: "",
 };
 
+// Smart defaults: member_count 4 and set_length 45 match the typical Austin
+// act + support slot — most users scan-and-confirm instead of composing.
 const EMPTY_BAND: BandFormValues = {
   band_name: "",
   genres: [],
-  member_count: "",
+  member_count: 4,
   sound_description: "",
-  set_length_minutes: "",
+  set_length_minutes: 45,
   typical_draw: "",
   email_list_size: "",
   largest_venue_capacity: "",
@@ -78,7 +80,7 @@ const EMPTY_BAND: BandFormValues = {
   booking_email: "",
   booking_fee_min: "",
   booking_fee_max: "",
-  spotify_artist_url: "https://open.spotify.com/artist/4Z8W4fKeB0KNGotKc4MLB5",
+  spotify_artist_url: "",
   youtube_channel_url: "",
   tiktok_handle: "",
   facebook_url: "",
@@ -90,7 +92,7 @@ const EMPTY_VENUE: VenueFormValues = {
   capacity: "",
   age_restriction: "",
   genres_hosted: [],
-  shows_per_week: "",
+  shows_per_week: 3,
   booking_contact_name: "",
   booking_contact_email: "",
   pay_structure: "",

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingStatus, tableForPlayerType } from "@/lib/supabase/profile";
+import { computeBandReadiness } from "@/lib/scoring/bandReadiness";
 import { Logo } from "@/components/Logo";
 import { MediaManager, type MediaRow } from "@/components/profile/MediaManager";
 import { EditInfoForm } from "@/components/profile/EditInfoForm";
@@ -85,6 +86,28 @@ export default async function ProfileEditPage({
 
   const initialSpecific = buildInitialSpecific(playerType, details, links);
 
+  // Goal gradient: bands see their Readiness Score immediately after
+  // onboarding — each photo/field added visibly moves them toward 10.
+  let readinessScore: number | null = null;
+  if (playerType === "band") {
+    readinessScore = computeBandReadiness({
+      bio: profile.bio ?? null,
+      instagram_followers:
+        typeof profile.instagram_followers === "number"
+          ? profile.instagram_followers
+          : null,
+      hasAvatar: media.some((m) => m.kind === "avatar"),
+      genres: details.genres ?? [],
+      sound_description: details.sound_description ?? null,
+      set_length_minutes: details.set_length_minutes ?? null,
+      email_list_size: details.email_list_size ?? null,
+      typical_draw: details.typical_draw ?? null,
+      largest_venue_capacity: details.largest_venue_capacity ?? null,
+      tiktok_followers: details.tiktok_followers ?? null,
+      youtube_followers: details.youtube_followers ?? null,
+    }).score;
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black">
       <header className="flex items-center justify-between border-b border-white/10 shadow-sm shadow-black/40 px-5 py-4 sm:px-8">
@@ -106,13 +129,21 @@ export default async function ProfileEditPage({
               <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-brand-orange" />
               <div>
                 <p className="text-base font-semibold text-white sm:text-lg">
-                  Almost done — let's add your photos &amp; video
+                  Last step — add your photos &amp; video
                 </p>
                 <p className="mt-1 text-sm text-brand-gray-200">
                   Profiles with a banner, avatar, and intro video get noticed
                   by the Austin music scene. Add yours below, then publish
                   when you're ready.
                 </p>
+                {readinessScore !== null ? (
+                  <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand-orange/15 px-3 py-1 text-xs font-bold text-brand-orange">
+                    Band Readiness Score: {readinessScore}/10
+                    {readinessScore < 10
+                      ? " — adding a photo moves it up"
+                      : ""}
+                  </p>
+                ) : null}
               </div>
             </div>
           </div>

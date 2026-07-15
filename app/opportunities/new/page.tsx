@@ -36,6 +36,17 @@ export default async function NewOpportunityPage() {
 
   const isPublished = !!profileRow?.is_published;
 
+  // Venue display name — pre-fills the open mic title ("{Venue} Open Mic").
+  let posterName: string | undefined;
+  if (canPostOpenMic(playerType) && profile.profile_id) {
+    const { data: venueRow } = await supabase
+      .from("venue_details")
+      .select("venue_name")
+      .eq("profile_id", profile.profile_id)
+      .maybeSingle();
+    posterName = venueRow?.venue_name ?? undefined;
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-20">
       <header className="flex items-center justify-between border-b border-white/10 shadow-sm shadow-black/40 px-5 py-4 sm:px-8">
@@ -81,6 +92,7 @@ export default async function NewOpportunityPage() {
             canPostEvents={canPostEvents(playerType)}
             canPostOpenMic={canPostOpenMic(playerType)}
             playerType={playerType}
+            posterName={posterName}
           />
         )}
       </section>

@@ -90,6 +90,15 @@ export default async function OpportunityDetailPage({
 
   const acceptedBands = taggedBands.filter((t) => t.status === "accepted");
 
+  // Loss aversion: surface the (real) auto-removal deadline to the owner.
+  const daysUntilRemoval = Math.max(
+    0,
+    Math.ceil(
+      (new Date(post.expires_at + "T12:00:00").getTime() - Date.now()) /
+        86_400_000,
+    ),
+  );
+
   const typeBg =
     post.post_type === "event"
       ? "bg-brand-orange/20 text-brand-orange border-brand-orange/30"
@@ -408,6 +417,7 @@ export default async function OpportunityDetailPage({
                   postId={post.id}
                   initialSignedUp={!!mySignup}
                   position={mySignup?.sort_order ?? null}
+                  queueLength={roster.length}
                 />
               ) : null
             ) : (
@@ -428,6 +438,16 @@ export default async function OpportunityDetailPage({
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-brand-orange">
                     Owner tools
                   </p>
+
+                  {daysUntilRemoval <= 3 ? (
+                    <p className="mt-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300">
+                      ⏳ This post is automatically removed in{" "}
+                      {daysUntilRemoval === 0
+                        ? "less than a day"
+                        : `${daysUntilRemoval} day${daysUntilRemoval === 1 ? "" : "s"}`}
+                      .
+                    </p>
+                  ) : null}
 
                   {isOpenMic ? (
                     <>

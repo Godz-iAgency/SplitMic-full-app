@@ -21,12 +21,26 @@ type Props = {
   canPostEvents: boolean;
   canPostOpenMic: boolean;
   playerType: PlayerType;
+  /** Venue display name — used to pre-fill the open mic title. */
+  posterName?: string;
 };
+
+// Smart default: bookings cluster on Fridays, so pre-fill the next one.
+// Local date math (not toISOString) so late-night posting doesn't skip a day.
+function nextFriday(): string {
+  const d = new Date();
+  let add = (5 - d.getDay() + 7) % 7;
+  if (add === 0) add = 7;
+  d.setDate(d.getDate() + add);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 
 export function PostCreationForm({
   canPostEvents,
   canPostOpenMic,
   playerType,
+  posterName,
 }: Props) {
   const router = useRouter();
   const [postType, setPostType] = useState<PostType | null>(null);
@@ -41,8 +55,10 @@ export function PostCreationForm({
         />
       ) : (
         <PostFields
+          key={postType}
           postType={postType}
           playerType={playerType}
+          posterName={posterName}
           onBack={() => setPostType(null)}
           onCreated={(id) => router.push(`/opportunities/${id}`)}
         />
@@ -109,8 +125,8 @@ function PostTypeChooser({
           </div>
           <h3 className="text-lg font-bold text-white">Post an Open Mic</h3>
           <p className="mt-1 text-sm text-brand-gray-300">
-            Bands sign up on the platform — you get a running order you can
-            manage the night of.
+            One post replaces the clipboard, the group chat, and the night-of
+            chaos. Bands sign up — you run the order.
           </p>
           <p className="mt-3 text-xs text-brand-gray-400">
             Stays up until 7 days after the date.
@@ -124,11 +140,13 @@ function PostTypeChooser({
 function PostFields({
   postType,
   playerType,
+  posterName,
   onBack,
   onCreated,
 }: {
   postType: PostType;
   playerType: PlayerType;
+  posterName?: string;
   onBack: () => void;
   onCreated: (id: string) => void;
 }) {
@@ -139,15 +157,21 @@ function PostFields({
   // Festivals run multi-day. Everyone else (venue, talent_buyer, record_label) is single-day.
   const isMultiDayEvent = playerType === "festival" && postType === "event";
 
-  const [title, setTitle] = useState("");
+  // Smart defaults — pre-filled so the task is scan-and-adjust, not compose.
+  const [title, setTitle] = useState(
+    isOpenMic && posterName ? `${posterName} Open Mic` : "",
+  );
   const [description, setDescription] = useState("");
-  const [eventDate, setEventDate] = useState("");
+  const [eventDate, setEventDate] = useState(isDateBased ? nextFriday() : "");
   const [eventEndDate, setEventEndDate] = useState("");
   const [eventLocation, setEventLocation] = useState("");
   const [openUntil, setOpenUntil] = useState("");
   const [genres, setGenres] = useState<string[]>([]);
   const [payInfo, setPayInfo] = useState("");
-  const [playerTypesWanted, setPlayerTypesWanted] = useState<PlayerType[]>([]);
+  // Events/open mics are posted to book bands ~always — pre-select them.
+  const [playerTypesWanted, setPlayerTypesWanted] = useState<PlayerType[]>(
+    isDateBased ? ["band"] : [],
+  );
   const [taggedBands, setTaggedBands] = useState<Band[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();

@@ -14,7 +14,8 @@ export function FinalCtaSection() {
           <span className="text-brand-orange">music industry network</span>
         </h2>
         <p className="mt-6 text-lg text-brand-gray-200 sm:text-xl">
-          Be a founding member of SplitMic. Free to join — no credit card required.
+          Three minutes to a live profile — instead of another month of cold
+          DMs and unanswered emails. Free to join, no credit card required.
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">

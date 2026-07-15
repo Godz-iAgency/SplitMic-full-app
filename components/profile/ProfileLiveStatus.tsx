@@ -116,8 +116,9 @@ export function ProfileLiveStatus({ profileId }: Props) {
         {confirmingUnpublish ? (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-brand-gray-300">
-              This hides your profile from search. You can republish anytime.
-              Confirm?
+              Unpublishing removes you from Discover — venues, buyers, and
+              labels can&apos;t find or message you until you republish. Your
+              photos and profile are kept safe. Confirm?
             </p>
             <div className="flex shrink-0 items-center gap-2">
               <button
