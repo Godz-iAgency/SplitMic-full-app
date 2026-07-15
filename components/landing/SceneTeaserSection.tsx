@@ -12,47 +12,62 @@ type Props = {
   cards: SearchCard[];
 };
 
-// Don't advertise an empty room — weak social proof is worse than none.
-// The section simply doesn't render until the scene has real density.
-const MIN_PROFILES_TO_SHOW = 6;
-const MIN_CARDS_TO_SHOW = 3;
+// The full card grid needs real density — a sparse 1–2 card row reads as
+// "nobody's here." Below this, we fall back to a "get in early" framing that
+// still shows the real counts (honest social proof) without the thin grid.
+const MIN_CARDS_FOR_GRID = 3;
 
 /**
  * Reciprocity: show real (published) inventory BEFORE asking for a signup.
  * Every card links to /signup — the gate sits at the moment of demonstrated
  * value, not before it. Counts and cards are live data, never fabricated.
+ *
+ * Cold-start aware:
+ *   - 0 published profiles  → render nothing (no empty room to advertise).
+ *   - 1 to (grid-1)         → "get in early" framing + real counts, no grid.
+ *   - grid+                 → full "this is the room" card grid.
  */
 export function SceneTeaserSection({ counts, cards }: Props) {
-  if (
-    !counts ||
-    counts.all < MIN_PROFILES_TO_SHOW ||
-    cards.length < MIN_CARDS_TO_SHOW
-  ) {
-    return null;
-  }
+  // Nothing real to show yet.
+  if (!counts || counts.all === 0) return null;
 
   const countLine = [
-    counts.band > 0 ? `${counts.band} bands` : null,
-    counts.venue > 0 ? `${counts.venue} venues` : null,
-    counts.talent_buyer > 0 ? `${counts.talent_buyer} talent buyers` : null,
-    counts.record_label > 0 ? `${counts.record_label} labels` : null,
-    counts.festival > 0 ? `${counts.festival} festivals` : null,
+    counts.band > 0 ? plural(counts.band, "band") : null,
+    counts.venue > 0 ? plural(counts.venue, "venue") : null,
+    counts.talent_buyer > 0
+      ? plural(counts.talent_buyer, "talent buyer")
+      : null,
+    counts.record_label > 0 ? plural(counts.record_label, "label") : null,
+    counts.festival > 0 ? plural(counts.festival, "festival") : null,
   ]
     .filter(Boolean)
     .join(" · ");
+
+  const hasGrid = cards.length >= MIN_CARDS_FOR_GRID;
 
   return (
     <section className="border-t border-brand-gray-800 bg-black px-6 py-20 sm:py-24">
       <div className="mx-auto max-w-6xl">
         <Reveal className="mb-12 text-center">
           <h2 className="text-3xl font-black sm:text-5xl">
-            This is <span className="text-brand-orange">the room</span>
+            {hasGrid ? (
+              <>
+                This is <span className="text-brand-orange">the room</span>
+              </>
+            ) : (
+              <>
+                Get in <span className="text-brand-orange">early</span>
+              </>
+            )}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-brand-gray-300">
-            {countLine} — live on SplitMic right now.
+            {hasGrid
+              ? `${countLine} — live on SplitMic right now.`
+              : `${countLine} already here. Be one of the first Austin sees.`}
           </p>
         </Reveal>
 
+        {hasGrid ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((card, i) => {
             const typeLabel =
@@ -110,13 +125,16 @@ export function SceneTeaserSection({ counts, cards }: Props) {
             );
           })}
         </div>
+        ) : null}
 
         <Reveal className="mt-10 text-center">
           <Link
             href="/signup"
             className="inline-flex items-center gap-2 rounded-xl border border-brand-orange/40 bg-brand-orange/10 px-8 py-4 text-base font-bold text-brand-orange transition hover:bg-brand-orange hover:text-white"
           >
-            Create a free profile to connect with them
+            {hasGrid
+              ? "Create a free profile to connect with them"
+              : "Claim your free founding profile"}
             <ArrowRight
               className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
               strokeWidth={2.25}
@@ -127,4 +145,9 @@ export function SceneTeaserSection({ counts, cards }: Props) {
       </div>
     </section>
   );
+}
+
+/** "1 band" / "3 bands" — pluralize the label unless it ends in a special case. */
+function plural(n: number, label: string): string {
+  return `${n} ${label}${n === 1 ? "" : "s"}`;
 }
