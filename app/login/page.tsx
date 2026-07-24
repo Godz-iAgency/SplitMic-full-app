@@ -18,8 +18,12 @@ export default async function LoginPage() {
 
   if (user) {
     if (isAdminEmail(user.email)) redirect("/admin");
-    const { isComplete } = await getOnboardingStatus(supabase, user.id);
-    redirect(isComplete ? "/search" : "/onboarding");
+    const { profile, isComplete } = await getOnboardingStatus(supabase, user.id);
+    redirect(
+      isComplete && profile?.profile_id
+        ? `/profile/${profile.profile_id}`
+        : "/onboarding",
+    );
   }
 
   return (

@@ -22,7 +22,7 @@ export default async function OnboardingPage() {
   if (isAdminEmail(user.email)) redirect("/admin");
 
   const { profile, isComplete } = await getOnboardingStatus(supabase, user.id);
-  if (isComplete) redirect("/search");
+  if (isComplete && profile?.profile_id) redirect(`/profile/${profile.profile_id}`);
 
   const initial: InitialOnboardingState = {
     user_id: user.id,

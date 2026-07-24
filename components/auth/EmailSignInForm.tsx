@@ -28,9 +28,13 @@ export function EmailSignInForm() {
         setLoading(false);
         return;
       }
-      // Refresh so server pages re-read session
+      // Refresh so server pages re-read the new session, then hand off to the
+      // /onboarding guard. It routes authoritatively from the server: admins to
+      // /admin, fully-onboarded users to their own profile, and anyone who
+      // hasn't finished onboarding stays there. Keeping that logic server-side
+      // avoids duplicating the completeness check here.
       router.refresh();
-      router.push("/search");
+      router.replace("/onboarding");
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again.");

@@ -42,8 +42,10 @@ export async function GET(request: Request) {
 
   // The database trigger (handle_new_user) automatically creates the users row.
   // Give it a moment to fire, then check onboarding status.
-  const { isComplete } = await getOnboardingStatus(supabase, user.id);
-  return NextResponse.redirect(
-    new URL(isComplete ? "/search" : "/onboarding", url.origin),
-  );
+  const { profile, isComplete } = await getOnboardingStatus(supabase, user.id);
+  const dest =
+    isComplete && profile?.profile_id
+      ? `/profile/${profile.profile_id}`
+      : "/onboarding";
+  return NextResponse.redirect(new URL(dest, url.origin));
 }
