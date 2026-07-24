@@ -17,14 +17,21 @@ type Props = {
   userId: string;
   profileId: string;
   media: MediaRow[];
+  /**
+   * When provided, the "Done — view my profile" button saves the profile-info
+   * form (rendered as a sibling) before navigating, instead of just linking
+   * away. Falls back to a plain link when omitted.
+   */
+  onDone?: () => Promise<void>;
 };
 
-export function MediaManager({ userId, profileId, media }: Props) {
+export function MediaManager({ userId, profileId, media, onDone }: Props) {
   const router = useRouter();
   const refresh = () => router.refresh();
 
   const [toast, setToast] = useState<string | null>(null);
   const [showBannerHelp, setShowBannerHelp] = useState(false);
+  const [doneSaving, setDoneSaving] = useState(false);
 
   // Auto-dismiss toast after 2.5 seconds
   useEffect(() => {
@@ -170,9 +177,27 @@ export function MediaManager({ userId, profileId, media }: Props) {
         <p className="text-xs leading-relaxed text-brand-gray-400 sm:max-w-md">
           Photos and video save automatically as you upload.
         </p>
-        <Link href={profileViewHref} className="btn-primary text-center">
-          Done — view my profile →
-        </Link>
+        {onDone ? (
+          <button
+            type="button"
+            disabled={doneSaving}
+            onClick={async () => {
+              setDoneSaving(true);
+              try {
+                await onDone();
+              } finally {
+                setDoneSaving(false);
+              }
+            }}
+            className="btn-primary text-center"
+          >
+            {doneSaving ? "Saving…" : "Done — view my profile →"}
+          </button>
+        ) : (
+          <Link href={profileViewHref} className="btn-primary text-center">
+            Done — view my profile →
+          </Link>
+        )}
       </div>
 
       {/* Success toast */}

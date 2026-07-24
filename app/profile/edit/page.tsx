@@ -5,8 +5,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingStatus, tableForPlayerType } from "@/lib/supabase/profile";
 import { computeBandReadiness } from "@/lib/scoring/bandReadiness";
 import { Logo } from "@/components/Logo";
-import { MediaManager, type MediaRow } from "@/components/profile/MediaManager";
-import { EditInfoForm } from "@/components/profile/EditInfoForm";
+import type { MediaRow } from "@/components/profile/MediaManager";
+import { ProfileEditor } from "@/components/profile/ProfileEditor";
 import type { PlayerType } from "@/lib/types";
 import type { CommonFieldValues } from "@/components/onboarding/forms/CommonFields";
 import type { BandFormValues } from "@/components/onboarding/forms/BandForm";
@@ -113,7 +113,7 @@ export default async function ProfileEditPage({
       <header className="flex items-center justify-between border-b border-white/10 shadow-sm shadow-black/40 px-5 py-4 sm:px-8">
         <Logo className="text-2xl" />
         <Link
-          href="/search"
+          href={`/profile/${profileId}`}
           className="text-sm font-medium text-brand-gray-300 hover:text-white"
         >
           ← Back
@@ -149,38 +149,16 @@ export default async function ProfileEditPage({
           </div>
         ) : null}
 
-        {/* ── Photos & Video ─────────────────────────────────────────── */}
-        <section>
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold sm:text-3xl">Photos &amp; video</h1>
-            <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
-              Add a banner, profile photo, up to 3 gallery photos, and a
-              15-second intro video.
-            </p>
-          </div>
-          <MediaManager
-            userId={user.id}
-            profileId={profileId}
-            media={media}
-          />
-        </section>
-
-        {/* ── Profile Info ────────────────────────────────────────────── */}
-        <section>
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold sm:text-3xl">Profile info</h1>
-            <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
-              Update your bio, contact details, and player-specific information.
-              Changes appear on your public profile immediately.
-            </p>
-          </div>
-          <EditInfoForm
-            profileId={profileId}
-            playerType={playerType}
-            initialCommon={initialCommon}
-            initialSpecific={initialSpecific}
-          />
-        </section>
+        {/* Photos & video + Profile info — wrapped together so either
+            section's finish button saves the info form before navigating. */}
+        <ProfileEditor
+          userId={user.id}
+          profileId={profileId}
+          media={media}
+          playerType={playerType}
+          initialCommon={initialCommon}
+          initialSpecific={initialSpecific}
+        />
 
       </div>
     </main>

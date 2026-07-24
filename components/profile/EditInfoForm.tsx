@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { PlayerType } from "@/lib/types";
 import { CommonFields, type CommonFieldValues } from "@/components/onboarding/forms/CommonFields";
@@ -12,12 +12,15 @@ import { FestivalForm, type FestivalFormValues } from "@/components/onboarding/f
 import type { ProfilePayload } from "@/components/onboarding/ProfileStep";
 import { saveProfileInfo } from "@/app/profile/edit/actions";
 
-type SpecificValues =
+export type SpecificValues =
   | BandFormValues
   | VenueFormValues
   | TalentBuyerFormValues
   | RecordLabelFormValues
   | FestivalFormValues;
+
+/** Imperative handle so a sibling button can trigger this form's save. */
+export type EditInfoFormHandle = { save: () => Promise<void> };
 
 type Props = {
   profileId: string;
@@ -26,12 +29,10 @@ type Props = {
   initialSpecific: SpecificValues;
 };
 
-export function EditInfoForm({
-  profileId,
-  playerType,
-  initialCommon,
-  initialSpecific,
-}: Props) {
+function EditInfoFormInner(
+  { profileId, playerType, initialCommon, initialSpecific }: Props,
+  ref: React.ForwardedRef<EditInfoFormHandle>,
+) {
   const router = useRouter();
   const [common, setCommon] = useState<CommonFieldValues>(initialCommon);
   const [specific, setSpecific] = useState<SpecificValues>(initialSpecific);
@@ -45,8 +46,11 @@ export function EditInfoForm({
     setCommon((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  // Persist every field, then go to the public profile. Exposed via the
+  // imperative handle below so the "Done — view my profile" button in the
+  // photos section runs this exact save — edits are never dropped, whichever
+  // button the user clicks to finish.
+  async function save() {
     setSaving(true);
     setError(null);
 
@@ -61,10 +65,16 @@ export function EditInfoForm({
     setSaving(false);
     if (result.error) {
       setError(result.error);
-    } else {
-      // Redirect straight to their profile — no second click needed
-      router.push(`/profile/${profileId}`);
+      return;
     }
+    router.push(`/profile/${profileId}`);
+  }
+
+  useImperativeHandle(ref, () => ({ save }));
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    await save();
   }
 
   return (
@@ -160,3 +170,5 @@ export function EditInfoForm({
     </form>
   );
 }
+
+export const EditInfoForm = forwardRef(EditInfoFormInner);
