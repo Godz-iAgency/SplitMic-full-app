@@ -87,7 +87,7 @@ export function HeroSection() {
             href="/login"
             className="w-full rounded-xl border-2 border-white/30 bg-black/40 px-10 py-3.5 text-lg font-bold text-white backdrop-blur transition hover:border-white hover:bg-white/10 active:scale-[0.97] sm:w-auto sm:py-4"
           >
-            Sign In
+            Log In
           </Link>
         </div>
 

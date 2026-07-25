@@ -1,10 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Home, Zap, HelpCircle } from "lucide-react";
+import { Home, Briefcase, HelpCircle } from "lucide-react";
 
 const TABS = [
   { href: "#who-its-for", label: "Home", Icon: Home },
-  { href: "#features", label: "Features", Icon: Zap },
+  { href: "#features", label: "Features", Icon: Briefcase },
   { href: "#how-it-works", label: "How it works", Icon: HelpCircle },
 ];
 
@@ -31,10 +31,13 @@ export function LandingNav() {
           </span>
         </a>
 
-        {/* Section tabs — icons on mobile, text labels on sm+ */}
+        {/* Section tabs — icons on mobile, text labels on sm+.
+            No min-w-0: the tab buttons are shrink-0, so without this the nav
+            container could be squeezed narrower than its own content and the
+            overflow would visually collide with the auth actions next to it. */}
         <nav
           aria-label="Page sections"
-          className="flex min-w-0 flex-1 items-center gap-1"
+          className="flex flex-1 items-center gap-1"
         >
           {TABS.map(({ href, label, Icon }) => (
             <a
@@ -53,20 +56,13 @@ export function LandingNav() {
           ))}
         </nav>
 
-        {/* Auth actions */}
-        <div className="flex shrink-0 items-center gap-2">
+        {/* Auth actions — Sign Up lives in the hero CTA; header keeps just Log in */}
+        <div className="flex shrink-0 items-center">
           <Link
             href="/login"
             className="rounded-full px-3 py-1.5 text-sm font-semibold text-brand-gray-300 transition hover:text-white"
           >
             Log in
-          </Link>
-          <Link
-            href="/signup"
-            className="rounded-full bg-brand-orange px-3 py-1.5 text-sm font-bold text-white shadow-sm shadow-brand-orange/30 transition hover:bg-orange-600 sm:px-4"
-          >
-            <span className="hidden sm:inline">Sign Up Free</span>
-            <span className="sm:hidden">Sign up</span>
           </Link>
         </div>
       </div>
