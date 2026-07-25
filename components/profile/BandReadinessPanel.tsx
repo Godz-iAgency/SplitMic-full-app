@@ -63,7 +63,7 @@ export function BandReadinessPanel({ readiness }: Props) {
               strokeWidth={2}
               aria-hidden="true"
             />
-            Private to you — tap to see why, and how to reach {max}.
+            Private to you: tap to see why, and how to reach {max}.
           </p>
         </div>
 
@@ -129,7 +129,7 @@ export function BandReadinessPanel({ readiness }: Props) {
             <span className="font-bold text-brand-orange">
               {score.toFixed(1)}
             </span>
-            ) on your card — never this breakdown. Update your numbers anytime in{" "}
+            ) on your card, never this breakdown. Update your numbers anytime in{" "}
             <span className="font-semibold text-brand-gray-200">
               Edit Profile
             </span>

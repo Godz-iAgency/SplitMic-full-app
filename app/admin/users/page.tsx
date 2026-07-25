@@ -123,10 +123,10 @@ export default async function AdminUsersPage({
                     {r.player_type
                       ? PLAYER_TYPE_OPTIONS.find((o) => o.value === r.player_type)
                           ?.label ?? r.player_type
-                      : "—"}
+                      : "N/A"}
                   </td>
                   <td className="px-4 py-3 text-brand-gray-300">
-                    {r.email ?? "—"}
+                    {r.email ?? "N/A"}
                   </td>
                   <td className="px-4 py-3 text-brand-gray-300">
                     {new Date(r.created_at).toLocaleDateString()}

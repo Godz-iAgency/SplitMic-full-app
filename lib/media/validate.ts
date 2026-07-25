@@ -43,7 +43,7 @@ export async function validateMedia(
       const mb = (file.size / 1024 / 1024).toFixed(1);
       return {
         code: "video_too_large",
-        message: `Your video is ${mb} MB — max is 50 MB. Export it as MP4 (not MOV or 4K) and try again.`,
+        message: `Your video is ${mb} MB. Max is 50 MB. Export it as MP4 (not MOV or 4K) and try again.`,
       };
     }
     let duration: number;
@@ -58,7 +58,7 @@ export async function validateMedia(
     if (duration > VIDEO_MAX_SECONDS + 0.5) {
       return {
         code: "video_too_long",
-        message: `Your video is ${Math.round(duration)}s — max is 30 seconds. Trim it on your phone or in iMovie/CapCut, then re-upload.`,
+        message: `Your video is ${Math.round(duration)}s. Max is 30 seconds. Trim it on your phone or in iMovie/CapCut, then re-upload.`,
       };
     }
     return null;

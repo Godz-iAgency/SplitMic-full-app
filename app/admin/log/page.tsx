@@ -77,7 +77,7 @@ export default async function AdminLogPage() {
                       {new Date(e.created_at).toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-xs text-brand-gray-300">
-                      {e.admin_email ?? "—"}
+                      {e.admin_email ?? "N/A"}
                     </td>
                     <td className="px-4 py-3">
                       <span
@@ -87,7 +87,7 @@ export default async function AdminLogPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-white">
-                      {e.target_label ?? e.target_id ?? "—"}
+                      {e.target_label ?? e.target_id ?? "N/A"}
                     </td>
                     <td className="px-4 py-3 text-xs text-brand-gray-300">
                       {e.details ? (
@@ -95,7 +95,7 @@ export default async function AdminLogPage() {
                           {JSON.stringify(e.details, null, 0)}
                         </pre>
                       ) : (
-                        "—"
+                        "N/A"
                       )}
                     </td>
                   </tr>

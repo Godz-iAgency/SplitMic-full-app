@@ -121,15 +121,15 @@ export function FestivalForm({ values, onChange }: Props) {
             }
             required
             options={[
-              { value: "yes", label: "Yes — we pay" },
-              { value: "no", label: "No — exposure only" },
+              { value: "yes", label: "Yes, we pay" },
+              { value: "no", label: "No, exposure only" },
             ]}
           />
           {showPayRange ? (
             <div className="grid grid-cols-2 gap-3">
               <NumberField
                 id="pay_min"
-                label="Pay — Min ($)"
+                label="Min Pay ($)"
                 value={values.pay_min}
                 onChange={(v) => onChange("pay_min", v)}
                 min={0}
@@ -138,7 +138,7 @@ export function FestivalForm({ values, onChange }: Props) {
               />
               <NumberField
                 id="pay_max"
-                label="Pay — Max ($)"
+                label="Max Pay ($)"
                 value={values.pay_max}
                 onChange={(v) => onChange("pay_max", v)}
                 min={0}

@@ -34,7 +34,7 @@ export default async function HomePage() {
             Welcome to <span className="text-brand-orange">SplitMic</span>
           </h1>
           <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
-            Pick who you want to explore — every profile is verified Austin.
+            Pick who you want to explore. Every profile is verified Austin.
           </p>
         </div>
 

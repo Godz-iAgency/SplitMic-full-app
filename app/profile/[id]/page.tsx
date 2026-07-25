@@ -827,7 +827,7 @@ function pickDetailItems(
         d.pays_bands === true
           ? range(d.pay_min, d.pay_max) ?? "Yes"
           : d.pays_bands === false
-            ? "No — exposure only"
+            ? "No, exposure only"
             : null,
       );
       break;

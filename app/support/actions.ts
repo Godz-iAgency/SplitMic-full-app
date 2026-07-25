@@ -82,7 +82,7 @@ export async function sendSupportMessage(
       from: SUPPORT_FROM_EMAIL,
       to: [SUPPORT_TO_EMAIL],
       replyTo: email,
-      subject: `[SplitMic Support] ${topic} — ${name}`,
+      subject: `[SplitMic Support] ${topic} (${name})`,
       text: `Topic: ${topic}\nFrom: ${name} <${email}>\n\n${message}`,
       html: `
         <div style="font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;color:#111;">

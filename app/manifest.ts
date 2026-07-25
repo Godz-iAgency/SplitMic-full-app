@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "SplitMic — Austin Music Industry",
+    name: "SplitMic: Austin Music Industry",
     short_name: "SplitMic",
     description:
-      "Austin's music industry network — connect bands, venues, talent buyers, festivals, and labels on one platform.",
+      "Austin's music industry network. Connect bands, venues, talent buyers, festivals, and labels on one platform.",
     start_url: "/search",
     scope: "/",
     display: "standalone",

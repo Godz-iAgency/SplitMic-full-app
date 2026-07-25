@@ -36,7 +36,7 @@ export function PlayerTypesSection() {
               <button
                 type="button"
                 onClick={() => setSelected(type)}
-                aria-label={`${type.name} — tap to learn more`}
+                aria-label={`${type.name}: tap to learn more`}
                 className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-brand-gray-800 bg-brand-gray-900/50 text-center transition hover:-translate-y-1 hover:border-brand-orange hover:bg-brand-gray-900 hover:shadow-lg hover:shadow-brand-orange/20 focus:outline-none focus:ring-2 focus:ring-brand-orange/50 active:scale-[0.98]"
               >
                 {/* Photo on the card face (same image shown in the modal) */}

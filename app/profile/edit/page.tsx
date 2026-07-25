@@ -129,7 +129,7 @@ export default async function ProfileEditPage({
               <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-brand-orange" />
               <div>
                 <p className="text-base font-semibold text-white sm:text-lg">
-                  Last step — add your photos &amp; video
+                  Last step: add your photos &amp; video
                 </p>
                 <p className="mt-1 text-sm text-brand-gray-200">
                   Profiles with a banner, avatar, and intro video get noticed
@@ -140,7 +140,7 @@ export default async function ProfileEditPage({
                   <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand-orange/15 px-3 py-1 text-xs font-bold text-brand-orange">
                     Band Readiness Score: {readinessScore}/10
                     {readinessScore < 10
-                      ? " — adding a photo moves it up"
+                      ? ", adding a photo moves it up"
                       : ""}
                   </p>
                 ) : null}

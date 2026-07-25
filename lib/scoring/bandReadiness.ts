@@ -133,7 +133,7 @@ function scoreDraw(bucket: string | null): Criterion {
       max,
       detail: "No typical draw added yet.",
       advice:
-        "Add how many people you typically draw — it's the first thing talent buyers look at.",
+        "Add how many people you typically draw. It's the first thing talent buyers look at.",
     };
   }
 
@@ -192,7 +192,7 @@ function scoreEmailList(size: number | null): Criterion {
     { min: 1000, points: 1.5, next: "" },
     { min: 200, points: 1, next: "Grow to 1,000 subscribers for the full 1.5 points." },
     { min: 1, points: 0.5, next: "Grow to 200 subscribers to earn 1 point." },
-    { min: 0, points: 0, next: "Even 1–200 subscribers earns 0.5 points — add yours in Edit Profile." },
+    { min: 0, points: 0, next: "Even 1–200 subscribers earns 0.5 points. Add yours in Edit Profile." },
   ]);
 
   return {

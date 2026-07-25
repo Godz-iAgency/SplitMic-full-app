@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Support",
   description:
-    "Get help with SplitMic — ask a question, report a bug, or send feedback.",
+    "Get help with SplitMic: ask a question, report a bug, or send feedback.",
 };
 
 export default async function SupportPage() {
@@ -51,7 +51,7 @@ export default async function SupportPage() {
             How can we <span className="text-brand-orange">help?</span>
           </h1>
           <p className="mt-3 text-base text-brand-gray-300">
-            Questions, bugs, or feedback — send us a message and we&apos;ll get
+            Questions, bugs, or feedback: send us a message and we&apos;ll get
             back to you by email.
           </p>
         </div>

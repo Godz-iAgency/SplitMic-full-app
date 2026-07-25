@@ -107,7 +107,7 @@ function PostTypeChooser({
         </div>
         <h3 className="text-lg font-bold text-white">Post an Opportunity</h3>
         <p className="mt-1 text-sm text-brand-gray-300">
-          An ongoing need — A&amp;R search, casting, collaboration, callout.
+          An ongoing need: A&amp;R search, casting, collaboration, callout.
         </p>
         <p className="mt-3 text-xs text-brand-gray-400">
           You set the deadline. Removes 7 days after.
@@ -126,7 +126,7 @@ function PostTypeChooser({
           <h3 className="text-lg font-bold text-white">Post an Open Mic</h3>
           <p className="mt-1 text-sm text-brand-gray-300">
             One post replaces the clipboard, the group chat, and the night-of
-            chaos. Bands sign up — you run the order.
+            chaos. Bands sign up, you run the order.
           </p>
           <p className="mt-3 text-xs text-brand-gray-400">
             Stays up until 7 days after the date.
@@ -283,7 +283,7 @@ function PostFields({
           required
           placeholder={
             isEvent
-              ? "Live Music Night — Friday Headliner Slot"
+              ? "Live Music Night: Friday Headliner Slot"
               : isOpenMic
                 ? "Tuesday Night Open Mic"
                 : "Looking for Austin indie bands for label showcase"
@@ -305,7 +305,7 @@ function PostFields({
           onChange={(e) => setDescription(e.target.value)}
           maxLength={2000}
           rows={5}
-          placeholder="Share details — vibe, expectations, what you're looking for…"
+          placeholder="Share details: vibe, expectations, what you're looking for…"
           className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-white placeholder:text-brand-gray-500 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
         />
         <p className="mt-1 text-right text-xs text-brand-gray-500">
@@ -349,7 +349,7 @@ function PostFields({
                   className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-white focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
                 />
                 <p className="mt-1 text-xs text-brand-gray-400">
-                  Optional — leave blank for a single-day festival.
+                  Optional, leave blank for a single-day festival.
                 </p>
               </div>
             </div>

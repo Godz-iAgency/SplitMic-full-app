@@ -89,7 +89,7 @@ export default async function OpenMicRosterPage({
           </div>
           <p className="mt-4 text-sm text-brand-gray-400">
             Bands are listed in signup order. Use the arrows to set the running
-            order — whoever arrives first can be moved up. Check bands in as they
+            order: whoever arrives first can be moved up. Check bands in as they
             arrive.
           </p>
         </div>

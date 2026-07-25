@@ -73,7 +73,7 @@ export function TalentBuyerForm({ values, onChange }: Props) {
         onChange={(v) => onChange("typical_booking_fee", v)}
         required
         placeholder="$500–$2,500"
-        hint="Free-form — what you charge clients (range, flat, or %)."
+        hint="Free-form: what you charge clients (range, flat, or %)."
       />
       <NumberField
         id="booking_radius_miles"
@@ -91,7 +91,7 @@ export function TalentBuyerForm({ values, onChange }: Props) {
         onChange={(v) => onChange("events_per_year", v)}
         min={0}
         placeholder="e.g., 25"
-        hint="Optional — shows bands how active you are"
+        hint="Optional: shows bands how active you are"
       />
 
       <div className="pt-2">

@@ -7,7 +7,7 @@ export const PLAYER_TYPE_DETAILS: PlayerTypeDetail[] = [
     headline: "Stop chasing gigs. Start landing them.",
     image: "/players/band.jpg",
     benefits: [
-      "A profile built for bands — genres, set length, sound",
+      "A profile built for bands: genres, set length, sound",
       "Direct access to venues and talent buyers booking now",
       "An opportunities marketplace where gigs come to you",
     ],
@@ -53,7 +53,7 @@ export const PLAYER_TYPE_DETAILS: PlayerTypeDetail[] = [
     benefits: [
       "Filter unsigned bands by genre, traction, and growth",
       "See which venues and festivals are booking them",
-      "Direct messaging — no manager middlemen",
+      "Direct messaging, no manager middlemen",
     ],
   },
 ];

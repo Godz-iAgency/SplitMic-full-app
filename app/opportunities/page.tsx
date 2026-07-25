@@ -153,7 +153,7 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }) {
         The feed is quiet right now
       </h2>
       <p className="mt-2 text-sm text-brand-gray-300">
-        Be the first to post. Music moves fast in Austin — get on the feed and
+        Be the first to post. Music moves fast in Austin. Get on the feed and
         get noticed.
       </p>
     </div>

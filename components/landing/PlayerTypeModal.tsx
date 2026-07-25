@@ -147,7 +147,7 @@ export function PlayerTypeModal({ detail, onClose }: Props) {
                 Start My {detail.name.replace(/s$/, "")} Profile
               </Link>
               <p className="mt-4 text-xs text-brand-gray-400">
-                Your pick carries into your profile — step one is already done.
+                Your pick carries into your profile, so step one is already done.
                 Free · No credit card.
               </p>
             </div>

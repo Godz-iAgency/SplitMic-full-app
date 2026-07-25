@@ -61,7 +61,7 @@ export function CommonFields({ values, onChange }: Props) {
         value={values.website_url}
         onChange={(v) => onChange("website_url", v)}
         placeholder="yoursite.com"
-        hint="Optional — just type your domain, e.g. yoursite.com"
+        hint="Optional: just type your domain, e.g. yoursite.com"
       />
       <TextField
         id="instagram_handle"
@@ -71,7 +71,7 @@ export function CommonFields({ values, onChange }: Props) {
           onChange("instagram_handle", v.startsWith("@") ? v.slice(1) : v)
         }
         placeholder="splitmicatx"
-        hint="Optional — without the @"
+        hint="Optional, without the @"
       />
       <NumberField
         id="instagram_followers"
@@ -90,7 +90,7 @@ export function CommonFields({ values, onChange }: Props) {
           onChange("twitter_handle", v.startsWith("@") ? v.slice(1) : v)
         }
         placeholder="splitmicatx"
-        hint="Optional — without the @"
+        hint="Optional, without the @"
       />
     </div>
   );

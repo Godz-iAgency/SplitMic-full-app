@@ -15,7 +15,7 @@ export function LandingNav() {
         {/* Logo — plain <a> so it always hard-navigates to / and replays the hero animation */}
         <a
           href="/"
-          aria-label="SplitMic — back to top"
+          aria-label="SplitMic: back to top"
           className="flex shrink-0 items-center gap-2"
         >
           <Image

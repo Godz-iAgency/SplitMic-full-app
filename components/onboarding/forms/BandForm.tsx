@@ -82,7 +82,7 @@ export function BandForm({ values, onChange }: Props) {
         required
         min={1}
         placeholder="e.g., 60"
-        hint="minutes — 45 is the typical Austin support slot"
+        hint="minutes, 45 is the typical Austin support slot"
       />
 
       <div className="pt-2">
@@ -98,13 +98,13 @@ export function BandForm({ values, onChange }: Props) {
           <span>
             These power your <strong className="text-brand-gray-200">Band
             Readiness Score</strong>. Your overall score is public, but this
-            breakdown is private — only you can see it.
+            breakdown is private. Only you can see it.
           </span>
         </p>
         <div className="space-y-4">
           <SelectField
             id="typical_draw"
-            label="Typical Draw — how many people you bring"
+            label="Typical Draw: how many people you bring"
             value={values.typical_draw}
             onChange={(v) => onChange("typical_draw", v)}
             options={DRAW_OPTIONS}
@@ -116,7 +116,7 @@ export function BandForm({ values, onChange }: Props) {
             value={values.largest_venue_capacity}
             onChange={(v) => onChange("largest_venue_capacity", v)}
             options={VENUE_OPTIONS}
-            hint="By room capacity — your biggest stage so far."
+            hint="By room capacity, your biggest stage so far."
           />
           <NumberField
             id="email_list_size"
@@ -126,7 +126,7 @@ export function BandForm({ values, onChange }: Props) {
             min={0}
             grouped
             placeholder="e.g., 1,200"
-            hint="Optional — direct reach to your fans."
+            hint="Optional: direct reach to your fans."
           />
           <div className="grid grid-cols-2 gap-3">
             <NumberField
@@ -165,12 +165,12 @@ export function BandForm({ values, onChange }: Props) {
             value={values.booking_email}
             onChange={(v) => onChange("booking_email", v)}
             placeholder="bookings@yourband.com"
-            hint="Optional — most venues prefer email over phone"
+            hint="Optional: most venues prefer email over phone"
           />
           <div className="grid grid-cols-2 gap-3">
             <NumberField
               id="booking_fee_min"
-              label="Booking Fee — Min ($)"
+              label="Min Booking Fee ($)"
               value={values.booking_fee_min}
               onChange={(v) => onChange("booking_fee_min", v)}
               min={0}
@@ -179,7 +179,7 @@ export function BandForm({ values, onChange }: Props) {
             />
             <NumberField
               id="booking_fee_max"
-              label="Booking Fee — Max ($)"
+              label="Max Booking Fee ($)"
               value={values.booking_fee_max}
               onChange={(v) => onChange("booking_fee_max", v)}
               min={0}
@@ -188,7 +188,7 @@ export function BandForm({ values, onChange }: Props) {
             />
           </div>
           <p className="text-xs text-brand-gray-400">
-            This is your typical range — used by venues / talent buyers to
+            This is your typical range, used by venues / talent buyers to
             filter. Actual show pay is always negotiated per gig.
           </p>
         </div>

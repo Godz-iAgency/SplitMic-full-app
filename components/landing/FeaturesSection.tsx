@@ -21,27 +21,27 @@ const FEATURES: FeatureDetail[] = [
       "Search by player type, genre, location, or name. Discover who's in the Austin music ecosystem instantly.",
     headline: "The whole scene in one search bar.",
     copy:
-      "Type what you're after — band, venue, or buyer — and filter by genre, player type, or name. No more asking around.",
+      "Type what you're after (band, venue, or buyer) and filter by genre, player type, or name. No more asking around.",
   },
   {
     id: "opportunities",
     Icon: Newspaper,
     title: "Community Feed",
     description:
-      "See every gig, show, and opportunity Austin is posting — live and in one stream.",
+      "See every gig, show, and opportunity Austin is posting, live and in one stream.",
     headline: "Where Austin's music scene posts in real time.",
     copy:
-      "Venues post slots, festivals list spots, bands find shows — all in one live feed, newest first. No phone tag, no lost emails.",
+      "Venues post slots, festivals list spots, bands find shows, all in one live feed, newest first. No phone tag, no lost emails.",
   },
   {
     id: "connections",
     Icon: Users,
     title: "Industry Connections",
     description:
-      "Build real relationships with verified industry pros. No fans, no spam — just business.",
+      "Build real relationships with verified industry pros. No fans, no spam. Just business.",
     headline: "Real people. Real roles. Real work.",
     copy:
-      "Everyone here is in music business — bands, venues, bookers, labels, festivals. No random fans, no spam. Every connection counts.",
+      "Everyone here is in music business: bands, venues, bookers, labels, festivals. No random fans, no spam. Every connection counts.",
   },
   {
     id: "messaging",
@@ -51,7 +51,7 @@ const FEATURES: FeatureDetail[] = [
       "Talk to venues, bands, and buyers directly. No more chasing DMs across 5 apps.",
     headline: "One inbox for all your music business.",
     copy:
-      "Message any band, venue, or buyer directly — no jumping between Instagram, email, and texts. Ask, get an answer, book the show.",
+      "Message any band, venue, or buyer directly, without jumping between Instagram, email, and texts. Ask, get an answer, book the show.",
   },
   {
     id: "profiles",
@@ -61,17 +61,17 @@ const FEATURES: FeatureDetail[] = [
       "Each player type gets a profile built for what matters in their role.",
     headline: "A profile built for your role.",
     copy:
-      "Bands show their sound and set length, venues show size and booking info — each player type fills out what actually matters.",
+      "Bands show their sound and set length, venues show size and booking info. Each player type fills out what actually matters.",
   },
   {
     id: "notifications",
     Icon: Bell,
     title: "Real-Time Notifications",
     description:
-      "Never miss a connection request, message, or opportunity — get notified the moment it happens.",
+      "Never miss a connection request, message, or opportunity. Get notified the moment it happens.",
     headline: "Hear about it the moment it happens.",
     copy:
-      "New message, gig, or connection request — you'll know right away, with email backup so you stay in the loop even when the app is closed.",
+      "New message, gig, or connection request: you'll know right away, with email backup so you stay in the loop even when the app is closed.",
   },
 ];
 

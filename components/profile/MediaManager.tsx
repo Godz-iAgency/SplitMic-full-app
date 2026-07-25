@@ -83,7 +83,7 @@ export function MediaManager({ userId, profileId, media, onDone }: Props) {
             <p>
               <span className="font-medium text-white">Banner</span> is wide
               (3:1). For zero cropping, design at <strong>2400×800</strong>.
-              Otherwise we crop the top and bottom — same as Twitter, LinkedIn,
+              Otherwise we crop the top and bottom, same as Twitter, LinkedIn,
               and Facebook.
             </p>
             <p className="mt-2">
@@ -191,11 +191,11 @@ export function MediaManager({ userId, profileId, media, onDone }: Props) {
             }}
             className="btn-primary text-center"
           >
-            {doneSaving ? "Saving…" : "Done — view my profile →"}
+            {doneSaving ? "Saving…" : "Done, view my profile →"}
           </button>
         ) : (
           <Link href={profileViewHref} className="btn-primary text-center">
-            Done — view my profile →
+            Done, view my profile →
           </Link>
         )}
       </div>

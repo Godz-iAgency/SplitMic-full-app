@@ -89,7 +89,7 @@ export default async function SearchPage({
             Discover Austin&apos;s music ecosystem
           </h1>
           <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
-            Browse bands, venues, talent buyers, labels, and festivals — all
+            Browse bands, venues, talent buyers, labels, and festivals, all
             verified Austin.
           </p>
         </div>

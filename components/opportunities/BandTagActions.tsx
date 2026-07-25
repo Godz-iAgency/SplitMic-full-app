@@ -77,7 +77,7 @@ export function BandTagActions({
         <>
           <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-emerald-300">
             <Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
-            Tag accepted — this event shows on your profile.
+            Tag accepted. This event shows on your profile.
           </p>
           <div className="mt-3">
             <button
@@ -93,7 +93,7 @@ export function BandTagActions({
               {shared ? (
                 <>
                   <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
-                  Shared to your feed — tap to unshare
+                  Shared to your feed, tap to unshare
                 </>
               ) : (
                 <>

@@ -14,7 +14,7 @@ export function FinalCtaSection() {
           <span className="text-brand-orange">music industry network</span>
         </h2>
         <p className="mt-6 text-lg text-brand-gray-200 sm:text-xl">
-          Three minutes to a live profile — instead of another month of cold
+          Three minutes to a live profile, instead of another month of cold
           DMs and unanswered emails. Free to join, no credit card required.
         </p>
 

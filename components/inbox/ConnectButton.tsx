@@ -49,7 +49,7 @@ export function ConnectButton({
     return (
       <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-brand-gray-300">
         <Clock className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-        Request sent — waiting for response
+        Request sent, waiting for response
       </div>
     );
   }
@@ -131,8 +131,8 @@ export function ConnectButton({
         maxLength={500}
         placeholder={
           myMode === "industry"
-            ? "Hey — I came across your profile and wanted to reach out…"
-            : "Hey — I'd love to connect. Here's what we're about…"
+            ? "Hey, I came across your profile and wanted to reach out…"
+            : "Hey, I'd love to connect. Here's what we're about…"
         }
         className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-brand-gray-500 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
       />

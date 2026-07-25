@@ -105,12 +105,12 @@ export function OpenMicSignupButton({
                     {queueLength} {queueLength === 1 ? "band is" : "bands are"}{" "}
                     already in line.
                   </span>{" "}
-                  Sign up to lock your spot — first come, first served.
+                  Sign up to lock your spot. First come, first served.
                 </>
               ) : (
                 <>
-                  Be first on the running order. First come, first served —
-                  the venue finalizes the lineup the night of.
+                  Be first on the running order. First come, first served.
+                  The venue finalizes the lineup the night of.
                 </>
               )}
             </p>

@@ -62,7 +62,7 @@ export function SceneTeaserSection({ counts, cards }: Props) {
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-brand-gray-300">
             {hasGrid
-              ? `${countLine} — live on SplitMic right now.`
+              ? `${countLine}, live on SplitMic right now.`
               : `${countLine} already here. Be one of the first Austin sees.`}
           </p>
         </Reveal>

@@ -127,12 +127,12 @@ export function VenueForm({ values, onChange }: Props) {
               { value: "combo", label: "Guarantee + Door Split" },
               { value: "varies", label: "Varies per show" },
             ]}
-            hint="Optional — helps bands decide if you're a fit"
+            hint="Optional: helps bands decide if you're a fit"
           />
           <div className="grid grid-cols-2 gap-3">
             <NumberField
               id="pay_min"
-              label="Pay — Min ($)"
+              label="Min Pay ($)"
               value={values.pay_min}
               onChange={(v) => onChange("pay_min", v)}
               min={0}
@@ -141,7 +141,7 @@ export function VenueForm({ values, onChange }: Props) {
             />
             <NumberField
               id="pay_max"
-              label="Pay — Max ($)"
+              label="Max Pay ($)"
               value={values.pay_max}
               onChange={(v) => onChange("pay_max", v)}
               min={0}

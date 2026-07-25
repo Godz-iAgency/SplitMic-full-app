@@ -89,7 +89,7 @@ export function RecordLabelForm({ values, onChange }: Props) {
         value={values.deal_types}
         onChange={(v) => onChange("deal_types", v)}
         options={DEAL_TYPE_OPTIONS}
-        hint="Optional — pick all that apply"
+        hint="Optional: pick all that apply"
       />
       <TextareaField
         id="looking_for"
@@ -99,7 +99,7 @@ export function RecordLabelForm({ values, onChange }: Props) {
         maxLength={300}
         rows={3}
         placeholder="e.g., Indie rock acts with strong original songwriting and an existing local following."
-        hint={`Optional A&R brief — ${values.looking_for.length}/300`}
+        hint={`Optional A&R brief: ${values.looking_for.length}/300`}
       />
     </div>
   );

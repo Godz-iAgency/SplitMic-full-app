@@ -23,7 +23,7 @@ export default async function AdminUserDetailPage({
 
   const playerTypeLabel = user.player_type
     ? PLAYER_TYPE_OPTIONS.find((o) => o.value === user.player_type)?.label
-    : "—";
+    : "N/A";
 
   return (
     <div className="space-y-6">
@@ -93,14 +93,14 @@ export default async function AdminUserDetailPage({
             Account
           </h2>
           <div className="space-y-3 rounded-2xl border border-white/5 bg-white/5 p-5">
-            <DetailRow label="Email" value={user.email ?? "—"} />
-            <DetailRow label="Full name" value={user.full_name ?? "—"} />
+            <DetailRow label="Email" value={user.email ?? "N/A"} />
+            <DetailRow label="Full name" value={user.full_name ?? "N/A"} />
             <DetailRow
               label="Joined"
               value={new Date(user.created_at).toLocaleString()}
             />
-            <DetailRow label="Phone" value={user.phone_number ?? "—"} />
-            <DetailRow label="Website" value={user.website_url ?? "—"} />
+            <DetailRow label="Phone" value={user.phone_number ?? "N/A"} />
+            <DetailRow label="Website" value={user.website_url ?? "N/A"} />
             <DetailRow
               label="Instagram"
               value={
@@ -110,7 +110,7 @@ export default async function AdminUserDetailPage({
                         ? ` (${user.instagram_followers.toLocaleString()} followers)`
                         : ""
                     }`
-                  : "—"
+                  : "N/A"
               }
             />
             <DetailRow
@@ -118,10 +118,10 @@ export default async function AdminUserDetailPage({
               value={
                 user.street_address
                   ? `${user.street_address}, ${user.city ?? ""}, ${user.state ?? ""} ${user.zip_code ?? ""}`
-                  : "—"
+                  : "N/A"
               }
             />
-            <DetailRow label="Bio" value={user.bio ?? "—"} multiline />
+            <DetailRow label="Bio" value={user.bio ?? "N/A"} multiline />
           </div>
 
           {/* Activity */}

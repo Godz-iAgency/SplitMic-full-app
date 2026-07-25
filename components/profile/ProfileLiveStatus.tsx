@@ -116,7 +116,7 @@ export function ProfileLiveStatus({ profileId }: Props) {
         {confirmingUnpublish ? (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-brand-gray-300">
-              Unpublishing removes you from Discover — venues, buyers, and
+              Unpublishing removes you from Discover: venues, buyers, and
               labels can&apos;t find or message you until you republish. Your
               photos and profile are kept safe. Confirm?
             </p>

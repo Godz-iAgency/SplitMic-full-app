@@ -64,7 +64,7 @@ export function HeroSection() {
         >
           Austin&apos;s music industry on one platform.
           <br className="hidden sm:block" /> Bands, Venues, Talent Buyers,
-          Record Labels & Festivals — all in one place.
+          Record Labels & Festivals, all in one place.
         </p>
 
         {/* CTAs */}

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     template: "%s | SplitMic",
   },
   description:
-    "SplitMic is Austin's music industry network — connecting bands, venues, talent buyers, festivals, and record labels on one platform.",
+    "SplitMic is Austin's music industry network, connecting bands, venues, talent buyers, festivals, and record labels on one platform.",
   applicationName: "SplitMic",
   appleWebApp: {
     capable: true,
