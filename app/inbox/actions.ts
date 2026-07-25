@@ -129,6 +129,7 @@ export async function sendMessage(
       senderProfileId: profile.id,
       kind: "message",
       messagePreview: trimmed,
+      threadId,
     });
   }
 
@@ -255,6 +256,7 @@ export async function initiateConnection(
         senderProfileId: myProfile.id,
         kind: "message",
         messagePreview: trimmed,
+        threadId: thread.id,
       });
     }
 

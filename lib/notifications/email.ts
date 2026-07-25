@@ -43,6 +43,8 @@ export async function notifyByEmail(params: {
   kind: NotifyKind;
   postTitle?: string | null;
   messagePreview?: string | null;
+  /** Required for `message` — deep-links the CTA to this specific thread. */
+  threadId?: string | null;
 }): Promise<void> {
   try {
     const apiKey = process.env.RESEND_API_KEY;
@@ -69,19 +71,32 @@ export async function notifyByEmail(params: {
       params.postTitle ?? null,
       params.messagePreview ?? null,
     );
+    const ctaPath = buildCtaPath(params.kind, params.threadId ?? null);
+    const ctaUrl = `${APP_URL}${ctaPath}`;
 
     const resend = new Resend(apiKey);
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [to],
       subject: content.subject,
-      text: `${content.heading}\n\n${content.line}\n\nOpen SplitMic: ${APP_URL}/inbox`,
-      html: renderHtml(content.heading, content.line),
+      text: `${content.heading}\n\n${content.line}\n\nOpen SplitMic: ${ctaUrl}`,
+      html: renderHtml(content.heading, content.line, ctaUrl),
     });
     if (error) console.error("[notify] Resend error:", error);
   } catch (err) {
     // Best-effort — swallow so the triggering action never fails on email.
     console.error("[notify] send failed:", err);
+  }
+}
+
+// Where the email's CTA should land, per notification kind.
+function buildCtaPath(kind: NotifyKind, threadId: string | null): string {
+  switch (kind) {
+    case "message":
+      return threadId ? `/inbox/${threadId}` : "/inbox";
+    case "connection_request":
+    case "post_response":
+      return "/inbox?tab=requests";
   }
 }
 
@@ -130,8 +145,15 @@ function buildContent(
       };
     case "message":
     default:
+      // Vary the subject per message (sender + a snippet) instead of a static
+      // string. Gmail groups same-subject emails into one conversation and
+      // collapses repeated-looking content (our button/footer) behind a "..."
+      // on every message after the first — a unique subject each time avoids
+      // that.
       return {
-        subject: "New message on SplitMic",
+        subject: messagePreview
+          ? `${senderName}: "${truncate(messagePreview, 60)}"`
+          : `New message from ${senderName}`,
         heading: `New message from ${senderName}`,
         line: messagePreview
           ? `"${truncate(messagePreview, 140)}"`
@@ -152,7 +174,7 @@ function escapeHtml(s: string): string {
     .replace(/>/g, "&gt;");
 }
 
-function renderHtml(heading: string, line: string): string {
+function renderHtml(heading: string, line: string, ctaUrl: string): string {
   return `
     <div style="font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:0 auto;color:#111;">
       <div style="background:#000;padding:20px 24px;border-radius:12px 12px 0 0;">
@@ -161,7 +183,7 @@ function renderHtml(heading: string, line: string): string {
       <div style="border:1px solid #eee;border-top:none;border-radius:0 0 12px 12px;padding:24px;">
         <h1 style="margin:0 0 12px;font-size:18px;font-weight:700;color:#111;">${escapeHtml(heading)}</h1>
         <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#444;">${escapeHtml(line)}</p>
-        <a href="${APP_URL}/inbox" style="display:inline-block;background:#FF6B35;color:#000;font-weight:700;font-size:14px;text-decoration:none;padding:11px 22px;border-radius:9999px;">Open SplitMic</a>
+        <a href="${ctaUrl}" style="display:inline-block;background:#FF6B35;color:#000;font-weight:700;font-size:14px;text-decoration:none;padding:11px 22px;border-radius:9999px;">Open SplitMic</a>
         <p style="margin:24px 0 0;color:#aaa;font-size:12px;">You're receiving this because you have a SplitMic account.</p>
       </div>
     </div>
