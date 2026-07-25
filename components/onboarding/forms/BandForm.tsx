@@ -108,7 +108,7 @@ export function BandForm({ values, onChange }: Props) {
             value={values.typical_draw}
             onChange={(v) => onChange("typical_draw", v)}
             options={DRAW_OPTIONS}
-            hint="The #1 thing talent buyers ask. A range is fine."
+            hint="The #1 thing talent buyers ask. Most Austin bands starting out pick 25-75."
           />
           <SelectField
             id="largest_venue_capacity"

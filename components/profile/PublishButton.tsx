@@ -5,9 +5,12 @@ import { publishProfile } from "@/app/profile/[id]/actions";
 
 type Props = {
   profileId: string;
+  /** Count of already-published profiles, used to frame publishing as a loss
+   *  (you're invisible to a real, sized network) rather than a plain instruction. */
+  liveProfileCount: number;
 };
 
-export function PublishButton({ profileId }: Props) {
+export function PublishButton({ profileId, liveProfileCount }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,11 +33,12 @@ export function PublishButton({ profileId }: Props) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-base font-semibold text-white">
-            You&apos;re not live yet
+            You&apos;re invisible right now
           </h3>
           <p className="mt-1 text-sm leading-relaxed text-brand-gray-300">
-            Once you publish, the Austin music scene can discover you in search.
-            You can always unpublish from your settings.
+            {liveProfileCount > 0
+              ? `${liveProfileCount} bands, venues, and buyers are already live on SplitMic, and none of them can find you yet. Publish to join them.`
+              : "Nobody in Austin's music scene can find or message you until you publish. You can always unpublish later."}
           </p>
           {error ? (
             <p className="mt-2 text-xs font-medium text-red-400">{error}</p>

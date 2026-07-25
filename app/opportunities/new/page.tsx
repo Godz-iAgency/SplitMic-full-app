@@ -75,8 +75,8 @@ export default async function NewOpportunityPage() {
 
         {!isPublished ? (
           <BlockNotice
-            title="Publish your profile first"
-            body="Your profile must be published before you can post. Head to your profile and hit Publish."
+            title="You're invisible until you publish"
+            body="Nobody in Austin's music scene can see this post, or you, until your profile is published. Head over and hit Publish to go live."
             ctaHref={`/profile/${profile.profile_id}`}
             ctaLabel="Go to my profile"
           />

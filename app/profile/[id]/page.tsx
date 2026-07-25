@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { tableForPlayerType } from "@/lib/supabase/profile";
+import { getProfileCountsByType } from "@/lib/supabase/search";
 import {
   getConnectionState,
   getConnectionCount,
@@ -102,6 +103,14 @@ export default async function ProfilePage({
   const isOwner = viewer.id === profile.user_id;
   const playerType = profile.player_type as PlayerType;
   const playerOption = PLAYER_TYPE_OPTIONS.find((o) => o.value === playerType);
+
+  // Loss-aversion framing on the publish CTA: how many profiles are already
+  // live (and can't see you yet). Only fetched for the one case that needs it.
+  let liveProfileCount = 0;
+  if (isOwner && !profile.is_published) {
+    const counts = await getProfileCountsByType(supabase);
+    liveProfileCount = counts.all;
+  }
 
   // Owner info
   const { data: owner } = await supabase
@@ -611,7 +620,7 @@ export default async function ProfilePage({
 
         {/* Owner-only publish CTA */}
         {isOwner && !profile.is_published ? (
-          <PublishButton profileId={profile.id} />
+          <PublishButton profileId={profile.id} liveProfileCount={liveProfileCount} />
         ) : null}
 
         {/* Live status + Update button (shown once published) */}
