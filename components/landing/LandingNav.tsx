@@ -4,7 +4,7 @@ import { Home, Briefcase, HelpCircle } from "lucide-react";
 
 const TABS = [
   { href: "#who-its-for", label: "Home", Icon: Home },
-  { href: "#features", label: "Features", Icon: Briefcase },
+  { href: "#features", label: "Benefits", Icon: Briefcase },
   { href: "#how-it-works", label: "How it works", Icon: HelpCircle },
 ];
 
