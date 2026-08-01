@@ -20,8 +20,11 @@ export type SpecificValues =
   | RecordLabelFormValues
   | FestivalFormValues;
 
-/** Imperative handle so a sibling button can trigger this form's save. */
-export type EditInfoFormHandle = { save: () => Promise<void> };
+/** Imperative handle so a sibling button can trigger this form's save.
+ *  Resolves true on success (navigating away — caller should leave its own
+ *  "saving" UI as-is rather than reset it), false on failure (caller should
+ *  reset so the user can retry). */
+export type EditInfoFormHandle = { save: () => Promise<boolean> };
 
 type Props = {
   profileId: string;
@@ -58,10 +61,10 @@ function EditInfoFormInner(
   }
 
   // Persist every field, then go to the public profile. Exposed via the
-  // imperative handle below so the "Done — view my profile" button in the
-  // photos section runs this exact save — edits are never dropped, whichever
-  // button the user clicks to finish.
-  async function save() {
+  // imperative handle below so the "Done" button in the photos section runs
+  // this exact save — edits are never dropped, whichever button the user
+  // clicks to finish.
+  async function save(): Promise<boolean> {
     setSaving(true);
     setError(null);
 
@@ -76,7 +79,7 @@ function EditInfoFormInner(
     if (result.error) {
       setSaving(false);
       setError(result.error);
-      return;
+      return false;
     }
 
     // Best-effort: if this silently fails, the profile stays unpublished and
@@ -86,8 +89,12 @@ function EditInfoFormInner(
       await publishProfile(profileId);
     }
 
-    setSaving(false);
+    // Deliberately leave `saving` true: this component is about to unmount
+    // once the navigation below lands. Resetting it first flipped the button
+    // back to its normal, clickable state for a frame — visible as the whole
+    // page flashing back to the edit form before the profile page took over.
     router.push(`/profile/${profileId}`);
+    return true;
   }
 
   useImperativeHandle(ref, () => ({ save }));

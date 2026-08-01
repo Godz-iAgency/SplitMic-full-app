@@ -20,9 +20,12 @@ type Props = {
   /**
    * When provided, the "Done" button saves the profile-info form (rendered as
    * a sibling) before navigating, instead of just linking away. Falls back to
-   * a plain link when omitted.
+   * a plain link when omitted. Resolves true on success (navigating away —
+   * the button should stay disabled rather than flash back to normal for a
+   * frame before the new page takes over) or false on failure (re-enable so
+   * the user can retry).
    */
-  onDone?: () => Promise<void>;
+  onDone?: () => Promise<boolean>;
   /** Swaps the finish button's copy to reflect that this save also publishes
    *  the profile (the post-onboarding first pass through this page). */
   publishOnDone?: boolean;
@@ -195,11 +198,11 @@ export function MediaManager({
             disabled={doneSaving}
             onClick={async () => {
               setDoneSaving(true);
-              try {
-                await onDone();
-              } finally {
-                setDoneSaving(false);
-              }
+              const succeeded = await onDone();
+              // On success, leave the button disabled: the page is about to
+              // unmount once navigation lands. Resetting here first is what
+              // caused the flash back to this form before the swap.
+              if (!succeeded) setDoneSaving(false);
             }}
             className="btn-primary text-center"
           >

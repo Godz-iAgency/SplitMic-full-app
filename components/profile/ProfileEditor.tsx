@@ -42,8 +42,11 @@ export function ProfileEditor({
   const formRef = useRef<EditInfoFormHandle>(null);
 
   // Save the info form (persists the fields + navigates to the profile).
-  const handleDone = async () => {
-    await formRef.current?.save();
+  // Returns whether it succeeded, so MediaManager knows whether to leave its
+  // own button in the "saving" state (navigating away) or reset it (failed,
+  // let the user retry).
+  const handleDone = async (): Promise<boolean> => {
+    return (await formRef.current?.save()) ?? false;
   };
 
   return (
