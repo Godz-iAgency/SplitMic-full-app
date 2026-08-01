@@ -27,5 +27,15 @@ export function createServiceRoleClient() {
       autoRefreshToken: false,
       persistSession: false,
     },
+    global: {
+      // Next's App Router caches fetch() by default, and supabase-js issues its
+      // queries through fetch. Without this, any code path that runs the SAME
+      // query repeatedly keeps getting the first response back: the scheduled
+      // cleanup job would see a stale empty result set every run after the
+      // first and silently delete nothing, and admin screens would show stale
+      // rows. Verified — not theoretical.
+      fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+        fetch(input, { ...init, cache: "no-store" }),
+    },
   });
 }

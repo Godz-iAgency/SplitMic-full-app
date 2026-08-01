@@ -96,6 +96,35 @@ bio, contact info) plus a type-specific detail table.
 - **AI show-matching** (`/match`, talent buyers only) — describe a show in plain English, Gemini extracts genre/draw/size/vibe criteria, we rank published bands against it using our own data (Gemini never ranks or sees band data directly).
 - **Admin console** (`/admin`) — gated to a hardcoded email allowlist in `lib/supabase/admin.ts`.
 
+## Scheduled cleanup
+
+Marketplace posts have two separate clocks, and they are not the same thing:
+
+| | When | What it does |
+|---|---|---|
+| **Soft expiry** | 7 days after the event / open-until date | Post stops appearing in the Feed. Deletes nothing. Computed by a DB trigger into `expires_at`. |
+| **Retention** | 1 year after that | Row is permanently deleted. |
+
+The long gap is deliberate. A post is the **only** place a show's history lives:
+`event_band_tags` (which bands accepted a gig) and `open_mic_signups` (the
+running order and who checked in) both cascade-delete with it. Deleting at soft
+expiry would wipe a venue's open mic roster a week after the night happened.
+
+`GET /api/cron/cleanup-posts` runs the job. It requires
+`Authorization: Bearer $CRON_SECRET` and refuses to run at all if `CRON_SECRET`
+is unset, so it can never run unauthenticated.
+
+```bash
+# See what would be deleted, without deleting
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  "https://<your-domain>/api/cron/cleanup-posts?dryRun=1"
+```
+
+`vercel.json` schedules it weekly. On any other host, point that host's
+scheduler at the same URL with the same header. Retention can be overridden per
+call (`?retentionDays=730`), but anything under 30 days is rejected — that
+would delete history still in use.
+
 ## Testing
 
 ```bash

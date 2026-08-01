@@ -24,6 +24,7 @@ schema gap (some legacy tables with no migration file), see
 - **AI show-matching for talent buyers** (`/match`, talent-buyer accounts only) — plain-English show description → Gemini extracts genre/draw/band-size/vibe criteria → ranked against published bands using our own data. Gemini never ranks or sees band data directly; a "why matched" line and Connect button sit on every result. Degrades to ranking by profile completeness if Gemini is unreachable, with that stated in the UI. See `lib/ai/`, `lib/supabase/matchBands.ts`, `app/match/`.
 - **Admin console** — dashboard stats, user moderation (suspend/delete/publish), post moderation, connection audit, full action log.
 - **Notifications (email)** — Resend transactional email for connection requests, post responses, and new messages, each deep-linking to the specific thread/request rather than a generic inbox (`buildCtaPath` in `lib/notifications/email.ts`).
+- **Scheduled cleanup of expired posts** — `GET /api/cron/cleanup-posts`, secret-guarded, dry-run supported, batched, idempotent. Posts soft-expire from the Feed after 7 days (unchanged) and are hard-deleted a **year** later. The long window is deliberate: `event_band_tags` and `open_mic_signups` cascade with the post, so it is the only place a show's history lives. Retention under 30 days is rejected outright. Scheduled weekly via `vercel.json`; portable to any scheduler.
 - **PWA** — installable, custom install prompt, offline fallback page, service worker (production only).
 - **Public landing page** — hero, features, how-it-works, player-type explainers, support/contact form.
 
@@ -34,7 +35,7 @@ schema gap (some legacy tables with no migration file), see
 
 ### ⛔ Not started
 
-- **Cleanup job for expired marketplace posts** — they soft-expire (stop appearing) but are never hard-deleted.
+_(nothing outstanding from the original round)_
 
 ### 🧪 Tests
 
@@ -72,6 +73,8 @@ Supabase project or a DOM. Still verified manually.
 | 3 | Open mic signup model | **Simple ordered list.** First-come-first-served; venue can reorder + check in. No time-slot picker. |
 | 4 | Email work | **Deep links to the specific thread/request/post.** Domain verification remains a manual ops task. |
 | 5 | AI fallback provider | **None.** Considered wiring `OPENROUTER_API_KEY` as a backup LLM if Gemini is down; decided the existing graceful degrade (rank by profile completeness, tell the user) already covers it, and a second provider isn't worth the added surface for a rare failure mode. |
+| 6 | Post retention | **1 year** past soft expiry, then hard delete. 90 days was considered and rejected: at current scale the storage difference is nil, and a shorter window would destroy show history before a future "shows played" profile feature could ever use it. Easy to tighten later; impossible to un-delete. |
+| 7 | Show history storage | **Stays on the post for now.** There is no separate archive — `event_band_tags` / `open_mic_signups` hang off `marketplace_posts` and cascade with it. A real "Memories"-style permanent history on band/venue profiles (surviving post deletion) is a **separate future feature**, not part of cleanup. |
 
 ---
 
@@ -88,7 +91,9 @@ Supabase project or a DOM. Still verified manually.
 
 Roughly in order of size:
 
-1. **Cleanup job for expired marketplace posts** — small, self-contained (a scheduled function or a query run on a cron trigger to hard-delete rows past `expires_at`).
+1. **Set `CRON_SECRET` in the deploy env** — until it's set, the cleanup endpoint refuses to run (by design). Generate with `openssl rand -hex 32`.
 2. **Resend domain verification** — ops task, not code, but blocks real email delivery.
-3. **Admin access model** — move off the hardcoded allowlist if a second admin is ever needed.
-4. **Widen test coverage** — the natural next targets are `lib/supabase/marketplace.ts` (post expiry/visibility rules) and `lib/pendingProfile.ts` (localStorage validation), both close to pure.
+3. **"Shows played" history on profiles** — the Snapchat-Memories idea: a permanent, browsable record of past shows on a band/venue profile, independent of the post's lifecycle. Real product value (social proof for bands, activity signal for venues) and the data exists today; needs its own design.
+4. **Admin access model** — move off the hardcoded allowlist if a second admin is ever needed.
+5. **Widen test coverage** — the natural next targets are `lib/supabase/marketplace.ts` (post expiry/visibility rules) and `lib/pendingProfile.ts` (localStorage validation), both close to pure.
+6. **Audit fetch caching on the cookie-based Supabase client** — the service-role client had a real Next.js fetch-cache staleness bug (fixed in `lib/supabase/service.ts`). `lib/supabase/server.ts` was not audited for the same issue.
