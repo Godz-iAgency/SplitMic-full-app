@@ -1,13 +1,21 @@
-# SplitMic — Phase 1 / Week 1
+# SplitMic
 
-Austin-only music ecosystem. Week 1 ships **Google OAuth + multi-step onboarding** for all 5 player types.
+Austin-only music-industry network connecting bands, venues, talent buyers,
+record labels, and festivals on one platform.
+
+For current status, in-flight work, and the decision log, see
+[`PROGRESS.md`](PROGRESS.md). For the database schema history (including some
+unused legacy tables), see [`migrations/SCHEMA_HISTORY.md`](migrations/SCHEMA_HISTORY.md).
+This file covers setup and a tour of the codebase.
 
 ## Stack
 
-- Next.js 14 (App Router, TypeScript)
-- Supabase Auth (Google OAuth) + Postgres
+- Next.js 14 (App Router, TypeScript, server actions)
+- Supabase (Postgres, Auth, Storage, Row Level Security)
 - Tailwind CSS
-- Google Maps Geocoding API (Austin address validation)
+- Google Maps Geocoding API (Austin address validation during onboarding)
+- Google Gemini API (AI show-matching for talent buyers)
+- Resend (transactional email)
 
 ## Run locally
 
@@ -16,75 +24,79 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000 — you'll be redirected to `/login`.
+Open http://localhost:3000. Without a session you're redirected to `/login`.
 
-## Env vars (`.env.local`)
+## Environment variables
+
+Copy `.env.example` to `.env.local` and fill in every value.
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=       # server-only, bypasses RLS — admin moderation
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
-OPENROUTER_API_KEY=
+NEXT_PUBLIC_APP_URL=             # site origin for links in emails; defaults to https://splitmic.com
+RESEND_API_KEY=
+NOTIFY_FROM_EMAIL=               # user notification emails; falls back to a Resend shared address
+SUPPORT_FROM_EMAIL=              # support form emails; same fallback
+GEMINI_API_KEY=                  # AI show-matching; needs the Generative Language API enabled
 ```
 
-> ⚠️ **Never commit `.env.local`.** Rotate any credentials that have been pasted into a chat or document.
+> **Never commit `.env.local`.** Rotate any credential that's been pasted into a chat, ticket, or doc.
 
-## Supabase setup checklist
+## Supabase setup
 
-1. **Auth → Providers → Google**: enable Google. Use the same client ID / secret as `NEXT_PUBLIC_GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
-2. **Auth → URL Configuration**: add the redirect URLs:
+1. **Auth → Providers → Google** — enable it, using the same client ID/secret as above.
+2. **Auth → URL Configuration → Redirect URLs** — add:
    - `http://localhost:3000/auth/callback`
-   - `https://<your-vercel-domain>/auth/callback` (Week 5)
-3. **Auth → URL Configuration → Site URL**: set to `http://localhost:3000` for now.
-4. **RLS**: every table this app writes to (`users`, `bands`, `venues`, `talent_buyers`, `record_labels`, `festivals`) needs an authenticated insert/update policy keyed on `auth.uid() = user_id` (or `id` for `users`).
+   - `https://<your-production-domain>/auth/callback`
+3. **Auth → URL Configuration → Site URL** — your production domain (or `http://localhost:3000` while developing).
+4. **Storage** — a `profile-media` bucket, public read, for avatars/banners/gallery photos/intro videos.
+5. **Database** — run every file in [`migrations/`](migrations) in numeric order (`step1`, `step4`, `step5`, `step5_fix`, `step6` … ). There is no `step2`/`step3` file; see `migrations/SCHEMA_HISTORY.md` for why. RLS policies are defined inline in each migration file.
+6. **Resend** — verify your sending domain before real users need to receive email; until then, delivery is best-effort to the account owner's own inbox (see `.env.example` notes above).
 
-## Expected schema (Week 1)
+## Project structure
 
-The app writes to these columns. If any column name in your existing schema differs, update the corresponding insert in `components/onboarding/OnboardingFlow.tsx` (`buildProfileRow`) and `app/auth/callback/route.ts`.
+```
+app/                      Next.js App Router — one folder per route
+  admin/                  Admin console (stats, moderation, action log)
+  auth/callback/          OAuth code exchange + first-time users row
+  inbox/                  DM threads + connection requests
+  match/                  AI show-matching (talent buyers only)
+  onboarding/              3-step signup flow (player type → address → profile)
+  opportunities/          Marketplace: events, opportunities, open mic rosters
+  profile/                Public profile view + owner edit flow
+  search/                 Discover (browse/filter published profiles)
+  support/                Contact form
 
-### `users`
-- `id` (uuid, PK, references `auth.users.id`)
-- `email` (text)
-- `google_auth_id` (text)
-- `full_name` (text)
-- `phone_number` (text)
-- `avatar_url` (text)
-- `player_type` (text — one of `band`, `venue`, `talent_buyer`, `record_label`, `festival`)
-- `street_address` (text)
-- `address_line_2` (text, nullable)
-- `city` (text — always `Austin`)
-- `state` (text — always `TX`)
-- `zip_code` (text — 5-digit, must be 78701–78799)
-- `profile_completed` (bool, default false)
-- `updated_at` (timestamptz)
+components/               One folder per feature area, mirrors app/
+lib/
+  ai/                     Gemini client + show-matching extraction
+  scoring/                Band Readiness Score
+  supabase/               Server-side query/action helpers (search, messaging, marketplace, profile)
+  notifications/          Transactional email
 
-### Player profile tables
-Each row is keyed on `user_id` (uuid, unique, references `users.id`) and shares the common fields:
-`full_name`, `phone_number`, `bio`, `instagram_handle`, `instagram_followers`.
+migrations/                Hand-run SQL migrations (run in the Supabase SQL editor, in order)
+```
 
-- `bands`: `+ band_name, genres (text[]), member_count, sound_description, set_length_minutes`
-- `venues`: `+ venue_name, capacity, genres_hosted (text[]), shows_per_week, booking_contact_name, booking_contact_email`
-- `talent_buyers`: `+ company_name, company_type, genres_focus (text[]), typical_booking_fee, booking_radius_miles`
-- `record_labels`: `+ label_name, label_type, genres_focus (text[]), artists_signed`
-- `festivals`: `+ festival_name, festival_start_date, festival_end_date, genres_featured (text[]), expected_attendance, total_band_slots`
+## Player types
 
-## Routes
+`band`, `venue`, `talent_buyer`, `record_label`, `festival` — see `lib/types.ts`
+for the full field shape of each. Every profile shares common fields (name,
+bio, contact info) plus a type-specific detail table.
 
-- `/` — bounces user based on session + profile state
-- `/login` — Google OAuth (signed-in users with completed profile go to `/search`)
-- `/auth/callback` — Supabase OAuth code exchange + first-time `users` row insert
-- `/onboarding` — 3 steps: player type → Austin address → profile form (Week 2 will add a 4th: photos)
-- `/api/validate-address` — POST `{ address }` → Google Maps geocode + Austin/ZIP check
-- `/search` — Week 1 placeholder welcome page with logout
+## Core flows, in brief
 
-## Austin address validation
+- **Onboarding** — 3 steps: player type → Google-Maps-validated Austin address → player-type-specific profile form. Immediately after, the user lands on `/profile/edit` to add photos/video, which auto-publishes the profile on save.
+- **Discover** — browse/search published profiles by type, genre, and text query.
+- **Marketplace (Opportunities)** — industry players post events/opportunities/open mics; bands can be tagged, apply, or sign up (open mic).
+- **Connections & Messaging** — industry accounts can DM directly; bands send a Connect request that the other side accepts/declines, opening a thread.
+- **AI show-matching** (`/match`, talent buyers only) — describe a show in plain English, Gemini extracts genre/draw/size/vibe criteria, we rank published bands against it using our own data (Gemini never ranks or sees band data directly).
+- **Admin console** (`/admin`) — gated to a hardcoded email allowlist in `lib/supabase/admin.ts`.
 
-The geocoder must return `locality = Austin`, `administrative_area_level_1 = TX`, `country = US`, and a `postal_code` in `78701–78799`. Anything else is rejected with a user-facing error.
+## Testing
 
-## Week 1 → Week 2 handoff
-
-- Photo / video upload (Step 4 of onboarding, currently shown as locked).
-- Austin band scoring engine.
-- Real `/search` UI.
+There is no automated test suite yet (`npm run lint` and `npx tsc --noEmit`
+are the only checks). See `PROGRESS.md` for the current housekeeping list.
