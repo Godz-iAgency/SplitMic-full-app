@@ -23,7 +23,7 @@ export function LogoutButton() {
       onClick={handleLogout}
       disabled={loading}
       aria-label="Sign out"
-      className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-brand-gray-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold text-brand-gray-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
     >
       <LogOut className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
       <span>{loading ? "Signing out…" : "Logout"}</span>

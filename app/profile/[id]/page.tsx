@@ -318,21 +318,27 @@ export default async function ProfilePage({
           </div>
         </div>
 
-        {/* Identity + content — pl matches avatar's left offset so name aligns under avatar */}
-        <section className="px-5 sm:px-8">
-          {/* Owner actions — Edit + Logout. These live here (not in the header)
-              so logout can't be tapped by accident, and edit is always in the
-              same spot across every player type. Right-aligned to sit opposite
-              the left-pinned avatar. */}
+        {/* Identity + content — no extra horizontal padding of its own, so it
+            lines up with the banner's left/right edges above (which only get
+            the outer container's padding). Previously this had its own px-5
+            sm:px-8 on top of that, indenting all page content further in
+            than the photo instead of aligning under it. */}
+        <section>
+          {/* Owner actions — Publish toggle + Edit + Logout. These live here
+              (not the header) so logout can't be tapped by accident, and edit
+              is always in the same spot across every player type. flex-wrap
+              + whitespace-nowrap on each button: if the row is ever too
+              narrow for all three, whole buttons wrap to a second line
+              instead of one button's own text breaking awkwardly mid-word. */}
           {isOwner ? (
-            <div className="mb-5 flex items-center justify-end gap-2.5">
+            <div className="mb-5 flex flex-wrap items-center justify-end gap-2.5">
               <PublishToggle
                 profileId={profile.id}
                 isPublished={profile.is_published}
               />
               <Link
                 href="/profile/edit"
-                className="inline-flex items-center gap-1.5 rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black transition hover:bg-brand-orange/90"
+                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black transition hover:bg-brand-orange/90"
               >
                 <Pencil className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
                 Edit profile

@@ -23,7 +23,7 @@ export function AdminUserSearchBox() {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Search by name or email..."
-        className="flex-1 rounded-full border border-white/10 bg-black/40 px-4 py-2 text-sm text-white placeholder:text-brand-gray-400 focus:border-brand-orange focus:outline-none"
+        className="min-w-0 flex-1 rounded-full border border-white/10 bg-black/40 px-4 py-2 text-sm text-white placeholder:text-brand-gray-400 focus:border-brand-orange focus:outline-none"
       />
       <button
         type="submit"

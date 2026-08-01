@@ -24,7 +24,7 @@ export default async function AdminLayout({
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black">
-      <header className="flex items-center justify-between gap-3 border-b border-white/10 shadow-sm shadow-black/40 bg-black/40 px-5 py-4 sm:px-8">
+      <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-white/10 shadow-sm shadow-black/40 bg-black/40 px-5 py-4 sm:px-8">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Link href="/admin" className="shrink-0">
             <Logo className="text-lg sm:text-2xl" />

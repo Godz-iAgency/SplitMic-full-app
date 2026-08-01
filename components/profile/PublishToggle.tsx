@@ -62,7 +62,7 @@ export function PublishToggle({ profileId, isPublished }: Props) {
           type="button"
           onClick={handleUnpublish}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-full border border-brand-orange/40 bg-brand-orange/10 px-4 py-2 text-sm font-bold text-brand-orange transition hover:bg-brand-orange/20 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-brand-orange/40 bg-brand-orange/10 px-4 py-2 text-sm font-bold text-brand-orange transition hover:bg-brand-orange/20 disabled:opacity-50"
         >
           <span className="relative flex h-2 w-2 shrink-0">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-orange opacity-70" />
@@ -75,7 +75,7 @@ export function PublishToggle({ profileId, isPublished }: Props) {
           type="button"
           onClick={handlePublish}
           disabled={busy}
-          className="rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50"
+          className="whitespace-nowrap rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50"
         >
           {busy ? "Publishing…" : "Publish"}
         </button>
