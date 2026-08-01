@@ -18,14 +18,23 @@ type Props = {
   profileId: string;
   media: MediaRow[];
   /**
-   * When provided, the "Done — view my profile" button saves the profile-info
-   * form (rendered as a sibling) before navigating, instead of just linking
-   * away. Falls back to a plain link when omitted.
+   * When provided, the "Done" button saves the profile-info form (rendered as
+   * a sibling) before navigating, instead of just linking away. Falls back to
+   * a plain link when omitted.
    */
   onDone?: () => Promise<void>;
+  /** Swaps the finish button's copy to reflect that this save also publishes
+   *  the profile (the post-onboarding first pass through this page). */
+  publishOnDone?: boolean;
 };
 
-export function MediaManager({ userId, profileId, media, onDone }: Props) {
+export function MediaManager({
+  userId,
+  profileId,
+  media,
+  onDone,
+  publishOnDone,
+}: Props) {
   const router = useRouter();
   const refresh = () => router.refresh();
 
@@ -59,6 +68,9 @@ export function MediaManager({ userId, profileId, media, onDone }: Props) {
   );
 
   const profileViewHref = `/profile/${profileId}`;
+  const doneLabel = publishOnDone
+    ? "Done, publish my profile →"
+    : "Done, view my profile →";
 
   return (
     <div className="space-y-12">
@@ -191,11 +203,11 @@ export function MediaManager({ userId, profileId, media, onDone }: Props) {
             }}
             className="btn-primary text-center"
           >
-            {doneSaving ? "Saving…" : "Done, view my profile →"}
+            {doneSaving ? "Saving…" : doneLabel}
           </button>
         ) : (
           <Link href={profileViewHref} className="btn-primary text-center">
-            Done, view my profile →
+            {doneLabel}
           </Link>
         )}
       </div>

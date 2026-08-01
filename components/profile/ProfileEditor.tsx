@@ -17,15 +17,18 @@ type Props = {
   playerType: PlayerType;
   initialCommon: CommonFieldValues;
   initialSpecific: SpecificValues;
+  /** The first pass through this page, right after onboarding. Both finish
+   *  buttons publish the profile as part of their save, instead of leaving a
+   *  brand-new user to find the Publish control themselves afterward. */
+  autoPublishOnSave?: boolean;
 };
 
 /**
  * Wraps the two edit sections (Photos & video + Profile info) so they can share
- * one save path. The photos section's "Done — view my profile" button and the
- * info form's "Save & view profile" button both run the SAME save via the form
- * handle below — so a profile edit is never lost regardless of which button the
- * user clicks to finish. Applies to every player type (the info form swaps its
- * fields internally by playerType).
+ * one save path. The photos section's "Done" button and the info form's save
+ * button both run the SAME save via the form handle below — so a profile edit
+ * is never lost regardless of which button the user clicks to finish. Applies
+ * to every player type (the info form swaps its fields internally by playerType).
  */
 export function ProfileEditor({
   userId,
@@ -34,6 +37,7 @@ export function ProfileEditor({
   playerType,
   initialCommon,
   initialSpecific,
+  autoPublishOnSave = false,
 }: Props) {
   const formRef = useRef<EditInfoFormHandle>(null);
 
@@ -58,6 +62,7 @@ export function ProfileEditor({
           profileId={profileId}
           media={media}
           onDone={handleDone}
+          publishOnDone={autoPublishOnSave}
         />
       </section>
 
@@ -76,6 +81,7 @@ export function ProfileEditor({
           playerType={playerType}
           initialCommon={initialCommon}
           initialSpecific={initialSpecific}
+          autoPublishOnSave={autoPublishOnSave}
         />
       </section>
     </>

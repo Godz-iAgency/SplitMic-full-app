@@ -11,6 +11,7 @@ import { RecordLabelForm, type RecordLabelFormValues } from "@/components/onboar
 import { FestivalForm, type FestivalFormValues } from "@/components/onboarding/forms/FestivalForm";
 import type { ProfilePayload } from "@/components/onboarding/ProfileStep";
 import { saveProfileInfo } from "@/app/profile/edit/actions";
+import { publishProfile } from "@/app/profile/[id]/actions";
 
 export type SpecificValues =
   | BandFormValues
@@ -27,10 +28,20 @@ type Props = {
   playerType: PlayerType;
   initialCommon: CommonFieldValues;
   initialSpecific: SpecificValues;
+  /** The first pass through /profile/edit, right after onboarding: publish as
+   *  part of this save so a new user doesn't land on an unpublished profile
+   *  and have to find the Publish control themselves. */
+  autoPublishOnSave?: boolean;
 };
 
 function EditInfoFormInner(
-  { profileId, playerType, initialCommon, initialSpecific }: Props,
+  {
+    profileId,
+    playerType,
+    initialCommon,
+    initialSpecific,
+    autoPublishOnSave = false,
+  }: Props,
   ref: React.ForwardedRef<EditInfoFormHandle>,
 ) {
   const router = useRouter();
@@ -62,11 +73,20 @@ function EditInfoFormInner(
 
     const result = await saveProfileInfo(profileId, payload);
 
-    setSaving(false);
     if (result.error) {
+      setSaving(false);
       setError(result.error);
       return;
     }
+
+    // Best-effort: if this silently fails, the profile stays unpublished and
+    // the Publish toggle at the top of the profile page still shows "Publish"
+    // — the user isn't stuck, they just get the manual path instead.
+    if (autoPublishOnSave) {
+      await publishProfile(profileId);
+    }
+
+    setSaving(false);
     router.push(`/profile/${profileId}`);
   }
 
@@ -163,7 +183,11 @@ function EditInfoFormInner(
           disabled={saving}
           className="btn-primary sm:min-w-[180px]"
         >
-          {saving ? "Saving…" : "Save & view profile"}
+          {saving
+            ? "Saving…"
+            : autoPublishOnSave
+              ? "Save & publish my profile"
+              : "Save & view profile"}
         </button>
 
       </div>

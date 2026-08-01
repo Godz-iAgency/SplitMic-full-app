@@ -137,8 +137,8 @@ export default async function ProfileEditPage({
                 </p>
                 <p className="mt-1 text-sm text-brand-gray-200">
                   Profiles with a banner, avatar, and intro video get noticed
-                  by the Austin music scene. Add yours below, then publish
-                  when you're ready.
+                  by the Austin music scene. Add yours below, we'll publish
+                  your profile as soon as you're done.
                 </p>
                 {readinessScore !== null ? (
                   <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand-orange/15 px-3 py-1 text-xs font-bold text-brand-orange">
@@ -162,6 +162,7 @@ export default async function ProfileEditPage({
           playerType={playerType}
           initialCommon={initialCommon}
           initialSpecific={initialSpecific}
+          autoPublishOnSave={isPostOnboarding}
         />
 
       </div>

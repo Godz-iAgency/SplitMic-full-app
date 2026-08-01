@@ -36,6 +36,7 @@ import {
 import { AppHeader } from "@/components/AppHeader";
 import { LogoutButton } from "@/components/LogoutButton";
 import { PublishButton } from "@/components/profile/PublishButton";
+import { PublishToggle } from "@/components/profile/PublishToggle";
 import { ProfileLiveStatus } from "@/components/profile/ProfileLiveStatus";
 import { BandReadinessPanel } from "@/components/profile/BandReadinessPanel";
 import { ReadinessBadge } from "@/components/profile/ReadinessBadge";
@@ -325,6 +326,10 @@ export default async function ProfilePage({
               the left-pinned avatar. */}
           {isOwner ? (
             <div className="mb-5 flex items-center justify-end gap-2.5">
+              <PublishToggle
+                profileId={profile.id}
+                isPublished={profile.is_published}
+              />
               <Link
                 href="/profile/edit"
                 className="inline-flex items-center gap-1.5 rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black transition hover:bg-brand-orange/90"
