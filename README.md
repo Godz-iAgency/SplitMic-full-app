@@ -98,5 +98,19 @@ bio, contact info) plus a type-specific detail table.
 
 ## Testing
 
-There is no automated test suite yet (`npm run lint` and `npx tsc --noEmit`
-are the only checks). See `PROGRESS.md` for the current housekeeping list.
+```bash
+npm test          # run once
+npm run test:watch  # re-run on change
+npx tsc --noEmit  # type check
+npm run lint
+```
+
+Tests use [Vitest](https://vitest.dev) and live next to the code they cover
+(`lib/**/*.test.ts`). Scope is the pure decision logic — Band Readiness
+scoring, AI criteria extraction and validation, band ranking, and input
+formatting. They run without a database, a browser, or a network call (the
+Gemini client is mocked), so the whole suite finishes in a few seconds.
+
+Server actions and React components are **not** covered; they need a live
+Supabase project or a DOM, which is a much heavier setup than the decision
+logic they delegate to. Verifying those is still manual.

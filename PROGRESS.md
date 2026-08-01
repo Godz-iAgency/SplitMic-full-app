@@ -34,8 +34,22 @@ schema gap (some legacy tables with no migration file), see
 
 ### ⛔ Not started
 
-- **Automated tests** — no test framework, no test script.
 - **Cleanup job for expired marketplace posts** — they soft-expire (stop appearing) but are never hard-deleted.
+
+### 🧪 Tests
+
+Vitest, 67 tests across `lib/**/*.test.ts`, run with `npm test`. Covers the
+pure decision logic: Band Readiness scoring, AI criteria extraction and
+validation (Gemini mocked), band ranking, and input formatting. No database,
+browser, or network needed.
+
+Both bugs found while building show-matching have regression tests, and both
+were verified to actually fail when the fix is reverted:
+- Genre must gate the shortlist (a band matching none of the requested genres is out, however well it scores elsewhere).
+- The smallest draw bucket is treated as no constraint (every band clears it, so scoring it was noise).
+
+Server actions and React components are not covered — they need a live
+Supabase project or a DOM. Still verified manually.
 
 ### 🧹 Housekeeping (resolved this round)
 
@@ -75,6 +89,6 @@ schema gap (some legacy tables with no migration file), see
 Roughly in order of size:
 
 1. **Cleanup job for expired marketplace posts** — small, self-contained (a scheduled function or a query run on a cron trigger to hard-delete rows past `expires_at`).
-2. **Automated test suite** — needs a framework decision (Vitest is the natural fit for a Next.js/TypeScript app) and a scope decision (unit tests on `lib/` logic like scoring/matching vs. integration tests against a real Supabase test project).
-3. **Resend domain verification** — ops task, not code, but blocks real email delivery.
-4. **Admin access model** — move off the hardcoded allowlist if a second admin is ever needed.
+2. **Resend domain verification** — ops task, not code, but blocks real email delivery.
+3. **Admin access model** — move off the hardcoded allowlist if a second admin is ever needed.
+4. **Widen test coverage** — the natural next targets are `lib/supabase/marketplace.ts` (post expiry/visibility rules) and `lib/pendingProfile.ts` (localStorage validation), both close to pure.
