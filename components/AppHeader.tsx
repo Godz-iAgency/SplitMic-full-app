@@ -5,12 +5,12 @@ import {
   Newspaper,
   UserCircle,
   LifeBuoy,
-  MessageCircle,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
 import { InboxBell } from "@/components/inbox/InboxBell";
 import { AdminLink } from "@/components/admin/AdminLink";
+import { HeaderMessagesLink } from "@/components/HeaderMessagesLink";
 
 type Active = "home" | "discover" | "feed" | "inbox" | "profile" | null;
 
@@ -85,18 +85,10 @@ export function AppHeader({
           </span>
           {/* Messages shortcut — mobile/tablet only. Goes straight to your
               conversations so you don't have to open the notifications bell
-              first. (Edit + Logout now live on the profile page on mobile.) */}
-          <Link
-            href="/inbox?tab=conversations"
-            aria-label="Messages"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition hover:bg-white/10 hover:text-brand-orange lg:hidden"
-          >
-            <MessageCircle
-              className="h-5 w-5"
-              strokeWidth={1.75}
-              aria-hidden="true"
-            />
-          </Link>
+              first. (Edit + Logout now live on the profile page on mobile.)
+              Becomes a dashboard shortcut for admin accounts — see
+              HeaderMessagesLink for why. */}
+          <HeaderMessagesLink />
           <InboxBell />
           <Link
             href="/support"

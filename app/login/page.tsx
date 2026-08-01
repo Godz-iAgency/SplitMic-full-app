@@ -27,7 +27,7 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center bg-gradient-to-b from-black via-brand-gray-900 to-black px-6 py-12">
+    <main className="relative flex min-h-screen items-center justify-center bg-gradient-to-b from-black via-brand-gray-900 to-black px-3 py-12 sm:px-6">
       {/* Back to landing page */}
       <Link
         href="/"
@@ -42,7 +42,7 @@ export default async function LoginPage() {
           <Logo className="text-4xl sm:text-5xl" />
         </div>
 
-        <div className="card animate-slide-up">
+        <div className="card animate-slide-up p-4 sm:p-6">
           <div className="text-center">
             <h1 className="text-2xl font-bold leading-tight sm:text-3xl">
               Welcome back

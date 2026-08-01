@@ -289,7 +289,7 @@ export default async function ProfilePage({
 
           {/* Avatar pinned to banner bottom edge, left-aligned inside the card */}
           <div className="absolute bottom-0 left-5 translate-y-1/2 sm:left-8">
-            <div className="h-28 w-28 overflow-hidden rounded-full shadow-lg shadow-black/50 ring-2 ring-brand-orange/50 ring-offset-2 ring-offset-black sm:h-32 sm:w-32">
+            <div className="h-[108px] w-[108px] overflow-hidden rounded-full shadow-lg shadow-black/50 ring-2 ring-brand-orange/50 ring-offset-2 ring-offset-black sm:h-32 sm:w-32">
               {avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -326,24 +326,30 @@ export default async function ProfilePage({
         <section>
           {/* Owner actions — Publish toggle + Edit + Logout. These live here
               (not the header) so logout can't be tapped by accident, and edit
-              is always in the same spot across every player type. flex-wrap
-              + whitespace-nowrap on each button: if the row is ever too
-              narrow for all three, whole buttons wrap to a second line
-              instead of one button's own text breaking awkwardly mid-word. */}
+              is always in the same spot across every player type. All three
+              stay on one line, including on a small phone: compact
+              padding/text below sm:, LogoutButton's icon hidden below sm:,
+              and whitespace-nowrap so nothing breaks mid-word. flex-wrap
+              stays on as a last-resort safety net, not the intended layout —
+              at this sizing the row fits without it on a real device. */}
           {isOwner ? (
-            <div className="mb-5 flex flex-wrap items-center justify-end gap-2.5">
+            <div className="mb-5 flex flex-wrap items-center justify-end gap-1.5 sm:gap-2.5">
               <PublishToggle
                 profileId={profile.id}
                 isPublished={profile.is_published}
               />
               <Link
                 href="/profile/edit"
-                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black transition hover:bg-brand-orange/90"
+                className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-brand-orange px-2.5 py-1.5 text-xs font-bold text-black transition hover:bg-brand-orange/90 sm:gap-1.5 sm:px-4 sm:py-2 sm:text-sm"
               >
-                <Pencil className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
+                <Pencil
+                  className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+                  strokeWidth={2.5}
+                  aria-hidden="true"
+                />
                 Edit profile
               </Link>
-              <LogoutButton />
+              <LogoutButton compact />
             </div>
           ) : null}
           <p className="text-sm uppercase tracking-wider text-brand-orange">
