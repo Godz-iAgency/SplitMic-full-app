@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, Users } from "lucide-react";
+import { ArrowRight, Sparkles, Users } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingStatus } from "@/lib/supabase/profile";
 import { AppHeader } from "@/components/AppHeader";
@@ -42,6 +42,32 @@ export default async function HomePage() {
             Pick who you want to explore. Every profile is verified Austin.
           </p>
         </div>
+
+        {/* Show matching — talent buyers only. Sits above the browse grid
+            because describing the show is faster than filtering to it. */}
+        {isComplete && profile.player_type === "talent_buyer" ? (
+          <Link
+            href="/match"
+            className="group mb-8 flex items-center gap-4 rounded-2xl border border-brand-orange/30 bg-brand-orange/10 p-5 transition hover:border-brand-orange hover:bg-brand-orange/15"
+          >
+            <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-brand-orange/20 text-brand-orange">
+              <Sparkles className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-lg font-bold text-white">
+                Find bands for your show
+              </span>
+              <span className="mt-0.5 block text-sm text-brand-gray-300">
+                Describe the show in plain English and we&apos;ll rank Austin
+                bands against it.
+              </span>
+            </span>
+            <ArrowRight
+              className="h-5 w-5 flex-shrink-0 text-brand-orange transition-transform group-hover:translate-x-1"
+              aria-hidden="true"
+            />
+          </Link>
+        ) : null}
 
         {/* Player-type cards — single column until large desktop */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
