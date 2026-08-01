@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
+import { writePendingProfile } from "@/lib/pendingProfile";
 import type { PlayerType } from "@/lib/types";
+import { MiniProfileBuilder } from "./MiniProfileBuilder";
 import { PlayerTypeIcon } from "./PlayerTypeIcon";
 
 export type PlayerTypeDetail = {
@@ -21,6 +23,23 @@ type Props = {
 };
 
 export function PlayerTypeModal({ detail, onClose }: Props) {
+  // "pitch" = why this platform is for you. "build" = the mini profile builder.
+  // Splitting the modal in two puts a small act of building before the signup
+  // wall (IKEA effect) without adding a route or a page load.
+  const [phase, setPhase] = useState<"pitch" | "build">("pitch");
+  const [genres, setGenres] = useState<string[]>([]);
+  const [scale, setScale] = useState("");
+
+  const activeType = detail?.type ?? null;
+
+  // Reopening the modal on a different role starts that role over: its
+  // questions and answers are not the ones already on screen.
+  useEffect(() => {
+    setPhase("pitch");
+    setGenres([]);
+    setScale("");
+  }, [activeType]);
+
   // Close on ESC key
   useEffect(() => {
     if (!detail) return;
@@ -37,6 +56,16 @@ export function PlayerTypeModal({ detail, onClose }: Props) {
   }, [detail, onClose]);
 
   if (!detail) return null;
+
+  const shortName = detail.name.replace(/s$/, "");
+  const answered = genres.length > 0 || scale !== "";
+
+  /** Hand the answers to onboarding. Runs on the way out, for both the
+   *  answered and skipped paths, so the player type is always carried. */
+  function persist() {
+    if (!detail) return;
+    writePendingProfile({ type: detail.type, genres, scale });
+  }
 
   return (
     <div
@@ -114,43 +143,73 @@ export function PlayerTypeModal({ detail, onClose }: Props) {
 
           {/* Body */}
           <div className="px-8 py-6">
-            <ul className="space-y-3">
-              {detail.benefits.map((benefit) => (
-                <li
-                  key={benefit}
-                  className="flex items-start gap-3 text-sm text-brand-gray-200 sm:text-base"
-                >
-                  <span
-                    className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-orange text-white"
-                    aria-hidden="true"
-                  >
-                    <Check className="h-3 w-3" strokeWidth={3} />
-                  </span>
-                  <span>{benefit}</span>
-                </li>
-              ))}
-            </ul>
+            {phase === "pitch" ? (
+              <>
+                <ul className="space-y-3">
+                  {detail.benefits.map((benefit) => (
+                    <li
+                      key={benefit}
+                      className="flex items-start gap-3 text-sm text-brand-gray-200 sm:text-base"
+                    >
+                      <span
+                        className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-orange text-white"
+                        aria-hidden="true"
+                      >
+                        <Check className="h-3 w-3" strokeWidth={3} />
+                      </span>
+                      <span>{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
 
-            {/* CTA */}
-            <div className="mt-6 flex flex-col items-center pb-2">
-              <Link
-                href={`/signup?type=${detail.type}`}
-                onClick={() => {
-                  try {
-                    localStorage.setItem("splitmic_pending_type", detail.type);
-                  } catch {
-                    // localStorage unavailable — URL param will still carry it
-                  }
-                }}
-                className="w-full rounded-xl bg-brand-orange px-8 py-4 text-center text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 sm:w-auto sm:min-w-[300px]"
-              >
-                Start My {detail.name.replace(/s$/, "")} Profile
-              </Link>
-              <p className="mt-4 text-xs text-brand-gray-400">
-                Your pick carries into your profile, so step one is already done.
-                Free · No credit card.
-              </p>
-            </div>
+                <div className="mt-6 flex flex-col items-center pb-2">
+                  <button
+                    type="button"
+                    onClick={() => setPhase("build")}
+                    className="w-full rounded-xl bg-brand-orange px-8 py-4 text-center text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 sm:w-auto sm:min-w-[300px]"
+                  >
+                    Start My {shortName} Profile
+                  </button>
+                  <p className="mt-4 text-xs text-brand-gray-400">
+                    Two quick questions first. Free · No credit card.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setPhase("pitch")}
+                  className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-brand-gray-400 transition hover:text-white"
+                >
+                  <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+                  Back
+                </button>
+
+                <MiniProfileBuilder
+                  playerType={detail.type}
+                  genres={genres}
+                  scale={scale}
+                  onGenresChange={setGenres}
+                  onScaleChange={setScale}
+                />
+
+                <div className="mt-7 flex flex-col items-center pb-2">
+                  <Link
+                    href={`/signup?type=${detail.type}`}
+                    onClick={persist}
+                    className="w-full rounded-xl bg-brand-orange px-8 py-4 text-center text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 sm:w-auto sm:min-w-[300px]"
+                  >
+                    {answered ? "Save and create my account" : "Create my account"}
+                  </Link>
+                  <p className="mt-4 text-center text-xs text-brand-gray-400">
+                    {answered
+                      ? "Your answers carry into your profile, so onboarding picks up where you left off."
+                      : "Both are optional. You can fill them in during onboarding instead."}
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

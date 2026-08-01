@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { PendingProfile } from "@/lib/pendingProfile";
 import type { PlayerType } from "@/lib/types";
 import { CommonFields, type CommonFieldValues } from "./forms/CommonFields";
 import { BandForm, type BandFormValues } from "./forms/BandForm";
@@ -150,6 +151,50 @@ function emptySpecific(playerType: PlayerType): ProfilePayload["specific"] {
   }
 }
 
+/**
+ * Seed this step from the landing page's mini profile builder.
+ *
+ * The casts are safe: readPendingProfile only returns a `scale` that is one of
+ * the values in that player type's own scaleOptions list, and those lists are
+ * copies of the matching form field's options.
+ */
+export function specificFromPending(
+  pending: PendingProfile,
+): ProfilePayload["specific"] {
+  switch (pending.type) {
+    case "band":
+      return {
+        ...EMPTY_BAND,
+        genres: pending.genres,
+        typical_draw: pending.scale,
+      };
+    case "venue":
+      return {
+        ...EMPTY_VENUE,
+        genres_hosted: pending.genres,
+        venue_type: pending.scale as VenueFormValues["venue_type"],
+      };
+    case "talent_buyer":
+      return {
+        ...EMPTY_TALENT_BUYER,
+        genres_focus: pending.genres,
+        company_type: pending.scale as TalentBuyerFormValues["company_type"],
+      };
+    case "record_label":
+      return {
+        ...EMPTY_RECORD_LABEL,
+        genres_focus: pending.genres,
+        label_type: pending.scale as RecordLabelFormValues["label_type"],
+      };
+    case "festival":
+      return {
+        ...EMPTY_FESTIVAL,
+        genres_featured: pending.genres,
+        festival_type: pending.scale as FestivalFormValues["festival_type"],
+      };
+  }
+}
+
 export function ProfileStep({
   playerType,
   initialCommon,
@@ -167,6 +212,19 @@ export function ProfileStep({
   const [specific, setSpecific] = useState<ProfilePayload["specific"]>(
     initialSpecific ?? emptySpecific(playerType),
   );
+
+  // A user resuming onboarding lands straight on this step, so this component
+  // can mount before the parent's mount effect has read the saved mini-builder
+  // answers (child effects run first). Apply them the first time they arrive.
+  // The ref makes this strictly one-shot: after that, initialSpecific is just
+  // this component's own state echoed back, and re-applying it would fight the
+  // user's typing.
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (seeded.current || !initialSpecific) return;
+    seeded.current = true;
+    setSpecific(initialSpecific);
+  }, [initialSpecific]);
 
   function updateCommon<K extends keyof CommonFieldValues>(
     key: K,

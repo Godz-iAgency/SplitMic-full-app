@@ -56,6 +56,10 @@ const config: Config = {
         float: "float 4s ease-in-out infinite",
         // Periodic light sweep — draws the eye to the primary CTA.
         shimmer: "shimmer 3s ease-in-out infinite",
+        // Continuous shine riding on top of the onboarding "Creating account"
+        // progress bar, whose width itself tracks real save progress rather
+        // than a fixed duration — distinct from the slower CTA `shimmer` above.
+        "bar-shimmer": "barShimmer 1.4s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -85,6 +89,10 @@ const config: Config = {
         shimmer: {
           "0%": { transform: "translateX(-100%)" },
           "60%, 100%": { transform: "translateX(100%)" },
+        },
+        barShimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(250%)" },
         },
       },
     },

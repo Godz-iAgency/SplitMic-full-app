@@ -4,16 +4,30 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createClientSupabaseClient } from "@/lib/supabase/client";
 import { tableForPlayerType } from "@/lib/supabase/profile";
+import {
+  clearPendingProfile,
+  isPlayerType,
+  readLegacyPendingType,
+  readPendingProfile,
+} from "@/lib/pendingProfile";
 import { normalizeWebsiteUrl } from "@/lib/url";
-import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
+import { type PlayerType } from "@/lib/types";
 import { PlayerTypeStep } from "./PlayerTypeStep";
 import { AddressStep, type ValidatedAddress } from "./AddressStep";
 import {
   ProfileStep,
   EMPTY_FORM_VALUES,
+  specificFromPending,
   type ProfilePayload,
 } from "./ProfileStep";
 import { ProgressIndicator } from "./ProgressIndicator";
+import { CreatingAccountOverlay } from "./CreatingAccountOverlay";
+
+// Floor on how long each "Creating account" checklist item stays visible
+// before the next one can check off. The real Supabase calls it's paced
+// against usually resolve faster than this on their own, so without a floor
+// the checklist would flash through before it's readable.
+const CREATING_ACCOUNT_STEP_MIN_MS = 900;
 import type { CommonFieldValues } from "./forms/CommonFields";
 
 export type InitialOnboardingState = {
@@ -38,10 +52,6 @@ const STEP_LABELS = [
   "Your profile",
   "Photos & publish",
 ];
-
-const VALID_PLAYER_TYPES = new Set<string>(
-  PLAYER_TYPE_OPTIONS.map((o) => o.value),
-);
 
 export function OnboardingFlow({ initial }: { initial: InitialOnboardingState }) {
   const router = useRouter();
@@ -88,36 +98,55 @@ export function OnboardingFlow({ initial }: { initial: InitialOnboardingState })
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [completedSteps, setCompletedSteps] = useState(0);
 
-  // Auto-pre-select the player type if the user clicked a card on the
-  // landing page. Source of truth: URL ?type=band, with a localStorage
-  // fallback so the choice survives the email-confirmation auth flow.
-  const autoSelectAttempted = useRef(false);
+  // Pick up what the visitor already chose on the landing page: their player
+  // type, and the genres / scale from the mini profile builder.
+  //
+  // Source of truth for the type is the URL (?type=band), with localStorage as
+  // the fallback that survives the email-confirmation round trip, which lands
+  // here with no query string. The mini-builder answers only ever travel in
+  // localStorage, so opening the confirmation link in a different browser
+  // simply drops them and shows an empty form.
+  //
+  // Nothing is cleared here: this runs on every mount, and a user who reloads
+  // or backs out mid-onboarding should get their answers again. It is cleared
+  // once the profile step actually saves.
+  const hydrationAttempted = useRef(false);
   useEffect(() => {
-    if (autoSelectAttempted.current) return;
-    if (initial.player_type) return; // already chose before
-    if (playerType) return; // user already picked in-session
+    if (hydrationAttempted.current) return;
+    hydrationAttempted.current = true;
 
+    const pending = readPendingProfile();
     const fromUrl = searchParams.get("type");
-    let fromStorage: string | null = null;
-    try {
-      fromStorage = localStorage.getItem("splitmic_pending_type");
-    } catch {
-      // ignore — storage may be disabled
+    const candidateType = isPlayerType(fromUrl)
+      ? fromUrl
+      : (pending?.type ?? readLegacyPendingType());
+
+    // What this session is actually onboarding as: a type already saved to the
+    // profile row wins over anything carried in from the landing page.
+    const resolvedType = initial.player_type ?? playerType ?? candidateType;
+
+    if (!initial.player_type && !playerType && candidateType) {
+      setPlayerType(candidateType);
     }
-    const candidate = fromUrl || fromStorage;
-    if (candidate && VALID_PLAYER_TYPES.has(candidate)) {
-      autoSelectAttempted.current = true;
-      setPlayerType(candidate as PlayerType);
-      // Clear the pending type so it doesn't auto-fill on a future visit
-      try {
-        localStorage.removeItem("splitmic_pending_type");
-      } catch {
-        // ignore
-      }
+
+    // Only seed the detail form when the answers were given for this same
+    // player type. Someone who browsed as a band and then signed up as a venue
+    // would otherwise get band answers in a venue form.
+    if (pending && resolvedType === pending.type) {
+      setSpecific(specificFromPending(pending));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Changing player type invalidates the detail form: each type has its own
+  // shape, so carrying the old object over would feed a venue form band fields.
+  function handlePlayerTypeSelect(next: PlayerType) {
+    if (next === playerType) return;
+    setPlayerType(next);
+    setSpecific(null);
+  }
 
   // STEP 1: Player type — upsert into profiles table
   async function handlePlayerTypeNext() {
@@ -201,6 +230,23 @@ export function OnboardingFlow({ initial }: { initial: InitialOnboardingState })
     if (!playerType || !profileId) return;
     setSaving(true);
     setError(null);
+    setCompletedSteps(0);
+
+    // Checks off the overlay's Nth item, holding at least
+    // CREATING_ACCOUNT_STEP_MIN_MS since the previous one so real steps that
+    // resolve near-instantly don't blur past unreadably.
+    let lastStepAt = Date.now();
+    async function checkOffStep(step: number) {
+      const elapsed = Date.now() - lastStepAt;
+      if (elapsed < CREATING_ACCOUNT_STEP_MIN_MS) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, CREATING_ACCOUNT_STEP_MIN_MS - elapsed),
+        );
+      }
+      setCompletedSteps(step);
+      lastStepAt = Date.now();
+    }
+
     try {
       // 3a. Update the profiles row with bio + common contact fields + instagram
       const { error: profileError } = await supabase
@@ -221,8 +267,10 @@ export function OnboardingFlow({ initial }: { initial: InitialOnboardingState })
 
       if (profileError) {
         setError(`Could not save profile: ${profileError.message}`);
+        setSaving(false);
         return;
       }
+      await checkOffStep(1);
 
       // 3b. Upsert detail table (band_details, venue_details, etc.)
       const tableName = tableForPlayerType(playerType);
@@ -233,8 +281,10 @@ export function OnboardingFlow({ initial }: { initial: InitialOnboardingState })
         .upsert(detailRow, { onConflict: "profile_id" });
       if (detailError) {
         setError(`Could not save details: ${detailError.message}`);
+        setSaving(false);
         return;
       }
+      await checkOffStep(2);
 
       // 3c. Replace profile_links (social URLs)
       const links = buildProfileLinks(profileId, payload);
@@ -246,9 +296,11 @@ export function OnboardingFlow({ initial }: { initial: InitialOnboardingState })
           .insert(links);
         if (linksError) {
           setError(`Could not save social links: ${linksError.message}`);
+          setSaving(false);
           return;
         }
       }
+      await checkOffStep(3);
 
       // 3d. Update users.full_name
       const { error: userError } = await supabase
@@ -260,12 +312,26 @@ export function OnboardingFlow({ initial }: { initial: InitialOnboardingState })
         .eq("id", initial.user_id);
       if (userError) {
         setError(`Saved details but could not finalize: ${userError.message}`);
+        setSaving(false);
         return;
       }
+      await checkOffStep(4);
 
+      // The landing-page answers are now saved to the profile, so stop
+      // re-seeding this form from them.
+      clearPendingProfile();
+
+      // Deliberately leave `saving` true here: this page is about to unmount
+      // once the navigation below lands. Resetting it first (the old
+      // try/finally did this unconditionally) flipped the overlay off and
+      // showed the onboarding form again for a frame before the new page
+      // took over.
       router.replace("/profile/edit?welcome=1");
       router.refresh();
-    } finally {
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Something went wrong. Please try again.",
+      );
       setSaving(false);
     }
   }
@@ -288,7 +354,7 @@ export function OnboardingFlow({ initial }: { initial: InitialOnboardingState })
       {step === 1 ? (
         <PlayerTypeStep
           selected={playerType}
-          onSelect={setPlayerType}
+          onSelect={handlePlayerTypeSelect}
           onNext={handlePlayerTypeNext}
           saving={saving}
           error={error}
@@ -310,6 +376,9 @@ export function OnboardingFlow({ initial }: { initial: InitialOnboardingState })
 
       {step === 3 && playerType ? (
         <ProfileStep
+          // Remount on a type change so the form can never keep another
+          // type's field shape in its own state.
+          key={playerType}
           playerType={playerType}
           initialCommon={common}
           initialSpecific={specific}
@@ -323,6 +392,10 @@ export function OnboardingFlow({ initial }: { initial: InitialOnboardingState })
           }}
           onSubmit={handleProfileSubmit}
         />
+      ) : null}
+
+      {step === 3 && saving ? (
+        <CreatingAccountOverlay completedSteps={completedSteps} />
       ) : null}
     </main>
   );
