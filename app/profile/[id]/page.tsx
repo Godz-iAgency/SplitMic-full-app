@@ -40,6 +40,7 @@ import { ProfileLiveStatus } from "@/components/profile/ProfileLiveStatus";
 import { BandReadinessPanel } from "@/components/profile/BandReadinessPanel";
 import { ReadinessBadge } from "@/components/profile/ReadinessBadge";
 import { ConnectButton } from "@/components/inbox/ConnectButton";
+import { ProfileIncompleteCard } from "@/components/ProfileIncompleteBanner";
 import { computeBandReadiness } from "@/lib/scoring/bandReadiness";
 import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
 
@@ -377,19 +378,34 @@ export default async function ProfilePage({
           <BandReadinessPanel readiness={bandReadiness} />
         ) : null}
 
-        {/* Connect / Message button (only when viewing someone else's published profile) */}
-        {!isOwner && profile.is_published && viewerProfile?.is_published ? (
+        {/* Connect / Message button (only when viewing someone else's published
+            profile). If the viewer can't act yet, say why instead of rendering
+            nothing: no profile row means they're mid-onboarding, an unpublished
+            one means they just need to go live. */}
+        {!isOwner && profile.is_published ? (
           <div className="mt-5">
-            <ConnectButton
-              otherProfileId={profile.id}
-              myMode={
-                isIndustryPlayerType(viewerProfile.player_type)
-                  ? "industry"
-                  : "band"
-              }
-              initialState={connectionState.state}
-              initialThreadId={connectionState.threadId}
-            />
+            {viewerProfile?.is_published ? (
+              <ConnectButton
+                otherProfileId={profile.id}
+                myMode={
+                  isIndustryPlayerType(viewerProfile.player_type)
+                    ? "industry"
+                    : "band"
+                }
+                initialState={connectionState.state}
+                initialThreadId={connectionState.threadId}
+              />
+            ) : viewerProfile ? (
+              <ProfileIncompleteCard
+                action="connect"
+                href={`/profile/${viewerProfile.id}`}
+                title="Publish your profile to connect"
+                body="You're invisible until you go live, so nobody can accept a request from you yet."
+                cta="Go to my profile"
+              />
+            ) : (
+              <ProfileIncompleteCard action="connect" />
+            )}
           </div>
         ) : null}
 

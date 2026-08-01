@@ -21,6 +21,7 @@ import {
 } from "@/lib/supabase/marketplace";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
+import { ProfileIncompleteCard } from "@/components/ProfileIncompleteBanner";
 import { RespondPanel } from "@/components/opportunities/RespondPanel";
 import { BandTagActions } from "@/components/opportunities/BandTagActions";
 import { DeletePostButton } from "@/components/opportunities/DeletePostButton";
@@ -41,8 +42,12 @@ export default async function OpportunityDetailPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Open to signed-up users mid-onboarding so feed cards don't dead-end
+  // (see the note in app/search/page.tsx). The respond / signup controls in the
+  // sidebar are swapped for a finish-profile prompt below, since the server
+  // actions behind them require a published profile.
   const { profile, isComplete } = await getOnboardingStatus(supabase, user.id);
-  if (!isComplete || !profile) redirect("/onboarding");
+  if (!profile) redirect("/onboarding");
 
   const { post, taggedBands } = await getPostDetail(supabase, params.id);
   if (!post) notFound();
@@ -411,7 +416,11 @@ export default async function OpportunityDetailPage({
               />
             ) : null}
 
-            {isOpenMic ? (
+            {!isComplete ? (
+              <ProfileIncompleteCard
+                action={isOpenMic ? "sign up for this open mic" : "respond"}
+              />
+            ) : isOpenMic ? (
               !isOwner && isBand ? (
                 <OpenMicSignupButton
                   postId={post.id}

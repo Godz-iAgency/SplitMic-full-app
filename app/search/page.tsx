@@ -8,6 +8,7 @@ import {
   type SortOption,
 } from "@/lib/supabase/search";
 import { AppHeader } from "@/components/AppHeader";
+import { ProfileIncompleteBanner } from "@/components/ProfileIncompleteBanner";
 import { WelcomeIntro } from "@/components/WelcomeIntro";
 import { CategoryTiles } from "@/components/search/CategoryTiles";
 import { SearchBox } from "@/components/search/SearchBox";
@@ -46,8 +47,14 @@ export default async function SearchPage({
 
   if (!user) redirect("/login");
 
+  // Reciprocity: Discover stays open to any signed-up user, even mid-onboarding.
+  // Published profiles are already public (the logged-out landing page shows
+  // them), so gating this behind a finished profile only hid value from people
+  // deciding whether to invest in one. Actions that need a real profile
+  // (Connect, message, post) are still gated at their own call sites; an
+  // unfinished user just gets the banner below instead.
   const { profile, isComplete } = await getOnboardingStatus(supabase, user.id);
-  if (!isComplete || !profile) redirect("/onboarding");
+  if (!profile) redirect("/onboarding");
 
   // Parse + validate URL params. Default is "all" (the neutral browse state)
   // so the landing shows the category grid + everyone; picking a category
@@ -81,6 +88,8 @@ export default async function SearchPage({
       <WelcomeIntro />
 
       <AppHeader active="discover" profileId={profile.profile_id} showEdit />
+
+      {!isComplete ? <ProfileIncompleteBanner /> : null}
 
       {/* Search section */}
       <section className="mx-auto max-w-7xl px-5 py-10 sm:px-8 sm:py-14">

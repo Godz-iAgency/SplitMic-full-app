@@ -9,6 +9,7 @@ import {
   type PostType,
 } from "@/lib/supabase/marketplace";
 import { AppHeader } from "@/components/AppHeader";
+import { ProfileIncompleteBanner } from "@/components/ProfileIncompleteBanner";
 import { PostTypeFilter } from "@/components/opportunities/PostTypeFilter";
 import { MarketplaceGenreFilter } from "@/components/opportunities/MarketplaceGenreFilter";
 import { MarketplaceSearchBox } from "@/components/opportunities/MarketplaceSearchBox";
@@ -35,8 +36,11 @@ export default async function OpportunitiesPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Open to signed-up users mid-onboarding (see the note in app/search/page.tsx).
+  // canPost below already resolves false without a player_type, so the create
+  // and respond affordances stay hidden until onboarding is finished.
   const { profile, isComplete } = await getOnboardingStatus(supabase, user.id);
-  if (!isComplete || !profile) redirect("/onboarding");
+  if (!profile) redirect("/onboarding");
 
   const rawType = searchParams.type ?? "all";
   const activeType = (
@@ -64,6 +68,8 @@ export default async function OpportunitiesPage({
     <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-24 lg:pb-20">
       <AppHeader active="feed" profileId={profile.profile_id} />
 
+      {!isComplete ? <ProfileIncompleteBanner /> : null}
+
       <section className="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-14">
         {/* ── Header: title + create CTA ───────────────────────────── */}
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -84,8 +90,10 @@ export default async function OpportunitiesPage({
           ) : null}
         </div>
 
-        {/* Bands: subtle note instead of taking up space at the top */}
-        {!canPost ? (
+        {/* Bands: subtle note instead of taking up space at the top. Gated on
+            isComplete so a mid-onboarding user (who also has canPost false, but
+            isn't necessarily a band) gets the banner above instead of this. */}
+        {!canPost && isComplete ? (
           <p className="mb-6 inline-flex items-start gap-2 rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-xs text-brand-gray-300">
             <Lightbulb
               className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-orange"

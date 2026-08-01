@@ -4,6 +4,7 @@ import { ArrowRight, Users } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingStatus } from "@/lib/supabase/profile";
 import { AppHeader } from "@/components/AppHeader";
+import { ProfileIncompleteBanner } from "@/components/ProfileIncompleteBanner";
 import { PlayerTypeIcon } from "@/components/landing/PlayerTypeIcon";
 import { PLAYER_TYPE_DETAILS } from "@/components/landing/playerTypeDetails";
 
@@ -21,12 +22,16 @@ export default async function HomePage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Open to signed-up users mid-onboarding (see the note in app/search/page.tsx).
+  // This page is a pure browse hub: static category cards linking into Discover.
   const { profile, isComplete } = await getOnboardingStatus(supabase, user.id);
-  if (!isComplete || !profile) redirect("/onboarding");
+  if (!profile) redirect("/onboarding");
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-brand-gray-900 to-black pb-24 lg:pb-20">
       <AppHeader active="home" profileId={profile.profile_id} />
+
+      {!isComplete ? <ProfileIncompleteBanner /> : null}
 
       <section className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
         <div className="mb-8">
