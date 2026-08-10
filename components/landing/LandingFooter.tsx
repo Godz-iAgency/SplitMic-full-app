@@ -13,12 +13,26 @@ export function LandingFooter() {
         </div>
 
         <div className="flex flex-col items-center gap-3 sm:items-end">
-          <Link
-            href="/support"
-            className="text-sm font-semibold text-brand-gray-300 transition hover:text-brand-orange"
-          >
-            Support &amp; Contact
-          </Link>
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            <Link
+              href="/live"
+              className="text-sm font-semibold text-brand-gray-300 transition hover:text-brand-orange"
+            >
+              Live Music Tonight
+            </Link>
+            <Link
+              href="/directory"
+              className="text-sm font-semibold text-brand-gray-300 transition hover:text-brand-orange"
+            >
+              Directory
+            </Link>
+            <Link
+              href="/support"
+              className="text-sm font-semibold text-brand-gray-300 transition hover:text-brand-orange"
+            >
+              Support &amp; Contact
+            </Link>
+          </nav>
           <p className="text-sm text-brand-gray-400">
             © {new Date().getFullYear()} SplitMic. Built for Austin&apos;s music scene.
           </p>

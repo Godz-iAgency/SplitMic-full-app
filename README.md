@@ -16,6 +16,7 @@ This file covers setup and a tour of the codebase.
 - Google Maps Geocoding API (Austin address validation during onboarding)
 - Google Gemini API (AI show-matching for talent buyers)
 - Resend (transactional email)
+- Firecrawl (scrapes Austin live-music listings for `/live`)
 
 ## Run locally
 
@@ -42,6 +43,8 @@ RESEND_API_KEY=
 NOTIFY_FROM_EMAIL=               # user notification emails; falls back to a Resend shared address
 SUPPORT_FROM_EMAIL=              # support form emails; same fallback
 GEMINI_API_KEY=                  # AI show-matching; needs the Generative Language API enabled
+FIRECRAWL_API_KEY=               # Scrapes Do512 for the /live page's daily sync job
+CRON_SECRET=                     # Shared by both scheduled endpoints (see "Scheduled jobs" below)
 ```
 
 > **Never commit `.env.local`.** Rotate any credential that's been pasted into a chat, ticket, or doc.
@@ -63,7 +66,9 @@ GEMINI_API_KEY=                  # AI show-matching; needs the Generative Langua
 app/                      Next.js App Router — one folder per route
   admin/                  Admin console (stats, moderation, action log)
   auth/callback/          OAuth code exchange + first-time users row
+  directory/              Public Austin music business directory — no login required
   inbox/                  DM threads + connection requests
+  live/                   Public "Austin Live Music" page — no login required
   match/                  AI show-matching (talent buyers only)
   onboarding/              3-step signup flow (player type → address → profile)
   opportunities/          Marketplace: events, opportunities, open mic rosters
@@ -74,9 +79,12 @@ app/                      Next.js App Router — one folder per route
 components/               One folder per feature area, mirrors app/
 lib/
   ai/                     Gemini client + show-matching extraction
+  directory/              CSV parsing/import + directory queries, JSON-LD, FAQ copy
+  events/                 Do512 scraping, event sync, profile matching, JSON-LD (see "Live events" below)
   scoring/                Band Readiness Score
   supabase/               Server-side query/action helpers (search, messaging, marketplace, profile)
   notifications/          Transactional email
+  http/                   Shared HTTP helpers (cron bearer-token auth)
 
 migrations/                Hand-run SQL migrations (run in the Supabase SQL editor, in order)
 ```
@@ -96,7 +104,68 @@ bio, contact info) plus a type-specific detail table.
 - **AI show-matching** (`/match`, talent buyers only) — describe a show in plain English, Gemini extracts genre/draw/size/vibe criteria, we rank published bands against it using our own data (Gemini never ranks or sees band data directly).
 - **Admin console** (`/admin`) — gated to a hardcoded email allowlist in `lib/supabase/admin.ts`.
 
-## Scheduled cleanup
+## Business directory
+
+`/directory` is a public, no-login guide to Austin's music industry across 8
+categories (venues, bands, talent buyers, record labels, festivals, rehearsal
+studios, instrument rental, backline), with one indexable page per category at
+`/directory/<slug>`.
+
+These listings are **not** SplitMic accounts. `profiles` holds real signed-up
+players; `directory_businesses` holds mostly-unclaimed scraped leads. When a
+business does sign up, an admin links the two via `claimed_profile_id` and the
+card starts pointing at the real profile.
+
+**Importing.** Source data is a scraped CSV at the project root
+(`business_directory_scraped.csv`, gitignored — it holds hundreds of
+third-party contact emails). Import it from `/admin/directory`: **Dry run**
+first to see the insert/update/unchanged counts, then **Import now**. Run it
+from `npm run dev` locally so the file is on disk, or paste the CSV into the
+box on that screen.
+
+Re-importing is safe by design: an existing row only ever has its *scraped*
+fields refreshed. Tier, outreach status, notes, and profile links are never
+touched, so a re-import can't undo hand curation. `lib/directory/import.test.ts`
+has a regression test asserting exactly that.
+
+**Tiers.** `standard` / `featured` / `spotlight` control both sort order and
+visual treatment — spotlight listings render full-width above the grid. Set
+them in `/admin/directory`.
+
+**Privacy.** Scraped emails and the outreach pipeline are readable only by the
+service role. RLS alone wouldn't do this (it's row-level, and the public anon
+key can query any readable column), so
+`migrations/step11_business_directory.sql` also revokes the blanket column
+grant and re-grants only the public-facing columns. Don't remove that block.
+
+## Live events
+
+`/live` is a public, no-login page showing Austin live music happening today
+and this week — the entry point for "Austin live music" search traffic.
+Events come from Do512, scraped daily via Firecrawl (`lib/events/do512.ts`)
+by the `sync-events` cron job below, matched against SplitMic's own
+published band/venue profiles where possible (`lib/events/matching.ts`), and
+stored in `live_events` (public read, service-role-only writes — see
+`migrations/step10_live_events.sql`). The page also carries a 10-question FAQ
+and JSON-LD structured data (`MusicEvent` per show, `FAQPage`) built from the
+same content it renders, so search engines and AI answer engines see exactly
+what a visitor sees.
+
+## Scheduled jobs
+
+Both jobs below share one `CRON_SECRET` and the same auth pattern
+(`lib/http/cronAuth.ts`): `Authorization: Bearer $CRON_SECRET`, fails closed
+(never runs unauthenticated) if the secret is unset. `vercel.json` schedules
+both; on any other host, point that host's scheduler at the same URLs with
+the same header.
+
+```bash
+# Live events — dry run (report only, writes nothing)
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  "https://<your-domain>/api/cron/sync-events?dryRun=1"
+```
+
+### Scheduled cleanup
 
 Marketplace posts have two separate clocks, and they are not the same thing:
 
@@ -120,10 +189,8 @@ curl -H "Authorization: Bearer $CRON_SECRET" \
   "https://<your-domain>/api/cron/cleanup-posts?dryRun=1"
 ```
 
-`vercel.json` schedules it weekly. On any other host, point that host's
-scheduler at the same URL with the same header. Retention can be overridden per
-call (`?retentionDays=730`), but anything under 30 days is rejected — that
-would delete history still in use.
+Runs weekly. Retention can be overridden per call (`?retentionDays=730`), but
+anything under 30 days is rejected — that would delete history still in use.
 
 ## Testing
 

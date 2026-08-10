@@ -8,6 +8,7 @@ import {
   FileText,
   Link2,
   ScrollText,
+  BookOpen,
   type LucideIcon,
 } from "lucide-react";
 
@@ -15,6 +16,7 @@ const items: Array<{ href: string; label: string; Icon: LucideIcon }> = [
   { href: "/admin", label: "Dashboard", Icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", Icon: Users },
   { href: "/admin/posts", label: "Posts", Icon: FileText },
+  { href: "/admin/directory", label: "Directory", Icon: BookOpen },
   { href: "/admin/connections", label: "Connections", Icon: Link2 },
   { href: "/admin/log", label: "Action log", Icon: ScrollText },
 ];

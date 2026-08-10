@@ -52,3 +52,10 @@ desktop.ini
 *.log
 .tmp/
 tmp/
+
+# Scraped source data for the business directory. Holds hundreds of
+# third-party contact emails, so it must not enter git history. The
+# directory_businesses table is the system of record after import; the
+# admin import screen also accepts a pasted CSV.
+business_directory_scraped.csv
+directory_data_sources.csv

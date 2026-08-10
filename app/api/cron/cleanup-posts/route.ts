@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { timingSafeEqual } from "node:crypto";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { isAuthorizedCronRequest } from "@/lib/http/cronAuth";
 import {
   cleanupExpiredPosts,
   DEFAULT_RETENTION_DAYS,
@@ -32,11 +32,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const provided = request.headers
-    .get("authorization")
-    ?.replace(/^Bearer\s+/i, "");
-
-  if (!provided || !secretsMatch(provided, secret)) {
+  if (!isAuthorizedCronRequest(request, secret)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
@@ -65,13 +61,4 @@ export async function GET(request: Request) {
   );
 
   return NextResponse.json(result);
-}
-
-/** Constant-time compare so a wrong secret can't be guessed by timing. */
-function secretsMatch(provided: string, expected: string): boolean {
-  const a = Buffer.from(provided);
-  const b = Buffer.from(expected);
-  // timingSafeEqual throws on a length mismatch, which would itself leak length.
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
 }
