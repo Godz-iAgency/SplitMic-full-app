@@ -132,6 +132,26 @@ has a regression test asserting exactly that.
 visual treatment — spotlight listings render full-width above the grid. Set
 them in `/admin/directory`.
 
+**Card imagery** comes from two places, with very different costs:
+
+- **Logos** are derived at render time from each site's favicon via Google's
+  endpoint (`lib/directory/media.ts`). Nothing stored, no API key, no credits.
+  That endpoint returns a generic globe rather than 404ing, so there's no error
+  branch; listings with no website fall back to an initial letter.
+- **Screenshots** are captured through Firecrawl and stored in the existing
+  `profile-media` bucket under `directory/screenshots/`. Run them from
+  `/admin/directory` in batches — **one Firecrawl credit per listing
+  attempted**. The job is resumable and only ever picks up rows never tried
+  (`screenshot_status IS NULL`), so a row is never captured or paid for twice.
+  Failures are marked `failed` and only retried when you explicitly click
+  "Retry failed". Cards without a screenshot show a brand gradient, so a
+  partial backfill still looks deliberate.
+
+**Filtering.** `?q=` searches name/description/subcategory; `?sub=` filters to
+an exact subcategory (venue type, band genre, festival season), populated from
+whatever values the data actually contains. The subcategory chip on every card
+is a link to that filter.
+
 **Privacy.** Scraped emails and the outreach pipeline are readable only by the
 service role. RLS alone wouldn't do this (it's row-level, and the public anon
 key can query any readable column), so

@@ -42,7 +42,7 @@ export function DirectoryCategoryTiles({ active, counts, query }: Props) {
             />
           </span>
           {meta.plural}
-          <span className="text-brand-gray-500" aria-hidden="true">
+          <span className="text-brand-gray-400" aria-hidden="true">
             ·
           </span>
           <span className="text-brand-gray-300">{counts[active] ?? 0}</span>

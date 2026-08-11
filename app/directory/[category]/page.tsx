@@ -6,6 +6,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import {
   getDirectoryBusinesses,
   getDirectoryCounts,
+  getSubcategoryOptions,
   type DirectoryCard,
 } from "@/lib/directory/queries";
 import {
@@ -13,7 +14,7 @@ import {
   categoryFromSlug,
   type DirectoryCategory,
 } from "@/lib/directory/categories";
-import { SearchBox } from "@/components/search/SearchBox";
+import { DirectoryFilterBar } from "@/components/directory/DirectoryFilterBar";
 import { DirectoryCategoryTiles } from "@/components/directory/DirectoryCategoryTiles";
 import { DirectoryListing } from "@/components/directory/DirectoryListing";
 import { DirectoryEmptyState } from "@/components/directory/DirectoryEmptyState";
@@ -57,25 +58,35 @@ export default async function DirectoryCategoryPage({
   searchParams,
 }: {
   params: { category: string };
-  searchParams: { q?: string };
+  searchParams: { q?: string; sub?: string };
 }) {
   const category = categoryFromSlug(params.category);
   if (!category) notFound();
 
   const meta = CATEGORY_META[category];
   const query = searchParams.q?.trim() ?? "";
+  const sub = searchParams.sub?.trim() ?? "";
+  const hasFilters = Boolean(query || sub);
 
   let cards: DirectoryCard[] = [];
   let counts = EMPTY_COUNTS;
+  let subcategoryOptions: string[] = [];
   try {
     const supabase = createServiceRoleClient();
-    [cards, counts] = await Promise.all([
-      getDirectoryBusinesses(supabase, { category, query: query || undefined }),
+    [cards, counts, subcategoryOptions] = await Promise.all([
+      getDirectoryBusinesses(supabase, {
+        category,
+        query: query || undefined,
+        subcategory: sub || undefined,
+      }),
       getDirectoryCounts(supabase),
+      getSubcategoryOptions(supabase, category),
     ]);
   } catch {
     // Renders the page shell (heading, FAQ, structured data) rather than a 500.
   }
+
+  const totalInCategory = counts[category] ?? cards.length;
 
   return (
     <>
@@ -104,9 +115,15 @@ export default async function DirectoryCategoryPage({
           </header>
 
           <div className="space-y-4">
-            <div className="max-w-xl">
-              <SearchBox />
-            </div>
+            <DirectoryFilterBar
+              shown={cards.length}
+              total={totalInCategory}
+              noun={meta.plural.toLowerCase()}
+              subcategoryOptions={subcategoryOptions}
+              subcategoryAllLabel={`All ${meta.plural.toLowerCase()}`}
+              resetHref={`/directory/${meta.slug}`}
+              hasFilters={hasFilters}
+            />
             <DirectoryCategoryTiles
               active={category}
               counts={counts}
@@ -115,11 +132,11 @@ export default async function DirectoryCategoryPage({
           </div>
 
           {cards.length === 0 ? (
-            query ? (
+            hasFilters ? (
               <DirectoryEmptyState
                 mode="no-results"
                 plural={meta.plural}
-                query={query}
+                query={query || sub}
                 clearHref={`/directory/${meta.slug}`}
               />
             ) : (

@@ -3,6 +3,7 @@ import { getAdminServiceClient } from "@/lib/supabase/admin-guard";
 import {
   getAdminDirectoryRows,
   getAdminDirectoryCounts,
+  getScreenshotProgress,
   OUTREACH_STATUSES,
   OUTREACH_LABELS,
   DIRECTORY_TIERS,
@@ -16,6 +17,7 @@ import {
   type DirectoryCategory,
 } from "@/lib/directory/categories";
 import { DirectoryImportPanel } from "@/components/admin/DirectoryImportPanel";
+import { DirectoryScreenshotPanel } from "@/components/admin/DirectoryScreenshotPanel";
 import {
   DirectoryTierSelect,
   DirectoryOutreachControl,
@@ -55,9 +57,10 @@ export default async function AdminDirectoryPage({
     query: searchParams.q,
   };
 
-  const [{ rows, total, truncated }, counts] = await Promise.all([
+  const [{ rows, total, truncated }, counts, shots] = await Promise.all([
     getAdminDirectoryRows(supabase, filters),
     getAdminDirectoryCounts(supabase),
+    getScreenshotProgress(supabase),
   ]);
 
   return (
@@ -73,6 +76,14 @@ export default async function AdminDirectoryPage({
       </div>
 
       <DirectoryImportPanel currentTotal={counts.total} />
+
+      {counts.total > 0 ? (
+        <DirectoryScreenshotPanel
+          done={shots.done}
+          pending={shots.pending}
+          failed={shots.failed}
+        />
+      ) : null}
 
       <div className="space-y-3">
         <AdminUserSearchBox placeholder="Search businesses by name..." />

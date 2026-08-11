@@ -1,11 +1,17 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Home, Briefcase, HelpCircle } from "lucide-react";
+import { Music, BookOpen, HelpCircle } from "lucide-react";
 
+/**
+ * Live Music and Directory are real pages and the main reason a stranger lands
+ * here from search, so they lead. "Home" used to sit first as a scroll anchor,
+ * but the logo already does that — this trades it for a destination rather than
+ * adding to the row, which keeps the mobile header as sparse as it was.
+ */
 const TABS = [
-  { href: "#who-its-for", label: "Home", Icon: Home },
-  { href: "#features", label: "Benefits", Icon: Briefcase },
-  { href: "#how-it-works", label: "How it works", Icon: HelpCircle },
+  { href: "/live", label: "Live Music", Icon: Music, external: true },
+  { href: "/directory", label: "Directory", Icon: BookOpen, external: true },
+  { href: "#how-it-works", label: "How it works", Icon: HelpCircle, external: false },
 ];
 
 export function LandingNav() {
@@ -39,21 +45,32 @@ export function LandingNav() {
           aria-label="Page sections"
           className="flex flex-1 items-center gap-1"
         >
-          {TABS.map(({ href, label, Icon }) => (
-            <a
-              key={href}
-              href={href}
-              aria-label={label}
-              className="flex shrink-0 items-center justify-center rounded-full p-2.5 text-brand-gray-300 transition hover:bg-white/5 hover:text-white sm:gap-1.5 sm:px-3 sm:py-1.5"
-            >
-              {/* Icon — mobile only */}
-              <Icon className="h-4 w-4 sm:hidden" aria-hidden="true" />
-              {/* Text — sm+ only */}
-              <span className="hidden whitespace-nowrap text-sm font-semibold sm:inline">
-                {label}
-              </span>
-            </a>
-          ))}
+          {TABS.map(({ href, label, Icon, external }) => {
+            const className =
+              "flex shrink-0 items-center justify-center rounded-full p-2.5 text-brand-gray-300 transition hover:bg-white/5 hover:text-white sm:gap-1.5 sm:px-3 sm:py-1.5";
+            const inner = (
+              <>
+                {/* Icon — mobile only */}
+                <Icon className="h-4 w-4 sm:hidden" aria-hidden="true" />
+                {/* Text — sm+ only */}
+                <span className="hidden whitespace-nowrap text-sm font-semibold sm:inline">
+                  {label}
+                </span>
+              </>
+            );
+
+            // Hash anchors stay plain <a> so they scroll; real routes use Link
+            // for client-side navigation.
+            return external ? (
+              <Link key={href} href={href} aria-label={label} className={className}>
+                {inner}
+              </Link>
+            ) : (
+              <a key={href} href={href} aria-label={label} className={className}>
+                {inner}
+              </a>
+            );
+          })}
         </nav>
 
         {/* Auth actions — Sign Up lives in the hero CTA; header keeps just Log in */}

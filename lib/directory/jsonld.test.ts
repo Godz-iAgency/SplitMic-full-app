@@ -20,6 +20,7 @@ const card = (overrides: Partial<DirectoryCard> = {}): DirectoryCard => ({
   subcategory: "Clubs & Small Venues",
   tier: "standard",
   claimedProfileId: null,
+  screenshotUrl: null,
   ...overrides,
 });
 

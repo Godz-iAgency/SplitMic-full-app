@@ -155,6 +155,26 @@ export async function getAdminDirectoryCounts(
   return { total, byCategory };
 }
 
+/** Screenshot backfill progress, for the admin panel's counters. */
+export async function getScreenshotProgress(
+  supabase: SupabaseClient,
+): Promise<{ done: number; pending: number; failed: number }> {
+  const table = () =>
+    supabase.from("directory_businesses").select("id", { count: "exact", head: true });
+
+  const [done, pending, failed] = await Promise.all([
+    table().eq("screenshot_status", "done"),
+    table().is("screenshot_status", null),
+    table().eq("screenshot_status", "failed"),
+  ]);
+
+  return {
+    done: done.count ?? 0,
+    pending: pending.count ?? 0,
+    failed: failed.count ?? 0,
+  };
+}
+
 /** PostgREST treats these as wildcards inside an ilike pattern. */
 function escapeLike(value: string): string {
   return value.replace(/[%_]/g, (match) => `\\${match}`);

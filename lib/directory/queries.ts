@@ -21,17 +21,21 @@ export type DirectoryCard = {
   subcategory: string | null;
   tier: "standard" | "featured" | "spotlight";
   claimedProfileId: string | null;
+  /** Stored website screenshot. Null until the backfill reaches this row. */
+  screenshotUrl: string | null;
 };
 
 /** Safety valve. The largest single category is ~296. */
 export const DIRECTORY_MAX_ROWS = 500;
 
 const PUBLIC_COLUMNS =
-  "id, category, business_name, website_url, phone, description, subcategory, tier, claimed_profile_id";
+  "id, category, business_name, website_url, phone, description, subcategory, tier, claimed_profile_id, screenshot_url";
 
 export type DirectoryFilters = {
   category?: DirectoryCategory;
   query?: string;
+  /** Exact subcategory match — venue type, band genre, festival season. */
+  subcategory?: string;
   limit?: number;
 };
 
@@ -45,6 +49,9 @@ export async function getDirectoryBusinesses(
     .eq("is_active", true);
 
   if (filters.category) query = query.eq("category", filters.category);
+
+  const sub = filters.subcategory?.trim();
+  if (sub) query = query.eq("subcategory", sub);
 
   const trimmed = filters.query?.trim();
   if (trimmed) {
@@ -75,8 +82,39 @@ export async function getDirectoryBusinesses(
       subcategory: row.subcategory,
       tier: row.tier,
       claimedProfileId: row.claimed_profile_id,
+      screenshotUrl: row.screenshot_url,
     }),
   );
+}
+
+/**
+ * Distinct subcategory values present in a category, for the filter dropdown.
+ *
+ * Read from the data rather than hardcoded, because what a subcategory *means*
+ * differs per category — venue types, band genres, festival seasons — and the
+ * set grows as new listings are imported.
+ */
+export async function getSubcategoryOptions(
+  supabase: SupabaseClient,
+  category: DirectoryCategory,
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("directory_businesses")
+    .select("subcategory")
+    .eq("is_active", true)
+    .eq("category", category)
+    .not("subcategory", "is", null)
+    .limit(DIRECTORY_MAX_ROWS);
+
+  if (error || !data) return [];
+
+  const unique = new Set<string>();
+  for (const row of data) {
+    const value = (row.subcategory as string | null)?.trim();
+    if (value) unique.add(value);
+  }
+
+  return [...unique].sort((a, b) => a.localeCompare(b));
 }
 
 export async function getDirectoryCounts(

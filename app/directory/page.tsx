@@ -16,13 +16,16 @@ import { DirectoryEmptyState } from "@/components/directory/DirectoryEmptyState"
 // so an hour of caching is plenty.
 export const revalidate = 3600;
 
+// Titled "Directory" rather than plain "Austin Live Music": /live already owns
+// that exact phrase, and two pages competing for it would split the ranking
+// signal instead of concentrating it. Both carry the keyword, different intent.
 export const metadata: Metadata = {
-  title: "Austin Music Business Directory",
+  title: "Austin Live Music Directory",
   description:
     "A curated directory of Austin's music industry: venues, bands, talent buyers, record labels, festivals, rehearsal studios, instrument rental, and backline.",
   alternates: { canonical: "/directory" },
   openGraph: {
-    title: "Austin Music Business Directory | SplitMic",
+    title: "Austin Live Music Directory | SplitMic",
     description:
       "Venues, bands, talent buyers, labels, festivals, studios, and gear — the Austin music industry in one place.",
     type: "website",
@@ -59,7 +62,7 @@ export default async function DirectoryHubPage({
       <div className="mx-auto max-w-5xl space-y-8">
         <header className="text-center">
           <h1 className="text-3xl font-bold sm:text-4xl">
-            Austin Music Business Directory
+            Austin Live Music Directory
           </h1>
           <p className="mx-auto mt-2 max-w-2xl text-brand-gray-300">
             Venues, bands, talent buyers, labels, festivals, rehearsal studios,

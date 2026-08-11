@@ -9,6 +9,12 @@ import {
   type DirectoryImportResult,
 } from "@/lib/directory/import";
 import { readDirectoryCsvFromDisk } from "@/lib/directory/csvFile";
+import {
+  backfillScreenshots,
+  resetFailedScreenshots,
+  SCREENSHOT_BATCH_SIZE,
+  type ScreenshotJobResult,
+} from "@/lib/directory/screenshotJob";
 import { CATEGORY_META } from "@/lib/directory/categories";
 import type {
   DirectoryTier,
@@ -127,6 +133,65 @@ export async function adminRunDirectoryImport(input: {
     revalidateDirectory();
   }
 
+  return result;
+}
+
+// ─── Screenshots ────────────────────────────────────────────────────────────
+
+/**
+ * Captures website screenshots for listings that don't have one yet.
+ *
+ * Batched and resumable — each call costs one Firecrawl credit per listing
+ * attempted, so the batch size is capped and the caller decides when to run
+ * another. Rows already attempted are never picked up again.
+ */
+export async function adminBackfillScreenshots(input: {
+  limit?: number;
+  dryRun?: boolean;
+}): Promise<ScreenshotJobResult> {
+  const guard = await requireAdmin();
+  if ("error" in guard) {
+    return {
+      remainingBefore: 0,
+      attempted: 0,
+      captured: 0,
+      failed: 0,
+      skipped: 0,
+      dryRun: Boolean(input.dryRun),
+      failures: [],
+      error: guard.error,
+    };
+  }
+
+  // Clamp so a hand-edited request can't launch an unbounded spend.
+  const limit = Math.min(Math.max(input.limit ?? SCREENSHOT_BATCH_SIZE, 1), 100);
+
+  const result = await backfillScreenshots(guard.supabase, {
+    limit,
+    dryRun: input.dryRun,
+  });
+
+  if (!input.dryRun && result.captured > 0) {
+    await logAdminAction({
+      actionType: "directory_screenshots",
+      details: { captured: result.captured, failed: result.failed },
+    });
+    revalidateDirectory();
+  }
+
+  return result;
+}
+
+/** Puts previously-failed rows back in the queue for an explicit retry. */
+export async function adminResetFailedScreenshots(): Promise<{
+  reset: number;
+  error?: string;
+}> {
+  const guard = await requireAdmin();
+  if ("error" in guard) return { reset: 0, error: guard.error };
+
+  const result = await resetFailedScreenshots(guard.supabase);
+  if (!result.error) revalidatePath("/admin/directory");
   return result;
 }
 
