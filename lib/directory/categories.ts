@@ -88,6 +88,7 @@ export const CATEGORY_META: Record<DirectoryCategory, CategoryMeta> = {
     csvLabel: "Instrument Rental",
     seoTitle: "Austin Instrument Rental",
     blurb: "Where to rent instruments and gear in Austin.",
+    image: "/players/instrument_rental.jpg",
   },
   rehearsal_studio: {
     slug: "rehearsal-studios",
@@ -96,6 +97,7 @@ export const CATEGORY_META: Record<DirectoryCategory, CategoryMeta> = {
     csvLabel: "Rehearsal Studios",
     seoTitle: "Austin Rehearsal Studios",
     blurb: "Hourly and monthly rehearsal rooms and practice spaces in Austin.",
+    image: "/players/rehearsal_studio.jpg",
   },
   backline: {
     slug: "backline",
@@ -104,6 +106,7 @@ export const CATEGORY_META: Record<DirectoryCategory, CategoryMeta> = {
     csvLabel: "Backline Companies",
     seoTitle: "Austin Backline Rental Companies",
     blurb: "Backline rental and stage gear providers serving Austin shows.",
+    image: "/players/backline.jpg",
   },
 };
 

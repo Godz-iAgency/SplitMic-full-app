@@ -119,9 +119,15 @@ function GridCard({ card }: { card: DirectoryCard }) {
 }
 
 /**
- * The website screenshot, or a brand gradient when we don't have one yet.
- * Screenshots are backfilled in batches, so most cards start on the gradient —
- * it has to look deliberate on its own, not like a broken image.
+ * The card's photo, in order of how much it actually tells a visitor:
+ *
+ *   1. The Google Places photo — a real shot of the venue or shopfront.
+ *   2. A screenshot of the business's website.
+ *   3. A brand gradient.
+ *
+ * Both photo sources are backfilled in batches, so plenty of cards sit on the
+ * gradient at any given time — it has to look deliberate on its own, not like
+ * a broken image.
  */
 function ImageBand({
   card,
@@ -133,20 +139,24 @@ function ImageBand({
   badge?: "featured" | null;
 }) {
   const logo = faviconUrl(card.websiteUrl);
+  const photo = card.placePhotoUrl ?? card.screenshotUrl;
+  // A venue photo is framed to be looked at; a website screenshot is a page,
+  // so anchor it to the top where the header and hero live.
+  const objectPosition = card.placePhotoUrl ? "object-center" : "object-top";
 
   return (
     <div className={`relative w-full ${height} shrink-0 overflow-hidden`}>
-      {card.screenshotUrl ? (
+      {photo ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={card.screenshotUrl}
+            src={photo}
             alt=""
-            className="h-full w-full object-cover object-top"
+            className={`h-full w-full object-cover ${objectPosition}`}
             loading="lazy"
           />
-          {/* Keeps white website screenshots from fighting the dark card. */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/10" />
+          {/* Keeps a bright photo from fighting the dark card body. */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/5" />
         </>
       ) : (
         <div className="h-full w-full bg-gradient-to-br from-brand-orange/25 via-brand-gray-900 to-black">

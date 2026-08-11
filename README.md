@@ -132,8 +132,18 @@ has a regression test asserting exactly that.
 visual treatment — spotlight listings render full-width above the grid. Set
 them in `/admin/directory`.
 
-**Card imagery** comes from two places, with very different costs:
+**Card imagery** comes from three sources, tried in that order — a real venue
+photo, then the business's website, then a gradient:
 
+- **Venue photos** come from Google Places (`lib/directory/places.ts`), matched
+  by business name scoped to Austin. Run them from `/admin/directory` in
+  batches — **one billed Places lookup per listing attempted**, resumable, and
+  a row is never looked up twice. Requires **"Places API (New)" enabled** on
+  the existing `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` in Google Cloud Console.
+  Google's terms allow storing a place ID indefinitely but the photo URI it
+  resolves to is short-lived, so the durable photo *resource name* is kept
+  alongside the last resolved URL — a re-run refreshes expired URLs without
+  repeating the place search.
 - **Logos** are derived at render time from each site's favicon via Google's
   endpoint (`lib/directory/media.ts`). Nothing stored, no API key, no credits.
   That endpoint returns a generic globe rather than 404ing, so there's no error

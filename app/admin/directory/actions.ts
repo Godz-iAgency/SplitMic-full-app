@@ -15,6 +15,12 @@ import {
   SCREENSHOT_BATCH_SIZE,
   type ScreenshotJobResult,
 } from "@/lib/directory/screenshotJob";
+import {
+  backfillPlacePhotos,
+  resetFailedPlaces,
+  PLACES_BATCH_SIZE,
+  type PlacesJobResult,
+} from "@/lib/directory/placesJob";
 import { CATEGORY_META } from "@/lib/directory/categories";
 import type {
   DirectoryTier,
@@ -191,6 +197,63 @@ export async function adminResetFailedScreenshots(): Promise<{
   if ("error" in guard) return { reset: 0, error: guard.error };
 
   const result = await resetFailedScreenshots(guard.supabase);
+  if (!result.error) revalidatePath("/admin/directory");
+  return result;
+}
+
+// ─── Google Places photos ───────────────────────────────────────────────────
+
+/**
+ * Matches listings to their Google Maps place and pulls that place's photo —
+ * the real venue shot. Batched for the same reason as screenshots: each
+ * attempt is a billed Places lookup, so the spend stays an explicit click.
+ */
+export async function adminBackfillPlacePhotos(input: {
+  limit?: number;
+  dryRun?: boolean;
+}): Promise<PlacesJobResult> {
+  const guard = await requireAdmin();
+  if ("error" in guard) {
+    return {
+      remainingBefore: 0,
+      attempted: 0,
+      photos: 0,
+      noPhoto: 0,
+      notFound: 0,
+      failed: 0,
+      dryRun: Boolean(input.dryRun),
+      failures: [],
+      error: guard.error,
+    };
+  }
+
+  const limit = Math.min(Math.max(input.limit ?? PLACES_BATCH_SIZE, 1), 100);
+
+  const result = await backfillPlacePhotos(guard.supabase, {
+    limit,
+    dryRun: input.dryRun,
+  });
+
+  if (!input.dryRun && result.photos > 0) {
+    await logAdminAction({
+      actionType: "directory_place_photos",
+      details: { photos: result.photos, failed: result.failed },
+    });
+    revalidateDirectory();
+  }
+
+  return result;
+}
+
+/** Puts failed Places lookups back in the queue for an explicit retry. */
+export async function adminResetFailedPlaces(): Promise<{
+  reset: number;
+  error?: string;
+}> {
+  const guard = await requireAdmin();
+  if ("error" in guard) return { reset: 0, error: guard.error };
+
+  const result = await resetFailedPlaces(guard.supabase);
   if (!result.error) revalidatePath("/admin/directory");
   return result;
 }

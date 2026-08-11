@@ -175,6 +175,28 @@ export async function getScreenshotProgress(
   };
 }
 
+/** Google Places backfill progress, for the admin panel's counters. */
+export async function getPlacesProgress(
+  supabase: SupabaseClient,
+): Promise<{ withPhoto: number; pending: number; notFound: number; failed: number }> {
+  const table = () =>
+    supabase.from("directory_businesses").select("id", { count: "exact", head: true });
+
+  const [withPhoto, pending, notFound, failed] = await Promise.all([
+    table().eq("places_status", "done"),
+    table().is("places_status", null),
+    table().eq("places_status", "not_found"),
+    table().eq("places_status", "failed"),
+  ]);
+
+  return {
+    withPhoto: withPhoto.count ?? 0,
+    pending: pending.count ?? 0,
+    notFound: notFound.count ?? 0,
+    failed: failed.count ?? 0,
+  };
+}
+
 /** PostgREST treats these as wildcards inside an ilike pattern. */
 function escapeLike(value: string): string {
   return value.replace(/[%_]/g, (match) => `\\${match}`);

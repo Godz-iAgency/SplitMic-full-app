@@ -81,9 +81,21 @@ export function FeaturesSection() {
   return (
     <section
       id="features"
-      className="scroll-mt-20 border-t border-brand-gray-800 bg-brand-gray-900/30 px-6 py-20 sm:py-24"
+      className="relative scroll-mt-20 overflow-hidden border-t border-brand-gray-800 bg-gradient-to-b from-brand-gray-900/60 via-black to-brand-gray-900/40 px-6 py-20 sm:py-24"
     >
-      <div className="mx-auto max-w-6xl">
+      {/* Ambient orange bloom behind the heading, and a faint dot grid over the
+          whole section — enough texture that the black stops reading as an
+          empty void, without competing with the cards. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-32 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-brand-orange/20 blur-[120px]"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.8)_1px,transparent_0)] [background-size:22px_22px]"
+      />
+
+      <div className="relative mx-auto max-w-6xl">
         <Reveal className="mb-14 text-center">
           <h2 className="text-3xl font-black sm:text-5xl">
             Everything you need to do{" "}
@@ -100,8 +112,15 @@ export function FeaturesSection() {
               <button
                 type="button"
                 onClick={() => setSelected(feature)}
-                className="group flex h-full w-full flex-col rounded-2xl border border-brand-gray-800 bg-black p-6 text-left transition hover:-translate-y-1 hover:border-brand-orange hover:bg-brand-gray-900 hover:shadow-lg hover:shadow-brand-orange/20 focus:outline-none focus:ring-2 focus:ring-brand-orange/50"
+                className="group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-brand-gray-900 via-black to-black p-6 text-left transition hover:-translate-y-1 hover:border-brand-orange/50 hover:shadow-xl hover:shadow-brand-orange/20 focus:outline-none focus:ring-2 focus:ring-brand-orange/50"
               >
+                {/* Corner glow that warms on hover, so the card has depth at
+                    rest instead of being a flat black rectangle. */}
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-brand-orange/10 blur-2xl transition duration-500 group-hover:bg-brand-orange/25"
+                />
+
                 {/* Same icon as the modal header — orange rounded square */}
                 <div className="mb-4 inline-flex h-12 w-12 shrink-0 items-center justify-center self-start rounded-2xl border border-brand-orange/40 bg-brand-orange/10 text-brand-orange shadow-md shadow-brand-orange/20 transition group-hover:scale-110">
                   <feature.Icon
