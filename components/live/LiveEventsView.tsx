@@ -6,6 +6,7 @@ import { isToday } from "@/lib/events/time";
 import { EventCard } from "./EventCard";
 import { EmptyState } from "./EmptyState";
 import { EventFaqSection } from "./EventFaqSection";
+import { BackToHomeLink } from "@/components/directory/BackToHomeLink";
 
 type Range = "today" | "week";
 
@@ -25,6 +26,8 @@ export function LiveEventsView({ events }: Props) {
   return (
     <main className="min-h-screen bg-black px-4 py-12 text-white sm:px-8">
       <div className="mx-auto max-w-5xl">
+        <BackToHomeLink className="mb-8" />
+
         <header className="text-center">
           <h1 className="text-3xl font-bold sm:text-4xl">Austin Live Music</h1>
           <p className="mt-2 text-brand-gray-300">

@@ -25,6 +25,12 @@ export type CategoryMeta = {
   /** <h1> and <title> text — this is the keyword the page targets. */
   seoTitle: string;
   blurb: string;
+  /**
+   * Tile photo, shared with the landing page's player cards so the two read as
+   * the same product. Only the five categories that map onto a SplitMic player
+   * type have one; the rest fall back to a brand gradient.
+   */
+  image?: string;
 };
 
 export const CATEGORY_META: Record<DirectoryCategory, CategoryMeta> = {
@@ -36,6 +42,7 @@ export const CATEGORY_META: Record<DirectoryCategory, CategoryMeta> = {
     seoTitle: "Austin Music Venues",
     blurb:
       "Clubs, dancehalls, concert halls, and amphitheaters booking live music across Austin.",
+    image: "/players/venue.jpg",
   },
   record_label: {
     slug: "record-labels",
@@ -44,6 +51,7 @@ export const CATEGORY_META: Record<DirectoryCategory, CategoryMeta> = {
     csvLabel: "Record Labels",
     seoTitle: "Austin Record Labels",
     blurb: "Independent labels signing and releasing Austin artists.",
+    image: "/players/record_label.jpg",
   },
   talent_buyer: {
     slug: "talent-buyers",
@@ -53,6 +61,7 @@ export const CATEGORY_META: Record<DirectoryCategory, CategoryMeta> = {
     seoTitle: "Austin Talent Buyers & Booking Agents",
     blurb:
       "The people who book the shows: talent buyers, booking agents, and promoters working in Austin.",
+    image: "/players/talent_buyer.jpg",
   },
   festival: {
     slug: "festivals",
@@ -61,6 +70,7 @@ export const CATEGORY_META: Record<DirectoryCategory, CategoryMeta> = {
     csvLabel: "Festivals",
     seoTitle: "Austin Music Festivals",
     blurb: "Music festivals and multi-day events happening in and around Austin.",
+    image: "/players/festival.jpg",
   },
   band: {
     slug: "bands",
@@ -69,6 +79,7 @@ export const CATEGORY_META: Record<DirectoryCategory, CategoryMeta> = {
     csvLabel: "Bands",
     seoTitle: "Austin Bands & Local Artists",
     blurb: "Active Austin bands and artists, by genre.",
+    image: "/players/band.jpg",
   },
   instrument_rental: {
     slug: "instrument-rental",

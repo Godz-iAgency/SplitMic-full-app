@@ -11,6 +11,7 @@ import { SearchBox } from "@/components/search/SearchBox";
 import { DirectoryCategoryTiles } from "@/components/directory/DirectoryCategoryTiles";
 import { DirectoryListing } from "@/components/directory/DirectoryListing";
 import { DirectoryEmptyState } from "@/components/directory/DirectoryEmptyState";
+import { BackToHomeLink } from "@/components/directory/BackToHomeLink";
 
 // Public page — no login. Directory data only changes on a manual import,
 // so an hour of caching is plenty.
@@ -60,6 +61,8 @@ export default async function DirectoryHubPage({
   return (
     <main className="min-h-screen bg-black px-4 py-12 text-white sm:px-8">
       <div className="mx-auto max-w-5xl space-y-8">
+        <BackToHomeLink />
+
         <header className="text-center">
           <h1 className="text-3xl font-bold sm:text-4xl">
             Austin Live Music Directory

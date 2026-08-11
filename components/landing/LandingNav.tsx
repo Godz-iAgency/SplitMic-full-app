@@ -1,17 +1,16 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Music, BookOpen, HelpCircle } from "lucide-react";
+import { Home, Music, BookOpen } from "lucide-react";
 
 /**
- * Live Music and Directory are real pages and the main reason a stranger lands
- * here from search, so they lead. "Home" used to sit first as a scroll anchor,
- * but the logo already does that — this trades it for a destination rather than
- * adding to the row, which keeps the mobile header as sparse as it was.
+ * Home first, then the two public destinations. Home anchors to the player-type
+ * section — the "what is this" answer — rather than the very top, which the
+ * logo already covers.
  */
 const TABS = [
+  { href: "#who-its-for", label: "Home", Icon: Home, external: false },
   { href: "/live", label: "Live Music", Icon: Music, external: true },
   { href: "/directory", label: "Directory", Icon: BookOpen, external: true },
-  { href: "#how-it-works", label: "How it works", Icon: HelpCircle, external: false },
 ];
 
 export function LandingNav() {

@@ -20,6 +20,7 @@ import { DirectoryListing } from "@/components/directory/DirectoryListing";
 import { DirectoryEmptyState } from "@/components/directory/DirectoryEmptyState";
 import { DirectoryFaqSection } from "@/components/directory/DirectoryFaqSection";
 import { DirectoryCategoryJsonLd } from "@/components/directory/DirectoryJsonLd";
+import { BackToHomeLink } from "@/components/directory/BackToHomeLink";
 
 // Server-rendered and cached for an hour. Deliberately NOT using
 // generateStaticParams: this page reads searchParams for its search box, which
@@ -98,6 +99,8 @@ export default async function DirectoryCategoryPage({
 
       <main className="min-h-screen bg-black px-4 py-12 text-white sm:px-8">
         <div className="mx-auto max-w-5xl space-y-8">
+          <BackToHomeLink />
+
           <nav
             aria-label="Breadcrumb"
             className="flex items-center gap-1 text-sm text-brand-gray-400"

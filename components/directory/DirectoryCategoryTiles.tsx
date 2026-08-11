@@ -67,9 +67,12 @@ export function DirectoryCategoryTiles({ active, counts, query }: Props) {
         Browse by category
       </h2>
 
+      {/* Photo tiles, matching the landing page's player cards so the directory
+          reads as the same product rather than a bolted-on list. The three
+          categories with no player-type photo fall back to a brand gradient. */}
       <nav
         aria-label="Browse the directory by category"
-        className="flex flex-wrap justify-center gap-3"
+        className="grid grid-cols-2 gap-3 lg:grid-cols-4"
       >
         {DIRECTORY_CATEGORIES.map((category) => {
           const meta = CATEGORY_META[category];
@@ -79,17 +82,37 @@ export function DirectoryCategoryTiles({ active, counts, query }: Props) {
             <Link
               key={category}
               href={`/directory/${meta.slug}`}
-              className="group flex shrink-0 grow-0 basis-[calc(50%-0.375rem)] flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 transition-all duration-200 hover:border-brand-orange/40 hover:bg-white/10 lg:basis-[calc(25%-0.5625rem)] lg:flex-col lg:items-start lg:gap-3 lg:p-4 lg:hover:-translate-y-0.5"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-brand-gray-900/50 transition-all duration-200 hover:border-brand-orange/40 hover:shadow-lg hover:shadow-brand-orange/10 lg:hover:-translate-y-0.5"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-orange/10 text-brand-orange transition group-hover:bg-brand-orange/20 lg:h-11 lg:w-11">
-                <DirectoryCategoryIcon
-                  category={category}
-                  className="h-[18px] w-[18px] lg:h-5 lg:w-5"
-                  strokeWidth={2}
-                />
-              </span>
+              <div className="relative aspect-[16/9] w-full overflow-hidden">
+                {meta.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={meta.image}
+                    alt=""
+                    loading="lazy"
+                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="h-full w-full bg-gradient-to-br from-brand-orange/25 via-brand-gray-900 to-black" />
+                )}
 
-              <div className="min-w-0">
+                {/* Fades the photo into the card body. */}
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 bg-gradient-to-t from-brand-gray-900 via-brand-gray-900/30 to-transparent"
+                />
+
+                <div className="absolute bottom-2 left-1/2 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-2xl border border-brand-orange/40 bg-black/70 text-brand-orange shadow-lg shadow-black/40 backdrop-blur transition group-hover:scale-110">
+                  <DirectoryCategoryIcon
+                    category={category}
+                    className="h-5 w-5"
+                    strokeWidth={1.75}
+                  />
+                </div>
+              </div>
+
+              <div className="px-3 pb-3 pt-2 text-center">
                 <p className="truncate text-sm font-bold text-white">
                   {meta.plural}
                 </p>
