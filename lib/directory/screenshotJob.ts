@@ -13,6 +13,11 @@ import {
  * (screenshot_status IS NULL), and marks the outcome on every row it touches.
  * A row is therefore never captured — or paid for — twice, no matter how many
  * times the job runs.
+ *
+ * It also skips any row that already has a free Open Graph image
+ * (og_image_url IS NOT NULL) — the card prefers that image over a screenshot
+ * anyway, so paying to screenshot a business that already has a real photo
+ * would be a pure wasted credit. Run the free lookup first.
  */
 
 /** Small by default: each run should be a deliberate, bounded spend. */
@@ -65,7 +70,8 @@ export async function backfillScreenshots(
   const { count: remainingBefore, error: countError } = await supabase
     .from("directory_businesses")
     .select("id", { count: "exact", head: true })
-    .is("screenshot_status", null);
+    .is("screenshot_status", null)
+    .is("og_image_url", null);
 
   if (countError) {
     return { ...emptyResult(dryRun), error: countError.message };
@@ -75,6 +81,10 @@ export async function backfillScreenshots(
     .from("directory_businesses")
     .select("id, business_name, website_url")
     .is("screenshot_status", null)
+    // Skip anything that already has a free photo — the card prefers it over
+    // a screenshot anyway, so capturing one here would just spend a credit
+    // for nothing.
+    .is("og_image_url", null)
     // Highest-visibility listings get pictures first, so a partial backfill
     // still improves the top of every page.
     .order("tier_rank", { ascending: true })

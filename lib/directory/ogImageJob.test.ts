@@ -34,14 +34,11 @@ function fakeSupabase(opts: { pending?: Row[]; selectError?: string } = {}) {
           isHeadCount = Boolean(options?.head);
           return builder;
         },
+        // Stays chainable regardless of how many filters are stacked before
+        // the query resolves — matches the real query builder, which only
+        // actually runs on await/.then().
         is: (column: string, value: unknown) => {
           state.isFilters.push({ column, value });
-          if (isHeadCount) {
-            return Promise.resolve({
-              count: opts.selectError ? null : pending.length,
-              error: opts.selectError ? { message: opts.selectError } : null,
-            });
-          }
           return builder;
         },
         order: () => builder,
@@ -60,6 +57,17 @@ function fakeSupabase(opts: { pending?: Row[]; selectError?: string } = {}) {
           if (pendingUpdate) state.updates.push({ id, payload: pendingUpdate });
           return Promise.resolve({ error: null });
         },
+        // Reached only by the head-count query (select + is(), awaited
+        // directly with no .limit() in the chain).
+        then: (resolve: (value: unknown) => unknown) =>
+          resolve(
+            isHeadCount
+              ? {
+                  count: opts.selectError ? null : pending.length,
+                  error: opts.selectError ? { message: opts.selectError } : null,
+                }
+              : { data: [], error: null },
+          ),
       };
 
       return builder;
