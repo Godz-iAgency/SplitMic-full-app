@@ -9,7 +9,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import type { DirectoryCard } from "@/lib/directory/queries";
-import { CATEGORY_META } from "@/lib/directory/categories";
+import { CATEGORY_META, type DirectoryCategory } from "@/lib/directory/categories";
 import {
   faviconUrl,
   displayHost,
@@ -44,7 +44,7 @@ function SpotlightCard({ card }: { card: DirectoryCard }) {
       id={`b-${card.id}`}
       data-business-card={card.id}
       data-tier="spotlight"
-      className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-orange/30 via-brand-orange/10 to-transparent p-[1.5px]"
+      className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-orange/30 via-brand-orange/10 to-transparent p-[1.5px]"
     >
       <div className="overflow-hidden rounded-[calc(1rem-1px)] bg-gradient-to-br from-brand-gray-900 to-black">
         <ImageBand card={card} height="h-40 sm:h-48" />
@@ -87,7 +87,7 @@ function GridCard({ card }: { card: DirectoryCard }) {
       id={`b-${card.id}`}
       data-business-card={card.id}
       data-tier={card.tier}
-      className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-gradient-to-br from-brand-gray-900 to-black transition-all duration-200 hover:-translate-y-1 hover:border-brand-orange/40 ${
+      className={`group flex h-full flex-col overflow-hidden rounded-2xl border bg-gradient-to-br from-brand-gray-900 to-black transition-all duration-200 hover:-translate-y-1 hover:border-brand-orange/40 ${
         featured
           ? "border-brand-orange/30 ring-1 ring-brand-orange/30"
           : "border-white/10"
@@ -121,7 +121,8 @@ function GridCard({ card }: { card: DirectoryCard }) {
 /**
  * The card's photo, in order of how much it actually tells a visitor:
  *
- *   1. The Google Places photo — a real shot of the venue or shopfront.
+ *   1. The business's own Open Graph image — free, and often a real photo of
+ *      the place, since that's what shows up when their link is shared.
  *   2. A screenshot of the business's website.
  *   3. A brand gradient.
  *
@@ -139,10 +140,10 @@ function ImageBand({
   badge?: "featured" | null;
 }) {
   const logo = faviconUrl(card.websiteUrl);
-  const photo = card.placePhotoUrl ?? card.screenshotUrl;
-  // A venue photo is framed to be looked at; a website screenshot is a page,
-  // so anchor it to the top where the header and hero live.
-  const objectPosition = card.placePhotoUrl ? "object-center" : "object-top";
+  const photo = card.ogImageUrl ?? card.screenshotUrl;
+  // An OG image is a chosen photo, framed to be looked at; a website
+  // screenshot is a whole page, so anchor it to the top where the hero lives.
+  const objectPosition = card.ogImageUrl ? "object-center" : "object-top";
 
   return (
     <div className={`relative w-full ${height} shrink-0 overflow-hidden`}>
@@ -159,9 +160,7 @@ function ImageBand({
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/5" />
         </>
       ) : (
-        <div className="h-full w-full bg-gradient-to-br from-brand-orange/25 via-brand-gray-900 to-black">
-          <div className="absolute inset-0 opacity-40 [background-image:radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.15)_1px,transparent_0)] [background-size:16px_16px]" />
-        </div>
+        <FallbackArt category={card.category} />
       )}
 
       {badge === "featured" ? (
@@ -193,6 +192,38 @@ function ImageBand({
           </span>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * The pre-photo look for a card, before its backfill runs. Category-icon
+ * watermark plus a warm off-center glow reads as "designed," not "empty" —
+ * cards sit on this for a while (photos are backfilled in batches), so it has
+ * to hold up on its own rather than feel like a loading state.
+ *
+ * No animation here: a category page can render close to 300 of these at
+ * once, and a synced or unsynced shimmer across that many cards would be more
+ * noisy than lively. Motion is reserved for the hover state instead, which
+ * only ever affects one card at a time.
+ */
+function FallbackArt({ category }: { category: DirectoryCategory }) {
+  return (
+    <div className="relative h-full w-full overflow-hidden bg-gradient-to-br from-brand-gray-900 via-brand-gray-900 to-black">
+      {/* Two off-center glows instead of one centered wash — reads as stage
+          lighting instead of a flat tint. */}
+      <div className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-brand-orange/25 blur-3xl" />
+      <div className="absolute -bottom-12 -right-8 h-36 w-36 rounded-full bg-brand-orange/10 blur-3xl" />
+
+      <div className="absolute inset-0 opacity-[0.15] [background-image:radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.5)_1px,transparent_0)] [background-size:18px_18px]" />
+
+      {/* Oversized, tilted category icon watermark — brightens slightly on
+          hover (the parent article carries `group`). */}
+      <DirectoryCategoryIcon
+        category={category}
+        strokeWidth={1}
+        className="absolute -bottom-5 -right-5 h-28 w-28 rotate-[-10deg] text-brand-orange/[0.12] transition-colors duration-300 group-hover:text-brand-orange/25"
+      />
     </div>
   );
 }

@@ -16,11 +16,11 @@ import {
   type ScreenshotJobResult,
 } from "@/lib/directory/screenshotJob";
 import {
-  backfillPlacePhotos,
-  resetFailedPlaces,
-  PLACES_BATCH_SIZE,
-  type PlacesJobResult,
-} from "@/lib/directory/placesJob";
+  backfillOgImages,
+  resetFailedOgImages,
+  OG_IMAGE_BATCH_SIZE,
+  type OgImageJobResult,
+} from "@/lib/directory/ogImageJob";
 import { CATEGORY_META } from "@/lib/directory/categories";
 import type {
   DirectoryTier,
@@ -201,43 +201,43 @@ export async function adminResetFailedScreenshots(): Promise<{
   return result;
 }
 
-// ─── Google Places photos ───────────────────────────────────────────────────
+// ─── Open Graph images ──────────────────────────────────────────────────────
 
 /**
- * Matches listings to their Google Maps place and pulls that place's photo —
- * the real venue shot. Batched for the same reason as screenshots: each
- * attempt is a billed Places lookup, so the spend stays an explicit click.
+ * Pulls each listing's own preview photo off its website. Free — no API key,
+ * no billing — but still batched so one admin click has a bounded, predictable
+ * runtime rather than sequentially fetching hundreds of websites at once.
  */
-export async function adminBackfillPlacePhotos(input: {
+export async function adminBackfillOgImages(input: {
   limit?: number;
   dryRun?: boolean;
-}): Promise<PlacesJobResult> {
+}): Promise<OgImageJobResult> {
   const guard = await requireAdmin();
   if ("error" in guard) {
     return {
       remainingBefore: 0,
       attempted: 0,
-      photos: 0,
-      noPhoto: 0,
-      notFound: 0,
+      found: 0,
+      noImage: 0,
       failed: 0,
+      skipped: 0,
       dryRun: Boolean(input.dryRun),
       failures: [],
       error: guard.error,
     };
   }
 
-  const limit = Math.min(Math.max(input.limit ?? PLACES_BATCH_SIZE, 1), 100);
+  const limit = Math.min(Math.max(input.limit ?? OG_IMAGE_BATCH_SIZE, 1), 100);
 
-  const result = await backfillPlacePhotos(guard.supabase, {
+  const result = await backfillOgImages(guard.supabase, {
     limit,
     dryRun: input.dryRun,
   });
 
-  if (!input.dryRun && result.photos > 0) {
+  if (!input.dryRun && result.found > 0) {
     await logAdminAction({
-      actionType: "directory_place_photos",
-      details: { photos: result.photos, failed: result.failed },
+      actionType: "directory_og_images",
+      details: { found: result.found, failed: result.failed },
     });
     revalidateDirectory();
   }
@@ -245,15 +245,15 @@ export async function adminBackfillPlacePhotos(input: {
   return result;
 }
 
-/** Puts failed Places lookups back in the queue for an explicit retry. */
-export async function adminResetFailedPlaces(): Promise<{
+/** Puts failed OG-image lookups back in the queue for an explicit retry. */
+export async function adminResetFailedOgImages(): Promise<{
   reset: number;
   error?: string;
 }> {
   const guard = await requireAdmin();
   if ("error" in guard) return { reset: 0, error: guard.error };
 
-  const result = await resetFailedPlaces(guard.supabase);
+  const result = await resetFailedOgImages(guard.supabase);
   if (!result.error) revalidatePath("/admin/directory");
   return result;
 }

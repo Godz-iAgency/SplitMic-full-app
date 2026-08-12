@@ -4,7 +4,7 @@ import {
   getAdminDirectoryRows,
   getAdminDirectoryCounts,
   getScreenshotProgress,
-  getPlacesProgress,
+  getOgImageProgress,
   OUTREACH_STATUSES,
   OUTREACH_LABELS,
   DIRECTORY_TIERS,
@@ -19,7 +19,7 @@ import {
 } from "@/lib/directory/categories";
 import { DirectoryImportPanel } from "@/components/admin/DirectoryImportPanel";
 import { DirectoryScreenshotPanel } from "@/components/admin/DirectoryScreenshotPanel";
-import { DirectoryPlacesPanel } from "@/components/admin/DirectoryPlacesPanel";
+import { DirectoryOgImagePanel } from "@/components/admin/DirectoryOgImagePanel";
 import {
   DirectoryTierSelect,
   DirectoryOutreachControl,
@@ -59,11 +59,11 @@ export default async function AdminDirectoryPage({
     query: searchParams.q,
   };
 
-  const [{ rows, total, truncated }, counts, shots, places] = await Promise.all([
+  const [{ rows, total, truncated }, counts, shots, ogImages] = await Promise.all([
     getAdminDirectoryRows(supabase, filters),
     getAdminDirectoryCounts(supabase),
     getScreenshotProgress(supabase),
-    getPlacesProgress(supabase),
+    getOgImageProgress(supabase),
   ]);
 
   return (
@@ -82,13 +82,11 @@ export default async function AdminDirectoryPage({
 
       {counts.total > 0 ? (
         <>
-          {/* Places first: a real venue photo beats a website screenshot, and
-              the card prefers it when both exist. */}
-          <DirectoryPlacesPanel
-            withPhoto={places.withPhoto}
-            pending={places.pending}
-            notFound={places.notFound}
-            failed={places.failed}
+          {/* OG image first: free, and the card prefers it when both exist. */}
+          <DirectoryOgImagePanel
+            done={ogImages.done}
+            pending={ogImages.pending}
+            failed={ogImages.failed}
           />
           <DirectoryScreenshotPanel
             done={shots.done}

@@ -1,43 +1,41 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { MapPin } from "lucide-react";
+import { ImageIcon } from "lucide-react";
 import {
-  adminBackfillPlacePhotos,
-  adminResetFailedPlaces,
+  adminBackfillOgImages,
+  adminResetFailedOgImages,
 } from "@/app/admin/directory/actions";
-import type { PlacesJobResult } from "@/lib/directory/placesJob";
+import type { OgImageJobResult } from "@/lib/directory/ogImageJob";
 
 const BATCH_OPTIONS = [10, 25, 50, 100];
 
 type Props = {
-  withPhoto: number;
+  /** Listings with a found preview photo. */
+  done: number;
+  /** Listings never checked. */
   pending: number;
-  notFound: number;
   failed: number;
 };
 
 /**
- * Pulls each listing's real Google Maps photo. Runs in bounded batches because
- * every attempt is a billed Places lookup — the spend should always be a
- * deliberate click with a visible size, never one job that drains the quota.
+ * Runs the free Open Graph image backfill in bounded batches.
+ *
+ * No API key, no billing — this just reads a meta tag off each business's own
+ * website. Still batched (rather than one huge run) so an admin click has a
+ * predictable, bounded runtime.
  */
-export function DirectoryPlacesPanel({
-  withPhoto,
-  pending,
-  notFound,
-  failed,
-}: Props) {
+export function DirectoryOgImagePanel({ done, pending, failed }: Props) {
   const [busy, startTransition] = useTransition();
   const [batch, setBatch] = useState(25);
-  const [result, setResult] = useState<PlacesJobResult | null>(null);
+  const [result, setResult] = useState<OgImageJobResult | null>(null);
   const [resetMsg, setResetMsg] = useState<string | null>(null);
 
   function run() {
     setResult(null);
     setResetMsg(null);
     startTransition(async () => {
-      setResult(await adminBackfillPlacePhotos({ limit: batch }));
+      setResult(await adminBackfillOgImages({ limit: batch }));
     });
   }
 
@@ -45,11 +43,11 @@ export function DirectoryPlacesPanel({
     setResult(null);
     setResetMsg(null);
     startTransition(async () => {
-      const res = await adminResetFailedPlaces();
+      const res = await adminResetFailedOgImages();
       setResetMsg(
         res.error
           ? res.error
-          : `${res.reset} failed ${res.reset === 1 ? "lookup" : "lookups"} queued to retry.`,
+          : `${res.reset} failed ${res.reset === 1 ? "listing" : "listings"} queued to retry. Run a batch to pick them up.`,
       );
     });
   }
@@ -59,23 +57,23 @@ export function DirectoryPlacesPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="inline-flex items-center gap-2 text-lg font-bold text-white">
-            <MapPin className="h-4 w-4 text-brand-orange" aria-hidden="true" />
-            Venue photos from Google
+            <ImageIcon className="h-4 w-4 text-brand-orange" aria-hidden="true" />
+            Listing photos (free)
           </h2>
           <p className="mt-1 text-sm text-brand-gray-300">
-            {withPhoto} with photos · {pending} waiting
-            {notFound > 0 ? ` · ${notFound} no Google match` : ""}
-            {failed > 0 ? ` · ${failed} failed` : ""}. Needs &ldquo;Places API
-            (New)&rdquo; enabled on your Google Maps key.
+            {done} found · {pending} waiting
+            {failed > 0 ? ` · ${failed} failed` : ""}. Pulls each business's own
+            website preview photo — no API key, no cost. Safe to stop and
+            continue later.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <label className="sr-only" htmlFor="places-batch">
+          <label className="sr-only" htmlFor="og-image-batch">
             Batch size
           </label>
           <select
-            id="places-batch"
+            id="og-image-batch"
             value={batch}
             onChange={(e) => setBatch(Number(e.target.value))}
             className="rounded-full border border-white/15 bg-black/40 px-3 py-2 text-sm font-semibold text-white focus:border-brand-orange/50 focus:outline-none"
@@ -93,7 +91,7 @@ export function DirectoryPlacesPanel({
             disabled={busy || pending === 0}
             className="rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50"
           >
-            {busy ? "Fetching…" : "Fetch venue photos"}
+            {busy ? "Fetching…" : "Find photos"}
           </button>
 
           {failed > 0 ? (
@@ -111,7 +109,8 @@ export function DirectoryPlacesPanel({
 
       {busy ? (
         <p className="mt-3 text-sm text-brand-gray-400">
-          Looking up {batch} businesses on Google Maps. Leave the page open.
+          Checking up to {batch} sites. This takes a few seconds each — leave
+          the page open.
         </p>
       ) : null}
 
@@ -125,8 +124,8 @@ export function DirectoryPlacesPanel({
             <p className="text-sm font-semibold text-red-300">{result.error}</p>
           ) : (
             <p className="text-sm font-semibold text-emerald-300">
-              {result.photos} photos, {result.noPhoto} matched without a photo,{" "}
-              {result.notFound} not on Google, {result.failed} failed.{" "}
+              {result.found} found, {result.noImage} had no photo,{" "}
+              {result.failed} failed, {result.skipped} skipped (no website).{" "}
               {Math.max(0, result.remainingBefore - result.attempted)} still
               waiting.
             </p>

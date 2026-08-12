@@ -132,18 +132,18 @@ has a regression test asserting exactly that.
 visual treatment — spotlight listings render full-width above the grid. Set
 them in `/admin/directory`.
 
-**Card imagery** comes from three sources, tried in that order — a real venue
-photo, then the business's website, then a gradient:
+**Card imagery** comes from three sources, tried in that order — the
+business's own preview photo, then a screenshot of its website, then a
+gradient. All free: no Google billing anywhere in this feature.
 
-- **Venue photos** come from Google Places (`lib/directory/places.ts`), matched
-  by business name scoped to Austin. Run them from `/admin/directory` in
-  batches — **one billed Places lookup per listing attempted**, resumable, and
-  a row is never looked up twice. Requires **"Places API (New)" enabled** on
-  the existing `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` in Google Cloud Console.
-  Google's terms allow storing a place ID indefinitely but the photo URI it
-  resolves to is short-lived, so the durable photo *resource name* is kept
-  alongside the last resolved URL — a re-run refreshes expired URLs without
-  repeating the place search.
+- **Open Graph images** (`lib/directory/ogImage.ts`) are each business's own
+  link-preview photo — the same image that shows up when their site is shared
+  on iMessage/Facebook/etc. Free: no API key, just reading one meta tag off
+  their page. Run from `/admin/directory` in batches. (A Google Places photo
+  pipeline was built and removed here — its API is billed and its photo URLs
+  expire, needing periodic re-fetching to stay working. `migrations/step13_directory_places.sql`
+  is left in place as harmless unused schema history, same as the step2/step3
+  gap documented in `SCHEMA_HISTORY.md`.)
 - **Logos** are derived at render time from each site's favicon via Google's
   endpoint (`lib/directory/media.ts`). Nothing stored, no API key, no credits.
   That endpoint returns a generic globe rather than 404ing, so there's no error

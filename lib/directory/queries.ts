@@ -23,15 +23,16 @@ export type DirectoryCard = {
   claimedProfileId: string | null;
   /** Stored website screenshot. Null until the backfill reaches this row. */
   screenshotUrl: string | null;
-  /** Google Places photo of the business itself. Preferred over a screenshot. */
-  placePhotoUrl: string | null;
+  /** The business's own Open Graph preview image, when it has one. Free — no
+   *  API key, no billing — and preferred over the screenshot when present. */
+  ogImageUrl: string | null;
 };
 
 /** Safety valve. The largest single category is ~296. */
 export const DIRECTORY_MAX_ROWS = 500;
 
 const PUBLIC_COLUMNS =
-  "id, category, business_name, website_url, phone, description, subcategory, tier, claimed_profile_id, screenshot_url, place_photo_url";
+  "id, category, business_name, website_url, phone, description, subcategory, tier, claimed_profile_id, screenshot_url, og_image_url";
 
 export type DirectoryFilters = {
   category?: DirectoryCategory;
@@ -85,7 +86,7 @@ export async function getDirectoryBusinesses(
       tier: row.tier,
       claimedProfileId: row.claimed_profile_id,
       screenshotUrl: row.screenshot_url,
-      placePhotoUrl: row.place_photo_url,
+      ogImageUrl: row.og_image_url,
     }),
   );
 }

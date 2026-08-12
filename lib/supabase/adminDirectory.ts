@@ -175,24 +175,22 @@ export async function getScreenshotProgress(
   };
 }
 
-/** Google Places backfill progress, for the admin panel's counters. */
-export async function getPlacesProgress(
+/** Open Graph image backfill progress, for the admin panel's counters. */
+export async function getOgImageProgress(
   supabase: SupabaseClient,
-): Promise<{ withPhoto: number; pending: number; notFound: number; failed: number }> {
+): Promise<{ done: number; pending: number; failed: number }> {
   const table = () =>
     supabase.from("directory_businesses").select("id", { count: "exact", head: true });
 
-  const [withPhoto, pending, notFound, failed] = await Promise.all([
-    table().eq("places_status", "done"),
-    table().is("places_status", null),
-    table().eq("places_status", "not_found"),
-    table().eq("places_status", "failed"),
+  const [done, pending, failed] = await Promise.all([
+    table().eq("og_image_status", "done"),
+    table().is("og_image_status", null),
+    table().eq("og_image_status", "failed"),
   ]);
 
   return {
-    withPhoto: withPhoto.count ?? 0,
+    done: done.count ?? 0,
     pending: pending.count ?? 0,
-    notFound: notFound.count ?? 0,
     failed: failed.count ?? 0,
   };
 }

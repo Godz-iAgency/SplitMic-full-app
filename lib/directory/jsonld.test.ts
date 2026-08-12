@@ -21,7 +21,7 @@ const card = (overrides: Partial<DirectoryCard> = {}): DirectoryCard => ({
   tier: "standard",
   claimedProfileId: null,
   screenshotUrl: null,
-  placePhotoUrl: null,
+  ogImageUrl: null,
   ...overrides,
 });
 
