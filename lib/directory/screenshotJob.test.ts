@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Both collaborators mocked: these tests cover the job's own batching,
@@ -84,9 +84,19 @@ function fakeSupabase(opts: { pending?: Row[]; selectError?: string } = {}) {
   return { client, state };
 }
 
+const originalKey = process.env.FIRECRAWL_API_KEY;
+
 beforeEach(() => {
   mockCapture.mockReset();
   mockUpload.mockReset();
+  // The job refuses to run without a key, so every test that expects real
+  // work needs one present.
+  process.env.FIRECRAWL_API_KEY = "test-key";
+});
+
+afterEach(() => {
+  if (originalKey === undefined) delete process.env.FIRECRAWL_API_KEY;
+  else process.env.FIRECRAWL_API_KEY = originalKey;
 });
 
 describe("backfillScreenshots", () => {
@@ -120,6 +130,22 @@ describe("backfillScreenshots", () => {
         column: "screenshot_status",
         value: null,
       });
+    });
+
+    it("refuses to run at all when the API key is missing, marking nothing", async () => {
+      // Regression guard: a missing key once marked every row in the batch as
+      // `failed`, which is wrong twice over — nothing was actually attempted,
+      // and those rows then sat excluded from later runs.
+      delete process.env.FIRECRAWL_API_KEY;
+      const { client, state } = fakeSupabase({
+        pending: [{ id: "r1", business_name: "Mohawk", website_url: "https://m.com" }],
+      });
+
+      const result = await backfillScreenshots(client, { now: NOW });
+
+      expect(result.error).toContain("FIRECRAWL_API_KEY is not set");
+      expect(state.updates).toEqual([]);
+      expect(mockCapture).not.toHaveBeenCalled();
     });
 
     it("also skips rows that already have a free Open Graph image (never spend a credit on those)", async () => {

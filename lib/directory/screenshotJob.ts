@@ -67,6 +67,18 @@ export async function backfillScreenshots(
   const dryRun = options.dryRun ?? false;
   const nowIso = (options.now ?? new Date()).toISOString();
 
+  // Fail fast on a missing key rather than letting every row in the batch
+  // "fail" individually. A config gap isn't a per-listing outcome, and marking
+  // it as one wrongly retires those rows from future runs until someone
+  // notices and hits Retry failed.
+  if (!process.env.FIRECRAWL_API_KEY) {
+    return {
+      ...emptyResult(dryRun),
+      error:
+        "FIRECRAWL_API_KEY is not set, so no screenshots can be captured. Add it to .env.local (local) or the Vercel environment (deployed), then try again. Nothing was changed.",
+    };
+  }
+
   const { count: remainingBefore, error: countError } = await supabase
     .from("directory_businesses")
     .select("id", { count: "exact", head: true })

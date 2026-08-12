@@ -155,7 +155,14 @@ export async function getAdminDirectoryCounts(
   return { total, byCategory };
 }
 
-/** Screenshot backfill progress, for the admin panel's counters. */
+/**
+ * Screenshot backfill progress, for the admin panel's counters.
+ *
+ * `pending` mirrors backfillScreenshots' own selection exactly, including its
+ * og_image_url filter — otherwise the panel would advertise work the job will
+ * never do (a listing that already has a free photo is deliberately skipped),
+ * and the number would never reach zero.
+ */
 export async function getScreenshotProgress(
   supabase: SupabaseClient,
 ): Promise<{ done: number; pending: number; failed: number }> {
@@ -164,7 +171,7 @@ export async function getScreenshotProgress(
 
   const [done, pending, failed] = await Promise.all([
     table().eq("screenshot_status", "done"),
-    table().is("screenshot_status", null),
+    table().is("screenshot_status", null).is("og_image_url", null),
     table().eq("screenshot_status", "failed"),
   ]);
 
