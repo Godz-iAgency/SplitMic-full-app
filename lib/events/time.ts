@@ -2,6 +2,14 @@
 
 const CHICAGO_TZ = "America/Chicago";
 
+/**
+ * "Today" runs 9am-to-9am Chicago time, not midnight-to-midnight — matching
+ * when the listing actually refreshes (the daily Do512 sync) rather than the
+ * clock. A show that started at 8pm stays "Tonight" all night; it only rolls
+ * into "Tomorrow"/history once the *next* 9am sync has run, not at 12:00am.
+ */
+const CYCLE_START_HOUR = 9;
+
 /** en-CA gives a plain YYYY-MM-DD string, handy as a same-day comparison key. */
 function chicagoDateKey(date: Date): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -12,8 +20,19 @@ function chicagoDateKey(date: Date): string {
   }).format(date);
 }
 
+/**
+ * Date key for the current 9am-9am cycle: shifting the instant back by the
+ * cycle's start hour before reading the calendar date means anything before
+ * 9am still keys to "yesterday", and anything at/after 9am keys to "today" —
+ * exactly the boundary the sync itself runs on.
+ */
+function cycleDateKey(date: Date): string {
+  const shifted = new Date(date.getTime() - CYCLE_START_HOUR * 60 * 60 * 1000);
+  return chicagoDateKey(shifted);
+}
+
 export function isToday(iso: string, now: Date = new Date()): boolean {
-  return chicagoDateKey(new Date(iso)) === chicagoDateKey(now);
+  return cycleDateKey(new Date(iso)) === cycleDateKey(now);
 }
 
 export function formatEventTime(iso: string): string {
@@ -25,12 +44,14 @@ export function formatEventTime(iso: string): string {
 }
 
 export function formatEventDayLabel(iso: string, now: Date = new Date()): string {
-  const eventKey = chicagoDateKey(new Date(iso));
-  const todayKey = chicagoDateKey(now);
+  // "Tonight"/"Tomorrow" use the same 9am-cycle boundary as isToday, so a
+  // card's label never contradicts which toggle it shows up under.
+  const eventKey = cycleDateKey(new Date(iso));
+  const todayKey = cycleDateKey(now);
   if (eventKey === todayKey) return "Tonight";
 
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  if (eventKey === chicagoDateKey(tomorrow)) return "Tomorrow";
+  if (eventKey === cycleDateKey(tomorrow)) return "Tomorrow";
 
   return new Intl.DateTimeFormat("en-US", {
     timeZone: CHICAGO_TZ,

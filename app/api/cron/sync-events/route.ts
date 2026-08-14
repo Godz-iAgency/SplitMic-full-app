@@ -13,6 +13,17 @@ export const dynamic = "force-dynamic";
  * CRON_SECRET is unset, so an unconfigured deploy can never expose an
  * unauthenticated write.
  *
+ * vercel.json schedules this at 14:00 UTC — 9am Central Daylight Time
+ * (roughly mid-March to early November) or 8am Central Standard Time the
+ * rest of the year. Vercel cron schedules run in UTC with no DST awareness,
+ * so a single fixed time can't track the offset change; 14:00 UTC keeps the
+ * "9am" mental model correct for the majority of the year and drifts by one
+ * hour during CST rather than needing a second cron entry plus a
+ * day-of-year guard to solve a one-hour, twice-a-year discrepancy. The
+ * "today" cycle boundary in lib/events/time.ts is fixed at 9am Chicago
+ * regardless of when this actually fires — a run landing at 8am instead of
+ * 9am just means the day rolls over an hour early on the days it happens.
+ *
  *   GET /api/cron/sync-events              → scrape + upsert
  *   GET /api/cron/sync-events?dryRun=1     → report only, write nothing
  */
