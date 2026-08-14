@@ -30,16 +30,30 @@ export type VideoProvider =
   | "loom"
   | "soundcloud"
   | "spotify"
-  | "google_drive";
+  | "google_drive"
+  | "dropbox"
+  | "direct_file";
+
+/**
+ * How the embed gets rendered, which is also where the security line sits.
+ *
+ * `iframe` loads someone else's *page*, which is what makes an open-ended
+ * allowlist dangerous — a page can render a convincing fake login form.
+ * `file` points a native <video> element at raw media bytes: no HTML, no
+ * scripts, nothing that can impersonate SplitMic. So `file` is safe from any
+ * host, while `iframe` stays restricted to the platforms named above.
+ */
+export type EmbedKind = "iframe" | "file";
 
 export type VideoEmbed = {
   provider: VideoProvider;
-  /** The `src` for the iframe. */
+  /** The `src` — for an iframe, or for a <video> element when kind is "file". */
   embedUrl: string;
   /** Human label for the provider, for aria-labels and helper text. */
   providerLabel: string;
   /** Audio platforms render as a short bar, not a 16:9 video frame. */
   isAudio: boolean;
+  kind: EmbedKind;
 };
 
 export type VideoEmbedResult =
@@ -53,7 +67,15 @@ const PROVIDER_LABELS: Record<VideoProvider, string> = {
   soundcloud: "SoundCloud",
   spotify: "Spotify",
   google_drive: "Google Drive",
+  dropbox: "Dropbox",
+  direct_file: "Video file",
 };
+
+/**
+ * Extensions a browser's native <video> element can plausibly decode. Matched
+ * against the path only, so a signed CDN URL with a query string still counts.
+ */
+const VIDEO_FILE_EXTENSIONS = [".mp4", ".webm", ".m4v", ".mov", ".ogv", ".ogg"];
 
 /**
  * Hosts that are worth naming in the error message. These are common enough
@@ -69,7 +91,8 @@ const KNOWN_BLOCKED: { match: RegExp; name: string }[] = [
   { match: /(^|\.)twitter\.com$/i, name: "Twitter" },
 ];
 
-const SUPPORTED_LIST = "YouTube, Vimeo, Loom, SoundCloud, Spotify, or Google Drive";
+const SUPPORTED_LIST =
+  "YouTube, Vimeo, Loom, SoundCloud, Spotify, or Google Drive — or a direct link to a video file (.mp4, .webm)";
 
 /**
  * Resolves a user-pasted link to an embed. Accepts a bare host too
@@ -111,6 +134,19 @@ export function resolveVideoEmbed(rawInput: string): VideoEmbedResult {
   const soundcloud = soundcloudEmbed(url, host);
   if (soundcloud) return { ok: true, embed: soundcloud };
 
+  // Dropbox share links serve an HTML preview page, not the file — one query
+  // param turns them into the raw file, which then qualifies as a direct file
+  // below. Checked before the extension test because the *unrewritten* link
+  // already ends in .mp4 and would otherwise be played as-is (and fail).
+  const dropboxFile = dropboxDirectUrl(url, host);
+  if (dropboxFile) {
+    return httpsFileEmbed(dropboxFile, "dropbox");
+  }
+
+  if (hasVideoExtension(url.pathname)) {
+    return httpsFileEmbed(url, "direct_file");
+  }
+
   const blocked = KNOWN_BLOCKED.find((entry) => entry.match.test(host));
   if (blocked) {
     return {
@@ -142,7 +178,55 @@ function embed(
     embedUrl,
     providerLabel: PROVIDER_LABELS[provider],
     isAudio,
+    kind: "iframe",
   };
+}
+
+/** True when the path ends in something a <video> element can decode. */
+function hasVideoExtension(pathname: string): boolean {
+  const lower = pathname.toLowerCase();
+  return VIDEO_FILE_EXTENSIONS.some((ext) => lower.endsWith(ext));
+}
+
+/**
+ * Builds a direct-file embed, rejecting plain http. The profile page is
+ * https, so a browser blocks an http media request as mixed content — the
+ * player would silently render an empty box. Better to say why up front.
+ */
+function httpsFileEmbed(url: URL, provider: VideoProvider): VideoEmbedResult {
+  if (url.protocol !== "https:") {
+    return {
+      ok: false,
+      reason:
+        "That video link isn't secure (http), so browsers block it from playing on SplitMic. Use an https link.",
+    };
+  }
+
+  return {
+    ok: true,
+    embed: {
+      provider,
+      embedUrl: url.href,
+      providerLabel: PROVIDER_LABELS[provider],
+      isAudio: false,
+      kind: "file",
+    },
+  };
+}
+
+/**
+ * Rewrites a Dropbox share link to serve the raw file instead of Dropbox's
+ * HTML preview page. Returns null for Dropbox URLs that aren't a video file,
+ * so a folder link falls through to the normal unsupported message.
+ */
+function dropboxDirectUrl(url: URL, host: string): URL | null {
+  if (host !== "dropbox.com" && host !== "dl.dropboxusercontent.com") return null;
+  if (!hasVideoExtension(url.pathname)) return null;
+
+  const rewritten = new URL(url.href);
+  rewritten.searchParams.delete("dl");
+  rewritten.searchParams.set("raw", "1");
+  return rewritten;
 }
 
 /** YouTube IDs are exactly 11 chars of [A-Za-z0-9_-]. */

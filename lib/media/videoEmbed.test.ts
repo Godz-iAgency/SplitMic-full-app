@@ -151,6 +151,74 @@ describe("resolveVideoEmbed", () => {
     });
   });
 
+  describe("direct video files (any host)", () => {
+    // These are allowed from anywhere, unlike the iframe providers, because a
+    // <video> element renders media bytes — it cannot render a page, so the
+    // fake-login-form risk that motivates the allowlist doesn't exist here.
+    it.each([".mp4", ".webm", ".m4v", ".mov", ".ogv"])(
+      "accepts a %s file from an arbitrary host",
+      (ext) => {
+        const result = embedOf(`https://cdn.somebodys-site.com/clips/intro${ext}`);
+        expect(result.provider).toBe("direct_file");
+        expect(result.kind).toBe("file");
+      },
+    );
+
+    it("renders as a file, never as an iframe", () => {
+      // The security property that makes arbitrary hosts acceptable.
+      expect(embedOf("https://evil.example.com/clip.mp4").kind).toBe("file");
+    });
+
+    it("keeps a signed CDN query string intact", () => {
+      const url = "https://cdn.example.com/clip.mp4?token=abc123&expires=999";
+      expect(embedOf(url).embedUrl).toBe(url);
+    });
+
+    it("matches the extension case-insensitively", () => {
+      expect(embedOf("https://cdn.example.com/CLIP.MP4").kind).toBe("file");
+    });
+
+    it("rejects a non-video file", () => {
+      expect(resolveVideoEmbed("https://example.com/deck.pdf").ok).toBe(false);
+    });
+
+    it("rejects an http file link, explaining that browsers block it", () => {
+      // Mixed content on an https page: it would render an empty player, so
+      // failing loudly beats failing silently.
+      const result = resolveVideoEmbed("http://cdn.example.com/clip.mp4");
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toContain("https");
+    });
+
+    it("still refuses an arbitrary HTML page from the same host", () => {
+      // Allowing files from any host must not widen the iframe allowlist.
+      expect(resolveVideoEmbed("https://cdn.somebodys-site.com/login").ok).toBe(false);
+    });
+  });
+
+  describe("Dropbox", () => {
+    it("rewrites a share link to serve the raw file", () => {
+      const result = embedOf("https://www.dropbox.com/s/abc123/intro.mp4?dl=0");
+      expect(result.provider).toBe("dropbox");
+      expect(result.kind).toBe("file");
+      expect(result.embedUrl).toContain("raw=1");
+      expect(result.embedUrl).not.toContain("dl=0");
+    });
+
+    it("handles the newer /scl/fi share format", () => {
+      const result = embedOf(
+        "https://www.dropbox.com/scl/fi/xyz/intro.mp4?rlkey=abc&dl=0",
+      );
+      expect(result.kind).toBe("file");
+      expect(result.embedUrl).toContain("rlkey=abc");
+      expect(result.embedUrl).toContain("raw=1");
+    });
+
+    it("rejects a Dropbox folder link that isn't a video", () => {
+      expect(resolveVideoEmbed("https://www.dropbox.com/home/videos").ok).toBe(false);
+    });
+  });
+
   describe("links that cannot work", () => {
     it.each([
       ["https://www.instagram.com/reel/abc123/", "Instagram"],
@@ -166,10 +234,12 @@ describe("resolveVideoEmbed", () => {
       }
     });
 
-    it("rejects an arbitrary site rather than iframing it", () => {
+    it("rejects an arbitrary page rather than iframing it", () => {
       // Not a capability gap — embedding attacker-chosen pages on a public
       // profile is a phishing vector (a fake login form rendered on our own
-      // domain). The allowlist is the mitigation.
+      // domain). The allowlist is the mitigation. Note the contrast with the
+      // direct-file tests above: the same host IS allowed to serve a .mp4,
+      // because media bytes can't impersonate anything.
       const result = resolveVideoEmbed("https://evil.example.com/fake-login");
       expect(result.ok).toBe(false);
     });
@@ -199,7 +269,11 @@ describe("isEmbeddableVideoUrl", () => {
     expect(isEmbeddableVideoUrl("https://youtu.be/dQw4w9WgXcQ")).toBe(true);
   });
 
+  it("is true for a direct video file on any host", () => {
+    expect(isEmbeddableVideoUrl("https://example.com/video.mp4")).toBe(true);
+  });
+
   it("is false for an unsupported one", () => {
-    expect(isEmbeddableVideoUrl("https://example.com/video.mp4")).toBe(false);
+    expect(isEmbeddableVideoUrl("https://example.com/watch-my-video")).toBe(false);
   });
 });

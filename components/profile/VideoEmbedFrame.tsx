@@ -16,6 +16,25 @@ export function VideoEmbedFrame({
   title?: string;
   className?: string;
 }) {
+  // A direct file plays in a native <video> element rather than an iframe.
+  // That's the whole reason any host is allowed for this case: there's no
+  // embedded page, so nothing can render a fake login form on our domain.
+  if (embed.kind === "file") {
+    return (
+      <div
+        className={`relative overflow-hidden rounded-2xl bg-black ring-1 ring-white/10 shadow-lg shadow-black/50 ${className}`}
+      >
+        <video
+          src={embed.embedUrl}
+          controls
+          playsInline
+          preload="metadata"
+          className="aspect-video w-full bg-black"
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       className={`relative overflow-hidden rounded-2xl bg-black ring-1 ring-white/10 shadow-lg shadow-black/50 ${className}`}
