@@ -19,6 +19,15 @@ export type SyncResult = {
   eventsScraped: number;
   eventsUpserted: number;
   eventsDeactivated: number;
+  /**
+   * Scraped events discarded for already being in the past. Surfaced because
+   * "scraped 16, upserted 0" reads as healthy on its own — it was, in fact,
+   * how a stale-cache bug hid for a full day (Firecrawl kept serving the
+   * previous evening's copy of the ".../today" page, so every event had
+   * already happened). A high number here against a low upsert count means
+   * the source page is stale, not that the night is over.
+   */
+  eventsSkippedPast: number;
   /** True when only one of the two Do512 pages could be scraped this run. */
   partial: boolean;
   dryRun: boolean;
@@ -34,6 +43,7 @@ const emptyResult = (dryRun: boolean): SyncResult => ({
   eventsScraped: 0,
   eventsUpserted: 0,
   eventsDeactivated: 0,
+  eventsSkippedPast: 0,
   partial: false,
   dryRun,
 });
@@ -74,9 +84,11 @@ export async function syncLiveEvents(
   }
 
   // Only keep events that haven't already happened.
-  const rows = [...bySourceId.values()].filter(
+  const mapped = [...bySourceId.values()];
+  const rows = mapped.filter(
     (row) => new Date(row.event_datetime).getTime() >= now.getTime(),
   );
+  const eventsSkippedPast = mapped.length - rows.length;
 
   // Attach a matched SplitMic profile, if any, to each row.
   const candidates = await loadMatchCandidates(supabase);
@@ -96,6 +108,7 @@ export async function syncLiveEvents(
       eventsScraped: raw.length,
       eventsUpserted: rowsWithMatch.length,
       eventsDeactivated: 0,
+      eventsSkippedPast,
       partial,
       dryRun: true,
     };
@@ -137,6 +150,7 @@ export async function syncLiveEvents(
         eventsScraped: raw.length,
         eventsUpserted,
         eventsDeactivated: 0,
+        eventsSkippedPast,
         partial,
         dryRun,
         error: `Upsert succeeded but deactivation failed: ${error.message}`,
@@ -149,6 +163,7 @@ export async function syncLiveEvents(
     eventsScraped: raw.length,
     eventsUpserted,
     eventsDeactivated,
+    eventsSkippedPast,
     partial,
     dryRun,
   };

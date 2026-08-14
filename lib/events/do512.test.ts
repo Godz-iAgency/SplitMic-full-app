@@ -168,6 +168,24 @@ describe("scrapeDo512Events", () => {
     expect(result).toEqual({ ok: true, data: [{ artist_name: "A", venue_name: "B" }] });
   });
 
+  it("asks Firecrawl for a live fetch instead of a cached copy", async () => {
+    // Regression guard for a full day of silent breakage: Firecrawl caches by
+    // URL, and this URL is ".../today" — content changes daily, URL never
+    // does. A cache hit re-served the previous evening's listings, so the 9am
+    // sync ingested only events that had already happened and wrote nothing,
+    // while still reporting a successful scrape.
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { json: { events: [] } } }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    await scrapeDo512Events("https://do512.com/events/live-music/today");
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(body.maxAge).toBe(0);
+  });
+
   it("rejects events extracted from a page that itself errored", async () => {
     // Regression guard for a real incident: Do512's /this-week began
     // returning 500, Firecrawl scraped the error page anyway, and the LLM

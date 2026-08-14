@@ -134,6 +134,29 @@ describe("syncLiveEvents", () => {
     expect(result.eventsUpserted).toBe(0);
   });
 
+  it("reports how many events were skipped for being in the past", async () => {
+    // Without this number, a stale source page looks identical to a healthy
+    // quiet night: both report "scraped N, upserted 0". A stale-cache bug hid
+    // behind exactly that ambiguity for a full day.
+    const pastEvent = { ...EVENT_A, event_date: "2026-08-10", event_time: "20:00" };
+    mockScrape.mockResolvedValue({ ok: true, data: [pastEvent] });
+    const { client } = fakeSupabase();
+
+    const result = await syncLiveEvents(client, { now: NOW });
+
+    expect(result.eventsSkippedPast).toBe(1);
+    expect(result.eventsUpserted).toBe(0);
+  });
+
+  it("reports zero skipped when everything scraped is still upcoming", async () => {
+    mockScrape.mockResolvedValue({ ok: true, data: [EVENT_A] });
+    const { client } = fakeSupabase();
+
+    const result = await syncLiveEvents(client, { now: NOW });
+
+    expect(result.eventsSkippedPast).toBe(0);
+  });
+
   it("runs a dry run without writing anything", async () => {
     mockScrape.mockResolvedValue({ ok: true, data: [EVENT_A] });
     const { client, state } = fakeSupabase();

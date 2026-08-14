@@ -119,6 +119,13 @@ export async function scrapeDo512Events(
       body: JSON.stringify({
         url,
         onlyMainContent: true,
+        // Force a live fetch. Firecrawl caches scrapes by URL, and this URL is
+        // literally "…/today" — its content changes daily while the URL never
+        // does, so a cache hit silently re-serves yesterday's listings. That
+        // happened in production: the 9am sync ingested the prior evening's
+        // cached page, every event was already in the past, and the feed wrote
+        // zero rows while reporting a clean, successful scrape.
+        maxAge: 0,
         formats: ["json"],
         jsonOptions: {
           prompt: EXTRACT_PROMPT,
