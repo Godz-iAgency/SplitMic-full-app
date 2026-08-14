@@ -36,8 +36,8 @@ export default async function ProfileEditPage({
   const profileId = profile.profile_id!;
   const playerType = profile.player_type as PlayerType;
 
-  // Fetch media, detail row, and links in parallel
-  const [mediaResult, detailResult, linksResult, ownerResult] =
+  // Fetch media, detail row, links, and the intro video link in parallel
+  const [mediaResult, detailResult, linksResult, ownerResult, videoResult] =
     await Promise.all([
       supabase
         .from("profile_media")
@@ -58,9 +58,17 @@ export default async function ProfileEditPage({
         .select("full_name")
         .eq("id", user.id)
         .maybeSingle(),
+      // Fetched separately rather than widening getOnboardingStatus's shared
+      // UserProfile type, which every authenticated page depends on.
+      supabase
+        .from("profiles")
+        .select("intro_video_url")
+        .eq("id", profileId)
+        .maybeSingle(),
     ]);
 
   const media: MediaRow[] = (mediaResult.data ?? []) as MediaRow[];
+  const introVideoUrl: string | null = videoResult.data?.intro_video_url ?? null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const details: any = detailResult.data ?? {};
   const links = linksResult.data ?? [];
@@ -159,6 +167,7 @@ export default async function ProfileEditPage({
           userId={user.id}
           profileId={profileId}
           media={media}
+          introVideoUrl={introVideoUrl}
           playerType={playerType}
           initialCommon={initialCommon}
           initialSpecific={initialSpecific}

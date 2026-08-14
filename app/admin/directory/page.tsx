@@ -5,6 +5,8 @@ import {
   getAdminDirectoryCounts,
   getScreenshotProgress,
   getOgImageProgress,
+  getWebsiteCheckProgress,
+  getDeadListings,
   OUTREACH_STATUSES,
   OUTREACH_LABELS,
   DIRECTORY_TIERS,
@@ -20,6 +22,7 @@ import {
 import { DirectoryImportPanel } from "@/components/admin/DirectoryImportPanel";
 import { DirectoryScreenshotPanel } from "@/components/admin/DirectoryScreenshotPanel";
 import { DirectoryOgImagePanel } from "@/components/admin/DirectoryOgImagePanel";
+import { DirectoryWebsiteCheckPanel } from "@/components/admin/DirectoryWebsiteCheckPanel";
 import {
   DirectoryTierSelect,
   DirectoryOutreachControl,
@@ -59,12 +62,15 @@ export default async function AdminDirectoryPage({
     query: searchParams.q,
   };
 
-  const [{ rows, total, truncated }, counts, shots, ogImages] = await Promise.all([
-    getAdminDirectoryRows(supabase, filters),
-    getAdminDirectoryCounts(supabase),
-    getScreenshotProgress(supabase),
-    getOgImageProgress(supabase),
-  ]);
+  const [{ rows, total, truncated }, counts, shots, ogImages, websiteCheck, deadListings] =
+    await Promise.all([
+      getAdminDirectoryRows(supabase, filters),
+      getAdminDirectoryCounts(supabase),
+      getScreenshotProgress(supabase),
+      getOgImageProgress(supabase),
+      getWebsiteCheckProgress(supabase),
+      getDeadListings(supabase),
+    ]);
 
   return (
     <div className="space-y-6">
@@ -92,6 +98,14 @@ export default async function AdminDirectoryPage({
             done={shots.done}
             pending={shots.pending}
             failed={shots.failed}
+          />
+          <DirectoryWebsiteCheckPanel
+            live={websiteCheck.live}
+            dead={websiteCheck.dead}
+            uncertain={websiteCheck.uncertain}
+            noWebsite={websiteCheck.noWebsite}
+            pending={websiteCheck.pending}
+            initialDeadListings={deadListings}
           />
         </>
       ) : null}

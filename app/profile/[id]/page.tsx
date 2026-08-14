@@ -33,6 +33,8 @@ import {
   getEventTagsForBand,
   formatEventDateRange,
 } from "@/lib/supabase/marketplace";
+import { resolveVideoEmbed } from "@/lib/media/videoEmbed";
+import { VideoEmbedFrame } from "@/components/profile/VideoEmbedFrame";
 import { AppHeader } from "@/components/AppHeader";
 import { LogoutButton } from "@/components/LogoutButton";
 import { PublishButton } from "@/components/profile/PublishButton";
@@ -95,7 +97,7 @@ export default async function ProfilePage({
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "id, user_id, player_type, street_address, address_line_2, city, state, zip_code, bio, phone_number, website_url, instagram_handle, instagram_followers, is_published",
+      "id, user_id, player_type, street_address, address_line_2, city, state, zip_code, bio, phone_number, website_url, instagram_handle, instagram_followers, is_published, intro_video_url",
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -184,12 +186,17 @@ export default async function ProfilePage({
 
   const banner = media.find((m) => m.kind === "banner");
   const avatar = media.find((m) => m.kind === "avatar");
-  const video = media.find((m) => m.kind === "video");
   const gallery = media.filter((m) => m.kind === "gallery");
 
   const bannerUrl = banner ? publicUrl(supabase, banner.storage_path) : null;
   const avatarUrl = avatar ? publicUrl(supabase, avatar.storage_path) : null;
-  const videoUrl = video ? publicUrl(supabase, video.storage_path) : null;
+
+  // Intro video is a link to a video they host elsewhere, embedded in an
+  // iframe — no longer an uploaded clip. A link that no longer resolves (the
+  // allowlist changed, say) simply renders no section rather than an error.
+  const videoEmbed = profile.intro_video_url
+    ? resolveVideoEmbed(profile.intro_video_url)
+    : null;
 
   // Band Readiness Score — pure hardcoded math (lib/scoring/bandReadiness.ts).
   // Public number; the breakdown is owner-only (BandReadinessPanel).
@@ -634,20 +641,12 @@ export default async function ProfilePage({
         ) : null}
 
         {/* Intro video */}
-        {videoUrl ? (
+        {videoEmbed?.ok ? (
           <section className="mt-12">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-orange">
               Intro video
             </h2>
-            <div className="relative overflow-hidden rounded-2xl ring-1 ring-white/10 shadow-lg shadow-black/50">
-              <video
-                src={videoUrl}
-                controls
-                playsInline
-                preload="metadata"
-                className="aspect-video w-full bg-black"
-              />
-            </div>
+            <VideoEmbedFrame embed={videoEmbed.embed} />
           </section>
         ) : null}
 

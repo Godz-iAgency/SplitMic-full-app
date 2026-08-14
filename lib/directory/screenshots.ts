@@ -11,9 +11,6 @@ const ENDPOINT = "https://api.firecrawl.dev/v1/scrape";
 /** Screenshots are slow: a cold page load plus render. */
 const TIMEOUT_MS = 45_000;
 
-/** Wide enough to read, short enough to crop to a card band. */
-const VIEWPORT = { width: 1280, height: 800 };
-
 export type ScreenshotResult =
   | { ok: true; url: string }
   | { ok: false; reason: string };
@@ -37,16 +34,12 @@ export async function captureScreenshot(
       signal: controller.signal,
       body: JSON.stringify({
         url: websiteUrl,
-        formats: [
-          {
-            type: "screenshot",
-            // Above-the-fold only — that's the part that reads as the site's
-            // identity, and a full-page capture of a long homepage crops to
-            // nothing useful in a 112px card band.
-            fullPage: false,
-            viewport: VIEWPORT,
-          },
-        ],
+        // Above-the-fold only ("screenshot", not "screenshot@fullPage") —
+        // that's the part that reads as the site's identity, and a full-page
+        // capture of a long homepage crops to nothing useful in a 112px card
+        // band. Firecrawl dropped the old fullPage/viewport object params in
+        // favor of encoding the mode directly in the format string.
+        formats: ["screenshot"],
       }),
     });
 

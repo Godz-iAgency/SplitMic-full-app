@@ -113,6 +113,28 @@ describe("mapEventToRow", () => {
     expect(row?.image_url).toBeNull();
     expect(row?.ticket_url).toBeNull();
   });
+
+  it("rejects an implausibly distant date as invented", () => {
+    // A "today"/"this weekend" listing can't hold a show a year out. This is
+    // the shape hallucinated rows took when the source page was broken.
+    const raw: RawDo512Event = {
+      artist_name: "Taylor Swift",
+      venue_name: "MetLife Stadium",
+      event_date: "2027-09-23",
+      event_time: "20:00",
+    };
+    expect(mapEventToRow(raw, NOW)).toBeNull();
+  });
+
+  it("still accepts a date inside the plausible window", () => {
+    const raw: RawDo512Event = {
+      artist_name: "A",
+      venue_name: "B",
+      event_date: "2026-09-01",
+      event_time: "20:00",
+    };
+    expect(mapEventToRow(raw, NOW)).not.toBeNull();
+  });
 });
 
 describe("scrapeDo512Events", () => {
@@ -144,6 +166,47 @@ describe("scrapeDo512Events", () => {
     const result = await scrapeDo512Events("https://do512.com/events/live-music/today");
 
     expect(result).toEqual({ ok: true, data: [{ artist_name: "A", venue_name: "B" }] });
+  });
+
+  it("rejects events extracted from a page that itself errored", async () => {
+    // Regression guard for a real incident: Do512's /this-week began
+    // returning 500, Firecrawl scraped the error page anyway, and the LLM
+    // invented well-formed concerts (Taylor Swift at MetLife, 2023 dates) to
+    // fill the schema. Firecrawl's own call succeeds here — only the scraped
+    // page's status reveals the content is worthless.
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          metadata: { statusCode: 500 },
+          json: {
+            events: [
+              { artist_name: "Taylor Swift", venue_name: "MetLife Stadium" },
+            ],
+          },
+        },
+      }),
+    }) as unknown as typeof fetch;
+
+    const result = await scrapeDo512Events("https://do512.com/events/live-music/this-week");
+
+    expect(result).toEqual({ ok: false, reason: "Do512 page returned 500" });
+  });
+
+  it("still accepts events when the scraped page returned 200", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          metadata: { statusCode: 200 },
+          json: { events: [{ artist_name: "A", venue_name: "B" }] },
+        },
+      }),
+    }) as unknown as typeof fetch;
+
+    const result = await scrapeDo512Events("https://do512.com/events/live-music/today");
+
+    expect(result.ok).toBe(true);
   });
 
   it("fails without throwing on a non-200 response", async () => {

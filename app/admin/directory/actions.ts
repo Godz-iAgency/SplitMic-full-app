@@ -21,6 +21,13 @@ import {
   OG_IMAGE_BATCH_SIZE,
   type OgImageJobResult,
 } from "@/lib/directory/ogImageJob";
+import {
+  checkWebsites,
+  resetWebsiteChecks,
+  deactivateDeadListings,
+  WEBSITE_CHECK_BATCH_SIZE,
+  type WebsiteCheckJobResult,
+} from "@/lib/directory/websiteCheckJob";
 import { CATEGORY_META } from "@/lib/directory/categories";
 import type {
   DirectoryTier,
@@ -255,6 +262,89 @@ export async function adminResetFailedOgImages(): Promise<{
 
   const result = await resetFailedOgImages(guard.supabase);
   if (!result.error) revalidatePath("/admin/directory");
+  return result;
+}
+
+// ─── Website liveness checks ────────────────────────────────────────────────
+
+/**
+ * Checks a batch of listings' websites to confirm they're still up. Free — a
+ * plain fetch, no API key — but still batched so one call has a bounded,
+ * predictable runtime rather than sequentially fetching hundreds of sites.
+ */
+export async function adminCheckWebsites(input: {
+  limit?: number;
+  dryRun?: boolean;
+}): Promise<WebsiteCheckJobResult> {
+  const guard = await requireAdmin();
+  if ("error" in guard) {
+    return {
+      remainingBefore: 0,
+      attempted: 0,
+      live: 0,
+      dead: 0,
+      uncertain: 0,
+      skipped: 0,
+      dryRun: Boolean(input.dryRun),
+      deadListings: [],
+      error: guard.error,
+    };
+  }
+
+  const limit = Math.min(Math.max(input.limit ?? WEBSITE_CHECK_BATCH_SIZE, 1), 100);
+
+  const result = await checkWebsites(guard.supabase, { limit, dryRun: input.dryRun });
+
+  if (!input.dryRun && result.attempted > 0) {
+    await logAdminAction({
+      actionType: "directory_check_websites",
+      details: { live: result.live, dead: result.dead, uncertain: result.uncertain },
+    });
+    revalidatePath("/admin/directory");
+  }
+
+  return result;
+}
+
+/** Puts dead/uncertain listings back in the queue for an explicit recheck. */
+export async function adminResetWebsiteChecks(
+  statuses?: ("dead" | "uncertain")[],
+): Promise<{ reset: number; error?: string }> {
+  const guard = await requireAdmin();
+  if ("error" in guard) return { reset: 0, error: guard.error };
+
+  const result = await resetWebsiteChecks(guard.supabase, statuses);
+  if (!result.error) revalidatePath("/admin/directory");
+  return result;
+}
+
+/**
+ * Hides every listing whose website is confirmed dead — soft removal
+ * (is_active = false), reversible from the per-row toggle, not a permanent
+ * delete. The caller is expected to have already shown the admin which
+ * businesses this will affect.
+ */
+export async function adminDeactivateDeadListings(): Promise<{
+  deactivated: number;
+  businesses: { businessName: string; websiteUrl: string; reason: string }[];
+  error?: string;
+}> {
+  const guard = await requireAdmin();
+  if ("error" in guard) return { deactivated: 0, businesses: [], error: guard.error };
+
+  const result = await deactivateDeadListings(guard.supabase);
+
+  if (!result.error && result.deactivated > 0) {
+    await logAdminAction({
+      actionType: "directory_deactivate_dead",
+      details: {
+        deactivated: result.deactivated,
+        businesses: result.businesses.map((b) => b.businessName),
+      },
+    });
+    revalidateDirectory();
+  }
+
   return result;
 }
 

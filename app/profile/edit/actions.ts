@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { tableForPlayerType } from "@/lib/supabase/profile";
 import { normalizeWebsiteUrl } from "@/lib/url";
+import { resolveVideoEmbed } from "@/lib/media/videoEmbed";
 import type { ProfilePayload } from "@/components/onboarding/ProfileStep";
 
 export async function saveProfileInfo(
@@ -76,6 +77,50 @@ export async function saveProfileInfo(
     .eq("id", user.id);
 
   if (userError) return { error: userError.message };
+
+  revalidatePath(`/profile/${profileId}`);
+  revalidatePath("/profile/edit");
+  return {};
+}
+
+/**
+ * Saves (or clears) the profile's intro video link.
+ *
+ * Re-validates the URL server-side rather than trusting the client's check —
+ * this value ends up as an iframe `src` on a public page, so the provider
+ * allowlist in resolveVideoEmbed is a security boundary, not just UX. Storing
+ * the raw pasted link (not the derived embed URL) keeps the user's own link
+ * intact for display and lets the resolver change without a data migration.
+ */
+export async function saveIntroVideoUrl(
+  profileId: string,
+  rawUrl: string,
+): Promise<{ error?: string }> {
+  const supabase = createServerSupabaseClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const trimmed = rawUrl.trim();
+  if (trimmed) {
+    const resolved = resolveVideoEmbed(trimmed);
+    if (!resolved.ok) return { error: resolved.reason };
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      intro_video_url: trimmed || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", profileId)
+    // Ownership is enforced in the query itself: a profile the caller doesn't
+    // own matches zero rows rather than updating someone else's.
+    .eq("user_id", user.id);
+
+  if (error) return { error: error.message };
 
   revalidatePath(`/profile/${profileId}`);
   revalidatePath("/profile/edit");

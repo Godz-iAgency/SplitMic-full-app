@@ -202,6 +202,64 @@ export async function getOgImageProgress(
   };
 }
 
+/** Website liveness check progress, for the admin panel's counters. */
+export async function getWebsiteCheckProgress(
+  supabase: SupabaseClient,
+): Promise<{ live: number; dead: number; uncertain: number; noWebsite: number; pending: number }> {
+  const table = () =>
+    supabase.from("directory_businesses").select("id", { count: "exact", head: true });
+
+  const [live, dead, uncertain, noWebsite, pending] = await Promise.all([
+    table().eq("website_status", "live"),
+    table().eq("website_status", "dead"),
+    table().eq("website_status", "uncertain"),
+    table().eq("website_status", "no_website"),
+    table().is("website_status", null),
+  ]);
+
+  return {
+    live: live.count ?? 0,
+    dead: dead.count ?? 0,
+    uncertain: uncertain.count ?? 0,
+    noWebsite: noWebsite.count ?? 0,
+    pending: pending.count ?? 0,
+  };
+}
+
+export type DeadListingRow = {
+  id: string;
+  businessName: string;
+  category: DirectoryCategory;
+  websiteUrl: string | null;
+  reason: string | null;
+  checkedAt: string | null;
+};
+
+/** Still-active listings confirmed dead, for the panel's review list before deactivating. */
+export async function getDeadListings(
+  supabase: SupabaseClient,
+  limit = 50,
+): Promise<DeadListingRow[]> {
+  const { data, error } = await supabase
+    .from("directory_businesses")
+    .select("id, business_name, category, website_url, website_check_reason, website_checked_at")
+    .eq("website_status", "dead")
+    .eq("is_active", true)
+    .order("website_checked_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id,
+    businessName: row.business_name,
+    category: row.category,
+    websiteUrl: row.website_url,
+    reason: row.website_check_reason,
+    checkedAt: row.website_checked_at,
+  }));
+}
+
 /** PostgREST treats these as wildcards inside an ilike pattern. */
 function escapeLike(value: string): string {
   return value.replace(/[%_]/g, (match) => `\\${match}`);

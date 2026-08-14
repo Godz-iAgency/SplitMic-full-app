@@ -14,6 +14,8 @@ type Props = {
   userId: string;
   profileId: string;
   media: MediaRow[];
+  /** Current intro video link (profiles.intro_video_url), or null. */
+  introVideoUrl: string | null;
   playerType: PlayerType;
   initialCommon: CommonFieldValues;
   initialSpecific: SpecificValues;
@@ -34,6 +36,7 @@ export function ProfileEditor({
   userId,
   profileId,
   media,
+  introVideoUrl,
   playerType,
   initialCommon,
   initialSpecific,
@@ -56,14 +59,15 @@ export function ProfileEditor({
         <div className="mb-8">
           <h1 className="text-2xl font-bold sm:text-3xl">Photos &amp; video</h1>
           <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
-            Add a banner, profile photo, up to 3 gallery photos, and a
-            15-second intro video.
+            Add a banner, profile photo, up to 3 gallery photos, and a link to
+            your intro video.
           </p>
         </div>
         <MediaManager
           userId={userId}
           profileId={profileId}
           media={media}
+          introVideoUrl={introVideoUrl}
           onDone={handleDone}
           publishOnDone={autoPublishOnSave}
         />

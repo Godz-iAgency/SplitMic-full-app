@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MediaSlot, type ExistingMedia } from "./MediaSlot";
+import { VideoLinkSlot } from "./VideoLinkSlot";
 import type { MediaKind } from "@/lib/media/validate";
 
 export type MediaRow = {
@@ -17,6 +18,8 @@ type Props = {
   userId: string;
   profileId: string;
   media: MediaRow[];
+  /** Current intro video link, or null if they haven't set one. */
+  introVideoUrl: string | null;
   /**
    * When provided, the "Done" button saves the profile-info form (rendered as
    * a sibling) before navigating, instead of just linking away. Falls back to
@@ -35,6 +38,7 @@ export function MediaManager({
   userId,
   profileId,
   media,
+  introVideoUrl,
   onDone,
   publishOnDone,
 }: Props) {
@@ -56,7 +60,6 @@ export function MediaManager({
 
   const avatar = findOne(media, "avatar");
   const banner = findOne(media, "banner");
-  const video = findOne(media, "video");
   const gallery = media.filter((m) => m.kind === "gallery");
 
   const gallerySlots: ExistingMedia[] = [0, 1, 2].map((i) =>
@@ -167,24 +170,17 @@ export function MediaManager({
         </div>
       </section>
 
-      {/* Video */}
+      {/* Intro video — a link to a video they already host, embedded on the
+          profile. Replaced the old 30s/50MB upload slot. */}
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
-          Intro video (30 sec max)
+          Intro video
         </h2>
-        <div className="max-w-md">
-          <MediaSlot
-            kind="video"
-            userId={userId}
-            profileId={profileId}
-            existing={video}
-            shape="square"
-            label="Add video"
-            hint="MP4 recommended. 30 seconds max, 50 MB max."
-            onChange={refresh}
-            onSuccess={handleSuccess}
-          />
-        </div>
+        <VideoLinkSlot
+          profileId={profileId}
+          initialUrl={introVideoUrl}
+          onSuccess={handleSuccess}
+        />
       </section>
 
       {/* Done bar */}

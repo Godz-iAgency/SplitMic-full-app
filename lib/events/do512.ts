@@ -21,7 +21,19 @@ const ENDPOINT = "https://api.firecrawl.dev/v1/scrape";
 const TIMEOUT_MS = 20_000;
 
 export const DO512_TODAY_URL = "https://do512.com/events/live-music/today";
-export const DO512_WEEK_URL = "https://do512.com/events/live-music/this-week";
+/**
+ * Do512's own /this-week path returns a 500 — it was used here originally and
+ * silently poisoned the feed (see the statusCode guard in scrapeDo512Events).
+ * /weekend is the working multi-day listing.
+ */
+export const DO512_WEEK_URL = "https://do512.com/events/live-music/weekend";
+
+/**
+ * How far ahead a scraped event may plausibly sit. A "today"/"this weekend"
+ * listing can't legitimately contain a show months out, so anything past this
+ * is a sign the extraction invented it rather than read it.
+ */
+export const MAX_EVENT_DAYS_AHEAD = 60;
 
 /** Subset of JSON Schema that Firecrawl's jsonOptions.schema accepts. */
 const EVENT_SCHEMA = {
@@ -107,13 +119,11 @@ export async function scrapeDo512Events(
       body: JSON.stringify({
         url,
         onlyMainContent: true,
-        formats: [
-          {
-            type: "json",
-            prompt: EXTRACT_PROMPT,
-            schema: EVENT_SCHEMA,
-          },
-        ],
+        formats: ["json"],
+        jsonOptions: {
+          prompt: EXTRACT_PROMPT,
+          schema: EVENT_SCHEMA,
+        },
       }),
     });
 
@@ -122,6 +132,18 @@ export async function scrapeDo512Events(
     }
 
     const body = await response.json();
+
+    // Firecrawl happily scrapes an error page and hands the HTML to an LLM,
+    // which then invents plausible-looking concerts to satisfy the schema —
+    // observed live: Do512's /this-week started 500ing and the extraction
+    // returned Taylor Swift at MetLife Stadium with 2023 dates. The scraped
+    // page's own status is the only reliable signal that happened, so treat
+    // anything non-2xx as a failed scrape no matter how good the JSON looks.
+    const pageStatus: unknown = body?.data?.metadata?.statusCode;
+    if (typeof pageStatus === "number" && (pageStatus < 200 || pageStatus >= 300)) {
+      return { ok: false, reason: `Do512 page returned ${pageStatus}` };
+    }
+
     const events: unknown = body?.data?.json?.events;
     if (!Array.isArray(events)) {
       return { ok: false, reason: "Firecrawl returned no events array" };
@@ -221,6 +243,11 @@ export function buildSourceEventId(
  * Maps one raw scraped event to a `live_events` row. Returns null when the
  * event can't be scheduled (no parseable date/time) — those get skipped by
  * the caller rather than inserted with a fabricated time.
+ *
+ * Also rejects implausibly distant dates. This is the second half of the
+ * anti-hallucination guard: the statusCode check in scrapeDo512Events catches
+ * an outright broken page, and this catches invented rows that slip through a
+ * page that technically returned 200.
  */
 export function mapEventToRow(
   event: RawDo512Event,
@@ -230,6 +257,10 @@ export function mapEventToRow(
 
   const eventDatetime = chicagoWallTimeToUtcIso(event.event_date, event.event_time);
   if (!eventDatetime) return null;
+
+  const daysAhead =
+    (new Date(eventDatetime).getTime() - now.getTime()) / 86_400_000;
+  if (daysAhead > MAX_EVENT_DAYS_AHEAD) return null;
 
   return {
     source: "do512",
