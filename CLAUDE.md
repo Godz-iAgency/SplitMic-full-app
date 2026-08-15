@@ -249,15 +249,23 @@ This is an installable PWA used across phone, tablet, small laptop, and large
 desktop. A change is not finished when it works at one width.
 
 **Current breakpoint reality — know this before adding UI.** The codebase uses
-`sm:` (640px) heavily and `lg:` (1024px) moderately. `md:` and `xl:` are used
-**zero times**. Layouts therefore jump straight from phone styling to `sm:` and
-then to `lg:`, with nothing specific to tablets or large screens. Treat that as
-a known gap rather than an intentional design:
+`sm:` (640px) heavily and `lg:` (1024px) moderately; `md:` and `xl:` are almost
+unused. That is mostly deliberate, not neglect:
 
-- The awkward range is roughly **768–1024px** (tablet portrait, small laptop),
-  which currently renders phone-to-`sm:` styling stretched wide.
-- When touching a layout, check that range specifically. Reach for `md:` where
-  it genuinely helps; do not add breakpoints that change nothing.
+- **The app chrome's `lg` cutoff is an intentional decision — do not "fix" it
+  to `md`.** `AppHeader.tsx` keeps the bottom tab bar and the collapsed header
+  all the way to 1024px because portrait tablets (e.g. Galaxy Tab A7) report an
+  800px CSS width, which is above `md`, and would otherwise get the crowded
+  desktop pill nav. The reasoning is in that file's docstring.
+- **The real hazard is card width, not viewport width.** Grids run
+  `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`, so a card is *widest just below
+  `lg`* — two columns sharing ~1000px — and then gets narrower when a third
+  column appears. Card width is therefore not monotonic with viewport width.
+  Any fixed-height element inside a card will letterbox worst in the middle of
+  the tablet range. Measured example: the directory card's image band hit 4.1:1
+  at 1005px against 2.8:1 on desktop, fixed with `h-28 md:h-36 lg:h-28`.
+- When adding a fixed-height element inside a fluid-width card, check its
+  proportions at ~1000px specifically, not just phone and desktop.
 - Very wide screens should be constrained by `max-w-*` containers rather than
   allowed to stretch text to unreadable line lengths.
 

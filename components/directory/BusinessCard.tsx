@@ -93,7 +93,19 @@ function GridCard({ card }: { card: DirectoryCard }) {
           : "border-white/10"
       }`}
     >
-      <ImageBand card={card} height="h-28" badge={featured ? "featured" : null} />
+      {/* Card width is NOT monotonic with viewport width: the grid holds two
+          columns from 640px all the way to 1024px, so a card is at its widest
+          (~465px) just before `lg`, then shrinks again when a third column
+          appears. A fixed band height therefore letterboxes worst in the
+          middle of the tablet range — measured 4.1:1 at 1005px versus 2.8:1 on
+          desktop. Growing the band at `md` and easing it back at `lg` tracks
+          the card rather than the viewport. Featured cards span two columns,
+          so they run wider still and get the spotlight treatment's heights. */}
+      <ImageBand
+        card={card}
+        height={featured ? "h-36 sm:h-48 lg:h-40" : "h-28 md:h-36 lg:h-28"}
+        badge={featured ? "featured" : null}
+      />
 
       {/* pt-7 clears the logo, which hangs 20px below the image band. */}
       <div className="flex flex-1 flex-col p-4 pt-7">
