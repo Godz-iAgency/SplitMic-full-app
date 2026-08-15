@@ -4,8 +4,10 @@ Austin-only music-industry network connecting bands, venues, talent buyers,
 record labels, and festivals on one platform.
 
 For current status, in-flight work, and the decision log, see
-[`PROGRESS.md`](PROGRESS.md). For the database schema history (including some
-unused legacy tables), see [`migrations/SCHEMA_HISTORY.md`](migrations/SCHEMA_HISTORY.md).
+[`PROGRESS.md`](PROGRESS.md). For the engineering standards and guardrails that
+apply to changes here, see [`CLAUDE.md`](CLAUDE.md). For the database schema
+history (including some unused legacy tables), see
+[`migrations/SCHEMA_HISTORY.md`](migrations/SCHEMA_HISTORY.md).
 This file covers setup and a tour of the codebase.
 
 ## Stack

@@ -2,10 +2,11 @@
 
 _Austin-only music-industry connection platform for bands, venues, talent buyers, record labels, and festivals._
 
-Last updated: **2026-08-11**
+Last updated: **2026-08-14**
 
-For setup and a codebase tour, see [`README.md`](README.md). For the database
-schema gap (some legacy tables with no migration file), see
+For setup and a codebase tour, see [`README.md`](README.md). For the
+engineering standards that apply to changes here, see [`CLAUDE.md`](CLAUDE.md).
+For the database schema gap (some legacy tables with no migration file), see
 [`migrations/SCHEMA_HISTORY.md`](migrations/SCHEMA_HISTORY.md).
 
 ---
