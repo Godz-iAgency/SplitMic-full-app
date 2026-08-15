@@ -102,19 +102,23 @@ Supabase project or a DOM. Still verified manually.
 
 ## 3. Operational checklist (outside the code)
 
-- [ ] **Verify `splitmic.com` in Resend** as a sending domain (SPF/DKIM DNS records), then set `NOTIFY_FROM_EMAIL="SplitMic <notify@splitmic.com>"` in the deploy env. Until then, real users won't reliably receive notification emails.
-- [ ] **Run `migrations/step10_live_events.sql`** in the Supabase SQL editor and set `FIRECRAWL_API_KEY` in the deploy env — until both are done, `/live` renders (empty) but `sync-events` has nothing to write to / no way to scrape.
-- [ ] **Run `migrations/step14_directory_og_image.sql`** in the Supabase SQL editor — **blocking**: without this, `/directory` and every category page render empty (the count query still works, but the card-data query errors on the missing `og_image_url` column and the page silently falls back to its empty state). Confirmed locally: `screenshot_url` and the unused `place_photo_url` both already exist in the live DB; only this one is missing.
-- [ ] **Find photos (free)** — `/admin/directory` → "Find photos" panel, in batches. No cost, no key. Cards fall back to a website screenshot when a business has no Open Graph image.
-- [ ] **Capture listing screenshots** — `/admin/directory` → "Generate screenshots", in batches. One Firecrawl credit per listing attempted; ~505 listings have websites. Only a fallback now: cards prefer the free Open Graph image when one exists.
-- [ ] **Run `migrations/step16_profile_intro_video_url.sql`** — **blocking, run before deploying**: the profile page selects `intro_video_url`, and until the column exists that query errors and every profile page 404s. Purely additive, so it's safe to run against the currently-deployed code first.
-- [ ] **Run `migrations/step15_directory_website_check.sql`** in the Supabase SQL editor — adds the `website_status`/`website_check_reason`/`website_checked_at` columns the new "Website check" panel needs. Without it the panel's queries error and the section just won't show useful counts.
-- [ ] **Check websites (free)** — `/admin/directory` → "Website check" panel → "Auto-check all" to run it against every listing in one sitting (no cost, no key), then review the confirmed-dead list before clicking "Hide N dead listings."
-- [ ] **Set 10-20 anchor businesses to Featured/Spotlight** in `/admin/directory` — the "make it look legit before selling placement" step.
-- [x] Directory CSV imported — 584 rows (296 venues, 77 labels, 76 talent buyers, 44 bands, 40 festivals, 25 instrument rental, 21 rehearsal studios, 5 backline).
+- [x] `migrations/step10_live_events.sql` run, `FIRECRAWL_API_KEY` set (local + deploy) — `/live` is populated and syncing daily.
+- [x] `migrations/step14_directory_og_image.sql` run — directory pages render.
+- [x] `migrations/step16_profile_intro_video_url.sql` run — profile pages render with `intro_video_url`.
+- [x] `migrations/step15_directory_website_check.sql` run — website-check panel is live.
+- [x] `CRON_SECRET` set (local + deploy), both scheduled endpoints confirmed working live.
+- [x] **Check websites** — ran to completion: 400 live, 35 dead (deactivated), 68 uncertain, 81 no-website.
+- [ ] **Recheck the 68 "uncertain" website listings** in a few days — "Recheck dead/uncertain" then "Auto-check all" in `/admin/directory`. Deliberately not automatic; a timeout/403/5xx isn't proof a business closed.
+- [ ] **Find photos (free)** — fully worked through (0 pending): 227 found, 168 no-image, 108 failed. Retry the 108 failed via "Retry failed."
+- [ ] **Capture listing screenshots** — **0 done, 276 failed, 227 never attempted.** The 276 failures predate today's Firecrawl request-shape fix (`formats: ["screenshot"]`, no more `viewport`/`fullPage`) and need "Retry failed" then a fresh "Generate screenshots" run to confirm the fix actually captures anything against real data — that hasn't been verified end-to-end yet.
+- [ ] **Set 10-20 anchor businesses to Featured/Spotlight** in `/admin/directory` — still 0/584 on either tier, so the tiered-card layout has never rendered on a real listing.
+- [x] Directory CSV imported — 584 rows (296 venues, 77 labels, 76 talent buyers, 44 bands, 40 festivals, 25 instrument rental, 21 rehearsal studios, 5 backline). 35 subsequently deactivated as confirmed-dead (549 active).
 - [x] `migrations/step12_directory_media.sql` run — screenshot columns exist.
-- [ ] **Submit `splitmic.com/sitemap.xml`** to Google Search Console — `app/sitemap.ts` and `app/robots.ts` now exist and cover `/`, `/live`, `/directory`, and the 8 category pages.
-- [x] `migrations/step11_business_directory.sql` run — `directory_businesses` exists, 0 rows.
+- [ ] **Submit `splitmic.com/sitemap.xml`** to Google Search Console — `app/sitemap.ts` and `app/robots.ts` cover `/`, `/live`, `/directory`, and the 8 category pages.
+- [ ] **Verify `splitmic.com` in Resend** as a sending domain (SPF/DKIM DNS records), then set `NOTIFY_FROM_EMAIL="SplitMic <notify@splitmic.com>"` in the deploy env. Real users won't reliably receive notification email until this is done.
+- [ ] **Manually confirm the video-link intro feature** — paste a real YouTube/Vimeo/etc. link into a profile's Intro Video field and confirm it plays. Built and unit-tested (`lib/media/videoEmbed.test.ts`) but never watched work in an actual browser.
+- [ ] **Rotate the Firecrawl API key** — it was pasted in plaintext chat earlier in the session. Recommended, not actioned.
+- [x] `migrations/step11_business_directory.sql` run.
 - [x] Confirmed `GEMINI_API_KEY` is a working key with the Generative Language API enabled.
 - [x] `.env.example` includes every required var.
 - [x] `step2`/`step3` schema history documented.
@@ -125,7 +129,7 @@ Supabase project or a DOM. Still verified manually.
 
 Roughly in order of size:
 
-1. **Set `CRON_SECRET` in the deploy env** — until it's set, the cleanup endpoint refuses to run (by design). Generate with `openssl rand -hex 32`.
+1. **Guest payment system (QR-scan tipping on band profiles)** — the stated next major feature. Constraints already recorded in `CLAUDE.md`'s Financial and Sensitive Operations section: the scanned code must encode the profile id (not a destination account) and resolve the payee server-side, payer is unauthenticated so every value must be revalidated server-side, webhooks (signature-verified) are the only source of truth for payment state, idempotency is mandatory. Payment provider not yet chosen — record that decision in §2 when it's made.
 2. **Resend domain verification** — ops task, not code, but blocks real email delivery.
 3. **Expand the Bands directory category** — 44 rows vs. 296 venues, because Austin Band List's ~700 names mostly lack contact info on the listing page and needed per-band verification. Everything else in the directory is comfortably populated; this one category looks thin until a follow-up scrape runs.
 4. **Import the directory CSV into a `claimed` flow** — right now linking a scraped listing to a real profile is a manual admin action (paste a profile ID). A self-serve "claim this listing" flow for business owners is the obvious next step once outreach starts converting.
