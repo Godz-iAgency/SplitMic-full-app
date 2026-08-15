@@ -200,12 +200,12 @@ export function Dropdown({
                 }}
                 className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-2 text-sm transition ${
                   opt.disabled
-                    ? "cursor-not-allowed text-brand-gray-500"
+                    ? "cursor-not-allowed text-brand-gray-400"
                     : isSelected
                       ? "bg-brand-orange/20 text-brand-orange"
                       : isHighlighted
                         ? "bg-white/10 text-white"
-                        : "text-brand-gray-100"
+                        : "text-brand-gray-200"
                 }`}
               >
                 <span className="truncate">{opt.label}</span>

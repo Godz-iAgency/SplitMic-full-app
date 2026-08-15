@@ -220,7 +220,7 @@ export function OpportunityCard({ card }: { card: MarketplaceCard }) {
               {card.genres.slice(0, 5).map((g) => (
                 <span
                   key={g}
-                  className="rounded-full border border-white/15 bg-white/[.07] px-3 py-1 text-xs font-semibold text-brand-gray-100"
+                  className="rounded-full border border-white/15 bg-white/[.07] px-3 py-1 text-xs font-semibold text-brand-gray-200"
                 >
                   {g}
                 </span>

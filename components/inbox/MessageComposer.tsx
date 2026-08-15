@@ -55,7 +55,7 @@ export function MessageComposer({ threadId }: { threadId: string }) {
           rows={1}
           maxLength={4000}
           placeholder="Type a message…"
-          className="min-w-0 flex-1 resize-none rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-brand-gray-500 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
+          className="min-w-0 flex-1 resize-none rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-brand-gray-400 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
         />
         <button
           type="submit"

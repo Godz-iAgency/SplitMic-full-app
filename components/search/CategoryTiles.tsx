@@ -49,7 +49,7 @@ export function CategoryTiles({ active, counts, query }: Props) {
             <PlayerTypeIcon type={active} className="h-3.5 w-3.5" strokeWidth={2.5} />
           </span>
           {activeTile?.label ?? active}
-          <span className="text-brand-gray-500" aria-hidden="true">
+          <span className="text-brand-gray-400" aria-hidden="true">
             ·
           </span>
           <span className="text-brand-gray-300">{counts[active] ?? 0}</span>

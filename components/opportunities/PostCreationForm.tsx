@@ -288,9 +288,9 @@ function PostFields({
                 ? "Tuesday Night Open Mic"
                 : "Looking for Austin indie bands for label showcase"
           }
-          className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-white placeholder:text-brand-gray-500 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
+          className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-white placeholder:text-brand-gray-400 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
         />
-        <p className="mt-1 text-right text-xs text-brand-gray-500">
+        <p className="mt-1 text-right text-xs text-brand-gray-400">
           {title.length}/120
         </p>
       </div>
@@ -306,9 +306,9 @@ function PostFields({
           maxLength={2000}
           rows={5}
           placeholder="Share details: vibe, expectations, what you're looking for…"
-          className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-white placeholder:text-brand-gray-500 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
+          className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-white placeholder:text-brand-gray-400 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
         />
-        <p className="mt-1 text-right text-xs text-brand-gray-500">
+        <p className="mt-1 text-right text-xs text-brand-gray-400">
           {description.length}/2000
         </p>
       </div>
@@ -381,7 +381,7 @@ function PostFields({
                 value={eventLocation}
                 onChange={(e) => setEventLocation(e.target.value)}
                 placeholder="Mohawk Austin, 912 Red River St"
-                className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-white placeholder:text-brand-gray-500 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
+                className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-white placeholder:text-brand-gray-400 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
               />
             </div>
           </div>
@@ -421,7 +421,7 @@ function PostFields({
           value={payInfo}
           onChange={(e) => setPayInfo(e.target.value)}
           placeholder="$200 guarantee, door deal, exposure…"
-          className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-white placeholder:text-brand-gray-500 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
+          className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-white placeholder:text-brand-gray-400 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
         />
       </div>
 

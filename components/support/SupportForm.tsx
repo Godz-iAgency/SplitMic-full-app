@@ -151,7 +151,7 @@ export function SupportForm({ defaultName = "", defaultEmail = "" }: Props) {
           maxLength={5000}
           className="input-field resize-y"
         />
-        <p className="mt-1 text-right text-xs text-brand-gray-500">
+        <p className="mt-1 text-right text-xs text-brand-gray-400">
           {message.length}/5000
         </p>
       </div>
@@ -177,7 +177,7 @@ export function SupportForm({ defaultName = "", defaultEmail = "" }: Props) {
         )}
       </button>
 
-      <p className="text-center text-xs text-brand-gray-500">
+      <p className="text-center text-xs text-brand-gray-400">
         Or email us directly at{" "}
         <a
           href="mailto:christopher@godz-iagency.com"

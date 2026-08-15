@@ -80,9 +80,9 @@ export function RespondPanel({ postId, alreadyResponded, isOwnPost }: Props) {
           maxLength={500}
           rows={4}
           placeholder="Hey, we'd love to play this slot. Here's a quick intro…"
-          className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-brand-gray-500 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
+          className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-brand-gray-400 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
         />
-        <p className="mt-1 text-right text-xs text-brand-gray-500">
+        <p className="mt-1 text-right text-xs text-brand-gray-400">
           {message.length}/500
         </p>
       </div>

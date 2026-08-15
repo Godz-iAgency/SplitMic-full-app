@@ -597,14 +597,14 @@ export default async function ProfilePage({
                       <p className="mt-0.5 truncate text-xs text-brand-gray-300">
                         {t.post.poster_name}
                         {t.post.event_location ? (
-                          <span className="text-brand-gray-500">
+                          <span className="text-brand-gray-400">
                             {" "}
                             · {t.post.event_location}
                           </span>
                         ) : null}
                       </p>
                       {t.post.event_date ? (
-                        <p className="mt-1 text-xs font-semibold text-brand-gray-100">
+                        <p className="mt-1 text-xs font-semibold text-brand-gray-200">
                           {formatEventDateRange(
                             t.post.event_date,
                             t.post.event_end_date,

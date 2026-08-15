@@ -50,7 +50,7 @@ export function ThreadListItem({ thread }: { thread: ThreadSummary }) {
             {thread.last_message_preview}
           </p>
         ) : (
-          <p className="mt-1 text-sm italic text-brand-gray-500">
+          <p className="mt-1 text-sm italic text-brand-gray-400">
             No messages yet
           </p>
         )}

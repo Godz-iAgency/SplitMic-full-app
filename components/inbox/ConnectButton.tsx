@@ -134,9 +134,9 @@ export function ConnectButton({
             ? "Hey, I came across your profile and wanted to reach out…"
             : "Hey, I'd love to connect. Here's what we're about…"
         }
-        className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-brand-gray-500 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
+        className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-brand-gray-400 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
       />
-      <p className="text-right text-xs text-brand-gray-500">
+      <p className="text-right text-xs text-brand-gray-400">
         {message.length}/500
       </p>
       {error ? (

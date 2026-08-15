@@ -230,7 +230,7 @@ export default async function AdminDirectoryPage({
                         {row.email}
                       </a>
                     ) : (
-                      <span className="text-brand-gray-500">No email</span>
+                      <span className="text-brand-gray-400">No email</span>
                     )}
                     {row.phone ? <span>{row.phone}</span> : null}
                     {row.websiteUrl ? (
@@ -318,7 +318,7 @@ function FilterGroup({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xs font-semibold uppercase tracking-wider text-brand-gray-500">
+      <span className="text-xs font-semibold uppercase tracking-wider text-brand-gray-400">
         {label}
       </span>
       {children}

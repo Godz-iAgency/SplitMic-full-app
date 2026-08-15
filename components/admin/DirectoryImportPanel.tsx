@@ -70,7 +70,7 @@ export function DirectoryImportPanel({ currentTotal }: { currentTotal: number })
           rows={6}
           spellCheck={false}
           placeholder="Category,Business Name,Email,Website,Notes…"
-          className="mt-2 w-full rounded-xl border border-white/15 bg-black/40 p-3 font-mono text-xs text-white placeholder:text-brand-gray-500 focus:border-brand-orange/50 focus:outline-none"
+          className="mt-2 w-full rounded-xl border border-white/15 bg-black/40 p-3 font-mono text-xs text-white placeholder:text-brand-gray-400 focus:border-brand-orange/50 focus:outline-none"
         />
       ) : null}
 

@@ -40,7 +40,7 @@ export function MarketplaceSearchBox() {
         onChange={(e) => setValue(e.target.value)}
         placeholder="Search posts by title…"
         aria-label="Search marketplace posts"
-        className="w-full rounded-full border border-white/15 bg-white/5 py-3 pl-11 pr-5 text-sm text-white placeholder:text-brand-gray-500 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
+        className="w-full rounded-full border border-white/15 bg-white/5 py-3 pl-11 pr-5 text-sm text-white placeholder:text-brand-gray-400 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40"
       />
     </div>
   );

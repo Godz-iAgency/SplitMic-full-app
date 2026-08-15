@@ -116,7 +116,7 @@ export default async function HomePage() {
           {/* Browse everyone */}
           <Link
             href="/search?type=all"
-            className="group flex h-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-brand-gray-700 bg-brand-gray-900/30 p-8 text-center transition hover:-translate-y-1 hover:border-brand-orange hover:bg-brand-gray-900"
+            className="group flex h-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-brand-gray-800 bg-brand-gray-900/30 p-8 text-center transition hover:-translate-y-1 hover:border-brand-orange hover:bg-brand-gray-900"
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-brand-orange/40 bg-brand-orange/10 text-brand-orange transition group-hover:scale-110">
               <Users className="h-6 w-6" strokeWidth={1.75} aria-hidden="true" />

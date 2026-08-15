@@ -212,7 +212,7 @@ export default async function OpportunityDetailPage({
           <div className="space-y-5 lg:col-span-2">
             {post.description ? (
               <SectionCard icon={<Info className="h-4 w-4" />} title="About">
-                <p className="whitespace-pre-line text-base leading-relaxed text-brand-gray-100">
+                <p className="whitespace-pre-line text-base leading-relaxed text-brand-gray-200">
                   {post.description}
                 </p>
               </SectionCard>

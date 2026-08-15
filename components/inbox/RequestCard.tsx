@@ -113,7 +113,7 @@ export function RequestCard({ request }: { request: IncomingRequest }) {
               {request.message}
             </p>
           ) : (
-            <p className="mt-2 text-sm italic text-brand-gray-500">
+            <p className="mt-2 text-sm italic text-brand-gray-400">
               No message.
             </p>
           )}

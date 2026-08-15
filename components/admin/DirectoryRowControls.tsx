@@ -127,11 +127,11 @@ export function DirectoryOutreachControl({ row }: { row: AdminDirectoryRow }) {
         }}
         rows={2}
         placeholder="Outreach notes…"
-        className="w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-white placeholder:text-brand-gray-500 focus:border-brand-orange/50 focus:outline-none"
+        className="w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-white placeholder:text-brand-gray-400 focus:border-brand-orange/50 focus:outline-none"
       />
 
       {row.lastContactedAt ? (
-        <p className="text-xs text-brand-gray-500">
+        <p className="text-xs text-brand-gray-400">
           Last contacted {new Date(row.lastContactedAt).toLocaleDateString()}
         </p>
       ) : null}
@@ -223,7 +223,7 @@ export function DirectoryClaimLink({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Profile ID to link…"
-        className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-2 py-1 text-xs text-white placeholder:text-brand-gray-500 focus:border-brand-orange/50 focus:outline-none"
+        className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-2 py-1 text-xs text-white placeholder:text-brand-gray-400 focus:border-brand-orange/50 focus:outline-none"
       />
       <button
         type="button"
