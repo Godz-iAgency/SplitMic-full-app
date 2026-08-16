@@ -24,5 +24,13 @@ export function buildUberUrl(event: LiveEventCard): string {
     params.set("dropoff[latitude]", String(event.venueLatitude));
     params.set("dropoff[longitude]", String(event.venueLongitude));
   }
+  // Uber's web fallback stopped honoring guest prefill without a registered
+  // app identifying the request (see PROGRESS.md §4 #1). Omitted entirely
+  // when unset rather than sent empty, so a missing env var degrades to the
+  // prior (broken-prefill) behavior instead of a malformed request.
+  const clientId = process.env.NEXT_PUBLIC_UBER_CLIENT_ID;
+  if (clientId) {
+    params.set("client_id", clientId);
+  }
   return `https://m.uber.com/ul/?${params.toString()}`;
 }

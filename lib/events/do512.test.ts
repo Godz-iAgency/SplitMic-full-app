@@ -186,6 +186,102 @@ describe("mapEventToRow", () => {
       expect(mapEventToRow(raw, NOW)?.image_url).toBeNull();
     });
   });
+
+  describe("placeholder values in text fields", () => {
+    // Regression guard for a real incident, and the non-URL sibling of the
+    // "Unknown" image_url bug above: the extraction returned the literal
+    // string "N/A" for venue_address on 5 of 32 live rows rather than
+    // omitting the field. Being truthy, it survived every `||` fallback and
+    // was handed to Google Maps and Uber as a destination, and published as
+    // the venue's address in the page's MusicEvent JSON-LD.
+    it('nulls a literal "N/A" venue_address so the venue-name fallback applies', () => {
+      const raw: RawDo512Event = {
+        artist_name: "A",
+        venue_name: "B",
+        event_date: "2026-08-15",
+        event_time: "20:00",
+        venue_address: "N/A",
+      };
+      expect(mapEventToRow(raw, NOW)?.venue_address).toBeNull();
+    });
+
+    it("nulls other placeholder spellings case-insensitively", () => {
+      for (const placeholder of ["n/a", " Unknown ", "TBD", "none", "-"]) {
+        const raw: RawDo512Event = {
+          artist_name: "A",
+          venue_name: "B",
+          event_date: "2026-08-15",
+          event_time: "20:00",
+          venue_address: placeholder,
+        };
+        expect(mapEventToRow(raw, NOW)?.venue_address).toBeNull();
+      }
+    });
+
+    it("keeps a real address untouched", () => {
+      const raw: RawDo512Event = {
+        artist_name: "A",
+        venue_name: "B",
+        event_date: "2026-08-15",
+        event_time: "20:00",
+        venue_address: "912 Red River, Austin, TX, 78701",
+      };
+      expect(mapEventToRow(raw, NOW)?.venue_address).toBe(
+        "912 Red River, Austin, TX, 78701",
+      );
+    });
+
+    it("matches whole strings only, never substrings", () => {
+      // "Nada Surf" starts with "na"; "The Unknown" contains "unknown". A
+      // substring check would silently delete both.
+      const raw: RawDo512Event = {
+        artist_name: "Nada Surf",
+        venue_name: "The Unknown",
+        event_date: "2026-08-15",
+        event_time: "20:00",
+        venue_address: "1 Unknown Road, Austin, TX",
+      };
+      const row = mapEventToRow(raw, NOW);
+      expect(row?.artist_name).toBe("Nada Surf");
+      expect(row?.venue_name).toBe("The Unknown");
+      expect(row?.venue_address).toBe("1 Unknown Road, Austin, TX");
+    });
+
+    it("skips the row entirely when a required name is a placeholder", () => {
+      // Unlike an address, there's no sensible fallback for these — a card
+      // titled "N/A" is worthless, so the row shouldn't exist at all.
+      const noArtist: RawDo512Event = {
+        artist_name: "N/A",
+        venue_name: "B",
+        event_date: "2026-08-15",
+        event_time: "20:00",
+      };
+      const noVenue: RawDo512Event = {
+        artist_name: "A",
+        venue_name: "Unknown",
+        event_date: "2026-08-15",
+        event_time: "20:00",
+      };
+      expect(mapEventToRow(noArtist, NOW)).toBeNull();
+      expect(mapEventToRow(noVenue, NOW)).toBeNull();
+    });
+
+    it("keeps source_event_id stable against the pre-trim implementation", () => {
+      // mapEventToRow now passes already-trimmed names to buildSourceEventId
+      // instead of the raw ones. buildSourceEventId normalizes internally, so
+      // the id must be unchanged — otherwise every existing row would fail to
+      // dedupe on the next sync and silently double.
+      const raw: RawDo512Event = {
+        artist_name: "  Test Band  ",
+        venue_name: "  Mohawk Austin  ",
+        event_date: "2026-08-15",
+        event_time: "20:00",
+      };
+      expect(mapEventToRow(raw, NOW)?.source_event_id).toBe(
+        buildSourceEventId("Mohawk Austin", "Test Band", "2026-08-16T01:00:00.000Z"),
+      );
+    });
+  });
 });
 
 describe("scrapeDo512Events", () => {

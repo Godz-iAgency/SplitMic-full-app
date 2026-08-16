@@ -262,6 +262,14 @@ export function mapEventToRow(
 ): LiveEventInsert | null {
   if (!event.event_date || !event.event_time) return null;
 
+  // artist_name and venue_name are the schema's only required fields, so the
+  // extraction fills them with a placeholder rather than omitting them when
+  // it has nothing. A row named "N/A" has nothing renderable in it — skip it
+  // instead of storing a card with a placeholder for a title.
+  const artistName = realValueOrNull(event.artist_name);
+  const venueName = realValueOrNull(event.venue_name);
+  if (!artistName || !venueName) return null;
+
   const eventDatetime = chicagoWallTimeToUtcIso(event.event_date, event.event_time);
   if (!eventDatetime) return null;
 
@@ -271,14 +279,13 @@ export function mapEventToRow(
 
   return {
     source: "do512",
-    source_event_id: buildSourceEventId(
-      event.venue_name,
-      event.artist_name,
-      eventDatetime,
-    ),
-    artist_name: event.artist_name.trim(),
-    venue_name: event.venue_name.trim(),
-    venue_address: event.venue_address?.trim() || null,
+    // Hash-stable against the pre-trim call this replaced: buildSourceEventId
+    // normalizes (trim + lowercase) internally, so already-trimmed input
+    // yields the same id and existing rows still dedupe rather than doubling.
+    source_event_id: buildSourceEventId(venueName, artistName, eventDatetime),
+    artist_name: artistName,
+    venue_name: venueName,
+    venue_address: realValueOrNull(event.venue_address),
     event_datetime: eventDatetime,
     is_free: typeof event.is_free === "boolean" ? event.is_free : null,
     image_url: httpUrlOrNull(event.image_url),
@@ -296,6 +303,47 @@ export function mapEventToRow(
  * rendered as an <img src="…/Unknown"> resolved against our own origin.
  * Schema-shaped output is not evidence a URL was actually present.
  */
+/**
+ * Values an LLM extraction emits to satisfy a field it has no data for.
+ * Matched as whole strings after trim + lowercase, never as substrings, so a
+ * real value containing one of these words ("Nada Surf", "The Unknown") is
+ * untouched.
+ */
+const PLACEHOLDER_VALUES = new Set([
+  "n/a",
+  "na",
+  "n.a.",
+  "unknown",
+  "none",
+  "null",
+  "undefined",
+  "tbd",
+  "tba",
+  "not available",
+  "not specified",
+  "not listed",
+  "no address",
+  "-",
+  "--",
+  "?",
+]);
+
+/**
+ * The non-URL counterpart to httpUrlOrNull, and the same lesson: the schema
+ * types venue_address as a plain string, so "no address on this listing" came
+ * back as the literal string "N/A" rather than an omitted field — observed
+ * live on 5 of 32 active rows. Nothing downstream could tell it from a real
+ * address, so it was passed to Google Maps and Uber as a destination and
+ * published as the venue's `address` in the page's MusicEvent structured
+ * data. Nulling it here lets all three fall back to "<venue name>, Austin,
+ * TX", which is what they already do when the field is genuinely absent.
+ */
+function realValueOrNull(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  return PLACEHOLDER_VALUES.has(trimmed.toLowerCase()) ? null : trimmed;
+}
+
 function httpUrlOrNull(value: string | undefined): string | null {
   const trimmed = value?.trim();
   if (!trimmed) return null;

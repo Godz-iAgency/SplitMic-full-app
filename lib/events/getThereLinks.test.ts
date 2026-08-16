@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { buildDirectionsUrl, buildUberUrl } from "./getThereLinks";
 import type { LiveEventCard } from "./queries";
 
@@ -59,5 +59,32 @@ describe("buildUberUrl", () => {
     const url = buildUberUrl(makeEvent());
     const params = new URL(url).searchParams;
     expect(params.get("dropoff[formatted_address]")).toBe("Mohawk Austin, Austin, TX");
+  });
+
+  describe("client_id", () => {
+    const originalClientId = process.env.NEXT_PUBLIC_UBER_CLIENT_ID;
+
+    beforeEach(() => {
+      delete process.env.NEXT_PUBLIC_UBER_CLIENT_ID;
+    });
+
+    afterEach(() => {
+      if (originalClientId === undefined) {
+        delete process.env.NEXT_PUBLIC_UBER_CLIENT_ID;
+      } else {
+        process.env.NEXT_PUBLIC_UBER_CLIENT_ID = originalClientId;
+      }
+    });
+
+    it("includes client_id when the app's Client ID is configured", () => {
+      process.env.NEXT_PUBLIC_UBER_CLIENT_ID = "test-client-id";
+      const params = new URL(buildUberUrl(makeEvent())).searchParams;
+      expect(params.get("client_id")).toBe("test-client-id");
+    });
+
+    it("omits client_id entirely rather than sending it empty when unset", () => {
+      const url = buildUberUrl(makeEvent());
+      expect(new URL(url).searchParams.has("client_id")).toBe(false);
+    });
   });
 });

@@ -1,13 +1,11 @@
-import { CATEGORY_META } from "@/lib/directory/categories";
-
 /**
- * SplitMic's own generic venue photo — the same asset used for the Venues
- * player-type tile and the directory's Venues category page
- * (lib/directory/categories.ts), so a card with no real photo still reads as
- * "us," not a placeholder. Falls back to the literal path only in the
- * unreachable case that entry loses its image.
+ * The no-photo fallback for a /live card. Dedicated to this feed rather than
+ * reusing the directory's Venues tile photo (CATEGORY_META.venue.image) —
+ * that asset already means "the Venues player type" on the landing page and
+ * directory, so reusing it here would read as a mismatch across many
+ * different, unrelated venues.
  */
-const GENERIC_VENUE_PHOTO = CATEGORY_META.venue.image ?? "/players/venue.jpg";
+const GENERIC_VENUE_PHOTO = "/live/fallback.jpg";
 
 /**
  * Top-of-card photo band for an event: Do512's event poster when it has one,
