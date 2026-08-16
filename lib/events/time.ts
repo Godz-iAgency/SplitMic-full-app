@@ -35,6 +35,22 @@ export function isToday(iso: string, now: Date = new Date()): boolean {
   return cycleDateKey(new Date(iso)) === cycleDateKey(now);
 }
 
+/**
+ * Whether an event's start time is still ahead of `now`. Distinct from
+ * isToday's cycle check on purpose: getUpcomingEvents' query has a 26-hour
+ * lookback so a show that's already started stays visible under "Tonight"
+ * (isToday's own docstring covers why) — but that same lookback also leaves
+ * *yesterday's* leftover shows sitting in the fetched result set. isToday
+ * correctly says those aren't today, but says nothing about whether they're
+ * upcoming — so a "This Week" filter built on isToday alone let a show from
+ * the night before leak in wearing a date already in the past. This is the
+ * check that catches it. Never applied to "Tonight" — a show that already
+ * started staying visible there is deliberate, not a bug.
+ */
+export function isUpcoming(iso: string, now: Date = new Date()): boolean {
+  return new Date(iso).getTime() > now.getTime();
+}
+
 export function formatEventTime(iso: string): string {
   return new Intl.DateTimeFormat("en-US", {
     timeZone: CHICAGO_TZ,

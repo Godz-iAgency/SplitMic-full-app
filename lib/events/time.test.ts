@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isToday, formatEventDayLabel, formatEventTime } from "./time";
+import { isToday, isUpcoming, formatEventDayLabel, formatEventTime } from "./time";
 
 // All times below are UTC instants chosen so their Chicago-local wall clock
 // is unambiguous and outside any DST transition window.
@@ -40,6 +40,33 @@ describe("isToday (9am-9am Chicago cycle, not midnight)", () => {
     const eventAt859am = "2026-08-13T13:59:00.000Z"; // 8:59am Chicago Aug 13
     const checkedAt9am = "2026-08-13T14:00:00.000Z";
     expect(isToday(eventAt859am, new Date(checkedAt9am))).toBe(false);
+  });
+});
+
+describe("isUpcoming", () => {
+  it("is true for an event later than now", () => {
+    const now = "2026-08-13T20:00:00.000Z";
+    const later = "2026-08-14T01:00:00.000Z";
+    expect(isUpcoming(later, new Date(now))).toBe(true);
+  });
+
+  it("is false for an event earlier than now", () => {
+    const now = "2026-08-14T01:00:00.000Z";
+    const earlier = "2026-08-13T20:00:00.000Z";
+    expect(isUpcoming(earlier, new Date(now))).toBe(false);
+  });
+
+  // Regression guard for a real incident: getUpcomingEvents' 26-hour lookback
+  // (so a show already underway doesn't vanish from "Tonight") also leaves
+  // yesterday's leftover shows in the fetched result set. isToday alone
+  // correctly excludes them from "Tonight", but says nothing about whether
+  // they're upcoming — so LiveEventsView's "This Week" filter (isToday only)
+  // let a finished show from the previous night appear as if it were still
+  // ahead, labeled with a date that had already passed.
+  it("is false for a past event that's still inside the 26h query lookback", () => {
+    const now = "2026-08-16T19:56:00.000Z"; // Sunday afternoon
+    const lastNightsShow = "2026-08-15T18:00:00.000Z"; // ~26h earlier
+    expect(isUpcoming(lastNightsShow, new Date(now))).toBe(false);
   });
 });
 

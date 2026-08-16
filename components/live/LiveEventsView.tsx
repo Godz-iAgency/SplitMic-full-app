@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { LiveEventCard as EventCardData } from "@/lib/events/queries";
-import { isToday } from "@/lib/events/time";
+import { isToday, isUpcoming } from "@/lib/events/time";
 import { EventCard } from "./EventCard";
 import { EmptyState } from "./EmptyState";
 import { EventFaqSection } from "./EventFaqSection";
@@ -20,14 +20,21 @@ export function LiveEventsView({ events }: Props) {
 
   // "This Week" is explicitly everything OTHER than tonight, not tonight plus
   // the rest of the week — the two tabs partition the list, they don't
-  // overlap.
-  const visible = useMemo(
-    () =>
-      range === "today"
-        ? events.filter((e) => isToday(e.eventDatetime))
-        : events.filter((e) => !isToday(e.eventDatetime)),
-    [events, range],
-  );
+  // overlap. It also excludes anything already in the past: the underlying
+  // query has a 26-hour lookback so a show that's already started doesn't
+  // vanish from "Tonight" mid-way through, but that same lookback leaves
+  // yesterday's leftover shows in the fetched list — without the isUpcoming
+  // check, those showed up under "This Week" wearing a date already gone by.
+  // "Tonight" deliberately keeps already-started shows visible (isToday's
+  // docstring), so isUpcoming is never applied there.
+  const visible = useMemo(() => {
+    const now = new Date();
+    return range === "today"
+      ? events.filter((e) => isToday(e.eventDatetime, now))
+      : events.filter(
+          (e) => !isToday(e.eventDatetime, now) && isUpcoming(e.eventDatetime, now),
+        );
+  }, [events, range]);
 
   return (
     <main className="min-h-screen bg-black px-4 py-12 text-white sm:px-8">
