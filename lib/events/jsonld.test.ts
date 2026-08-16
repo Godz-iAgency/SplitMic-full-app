@@ -16,6 +16,8 @@ const EVENT: LiveEventCard = {
   ticketUrl: "https://example.com/tickets",
   matchedProfileId: "profile-1",
   matchedProfileType: "band",
+  directoryBusinessId: null,
+  directoryPhotoUrl: null,
 };
 
 describe("buildEventsJsonLd", () => {
@@ -52,6 +54,40 @@ describe("buildEventsJsonLd", () => {
 
   it("returns an empty graph for no events", () => {
     expect(buildEventsJsonLd([], "https://splitmic.com")["@graph"]).toEqual([]);
+  });
+
+  it("falls back to the directory listing for url/image when there's no profile or ticket link", () => {
+    const directoryOnly = {
+      ...EVENT,
+      imageUrl: null, // no Do512 poster, so directoryPhotoUrl should win
+      ticketUrl: null,
+      matchedProfileId: null,
+      matchedProfileType: null,
+      directoryBusinessId: "biz-1",
+      directoryPhotoUrl: "https://example.com/venue-photo.jpg",
+    };
+    const jsonld = buildEventsJsonLd([directoryOnly], "https://splitmic.com");
+    const entry = jsonld["@graph"][0];
+    expect(entry.url).toBe("https://splitmic.com/directory/venues#b-biz-1");
+    expect(entry.image).toBe("https://example.com/venue-photo.jpg");
+  });
+
+  it("prefers ticketUrl over any matched destination", () => {
+    const withEverything = { ...EVENT, directoryBusinessId: "biz-1" };
+    const jsonld = buildEventsJsonLd([withEverything], "https://splitmic.com");
+    expect(jsonld["@graph"][0].url).toBe(EVENT.ticketUrl);
+  });
+
+  it("falls back to the internal anchor when nothing matched at all", () => {
+    const nothingMatched = {
+      ...EVENT,
+      ticketUrl: null,
+      matchedProfileId: null,
+      matchedProfileType: null,
+      directoryBusinessId: null,
+    };
+    const jsonld = buildEventsJsonLd([nothingMatched], "https://splitmic.com");
+    expect(jsonld["@graph"][0].url).toBe(`https://splitmic.com/live#event-${EVENT.id}`);
   });
 });
 

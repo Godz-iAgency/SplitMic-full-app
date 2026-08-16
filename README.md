@@ -183,6 +183,17 @@ and JSON-LD structured data (`MusicEvent` per show, `FAQPage`) built from the
 same content it renders, so search engines and AI answer engines see exactly
 what a visitor sees.
 
+Each card also cross-references the venue name against the business
+directory (`matching.ts`'s `findDirectoryVenueMatch`, independent of the
+band/artist match above — a matched band never suppresses the venue check).
+When a match exists the whole card links out — a real SplitMic venue profile
+first, else the directory listing — and the venue's own directory photo fills
+the image band whenever Do512 didn't give the event its own poster. A
+deactivated (confirmed-dead) directory listing is treated as no match, since
+that's re-checked live in `getUpcomingEvents`, not trusted from the sync-time
+snapshot. "Tonight" and "This Week" are a strict partition, not overlapping
+sets — a show happening tonight only shows under the Tonight tab.
+
 ## Scheduled jobs
 
 Both jobs below share one `CRON_SECRET` and the same auth pattern

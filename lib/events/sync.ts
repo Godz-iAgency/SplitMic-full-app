@@ -7,7 +7,12 @@ import {
   type LiveEventInsert,
   type RawDo512Event,
 } from "./do512";
-import { loadMatchCandidates, findMatch } from "./matching";
+import {
+  loadMatchCandidates,
+  findMatch,
+  loadDirectoryVenueCandidates,
+  findDirectoryVenueMatch,
+} from "./matching";
 
 /**
  * Orchestrates one daily Do512 → live_events sync. Mirrors
@@ -90,14 +95,23 @@ export async function syncLiveEvents(
   );
   const eventsSkippedPast = mapped.length - rows.length;
 
-  // Attach a matched SplitMic profile, if any, to each row.
-  const candidates = await loadMatchCandidates(supabase);
+  // Attach a matched SplitMic profile, if any, to each row. Independently,
+  // also attach a matched directory venue listing — computed regardless of
+  // whether a profile matched, since findMatch's band-first short-circuit
+  // means a band match never even checks the venue against profiles. See
+  // matching.ts for why these two are kept separate.
+  const [candidates, directoryVenues] = await Promise.all([
+    loadMatchCandidates(supabase),
+    loadDirectoryVenueCandidates(supabase),
+  ]);
   const rowsWithMatch = rows.map((row) => {
     const match = findMatch(candidates, row.artist_name, row.venue_name);
+    const directoryMatch = findDirectoryVenueMatch(directoryVenues, row.venue_name);
     return {
       ...row,
       matched_profile_id: match?.profileId ?? null,
       matched_profile_type: match?.profileType ?? null,
+      matched_directory_business_id: directoryMatch,
     };
   });
 

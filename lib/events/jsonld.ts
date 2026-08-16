@@ -1,4 +1,5 @@
 import { FAQ_ITEMS } from "./faqContent";
+import { CATEGORY_META } from "@/lib/directory/categories";
 import type { LiveEventCard } from "./queries";
 
 /**
@@ -28,12 +29,14 @@ export function buildEventsJsonLd(events: LiveEventCard[], baseUrl: string) {
           ? { sameAs: `${baseUrl}/profile/${event.matchedProfileId}` }
           : {}),
       },
-      image: event.imageUrl || undefined,
+      image: event.imageUrl || event.directoryPhotoUrl || undefined,
       url:
         event.ticketUrl ||
         (event.matchedProfileId
           ? `${baseUrl}/profile/${event.matchedProfileId}`
-          : `${baseUrl}/live#event-${event.id}`),
+          : event.directoryBusinessId
+            ? `${baseUrl}/directory/${CATEGORY_META.venue.slug}#b-${event.directoryBusinessId}`
+            : `${baseUrl}/live#event-${event.id}`),
       isAccessibleForFree: event.isFree ?? undefined,
     })),
   };

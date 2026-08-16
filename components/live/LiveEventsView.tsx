@@ -18,8 +18,14 @@ type Props = {
 export function LiveEventsView({ events }: Props) {
   const [range, setRange] = useState<Range>("today");
 
+  // "This Week" is explicitly everything OTHER than tonight, not tonight plus
+  // the rest of the week — the two tabs partition the list, they don't
+  // overlap.
   const visible = useMemo(
-    () => (range === "today" ? events.filter((e) => isToday(e.eventDatetime)) : events),
+    () =>
+      range === "today"
+        ? events.filter((e) => isToday(e.eventDatetime))
+        : events.filter((e) => !isToday(e.eventDatetime)),
     [events, range],
   );
 

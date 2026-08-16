@@ -14,6 +14,13 @@ export type LiveEventCard = {
   ticketUrl: string | null;
   matchedProfileId: string | null;
   matchedProfileType: "band" | "venue" | null;
+  /** Matched directory venue listing, re-checked live (not the sync-time
+   *  snapshot) so a business deactivated after the match still comes back
+   *  null here rather than linking to a hidden listing. */
+  directoryBusinessId: string | null;
+  /** The matched business's own photo (Open Graph image, else website
+   *  screenshot), for the card's image band when Do512 gave no poster. */
+  directoryPhotoUrl: string | null;
 };
 
 export type UpcomingEventsOptions = {
@@ -54,7 +61,7 @@ export async function getUpcomingEvents(
   const { data, error } = await supabase
     .from("live_events")
     .select(
-      "id, artist_name, venue_name, venue_address, venue_latitude, venue_longitude, event_datetime, is_free, image_url, ticket_url, matched_profile_id, matched_profile_type",
+      "id, artist_name, venue_name, venue_address, venue_latitude, venue_longitude, event_datetime, is_free, image_url, ticket_url, matched_profile_id, matched_profile_type, matched_directory_business_id",
     )
     .eq("is_active", true)
     .gte("event_datetime", rangeStart.toISOString())
@@ -63,18 +70,58 @@ export async function getUpcomingEvents(
 
   if (error || !data) return [];
 
-  return data.map((row) => ({
-    id: row.id,
-    artistName: row.artist_name,
-    venueName: row.venue_name,
-    venueAddress: row.venue_address,
-    venueLatitude: row.venue_latitude !== null ? Number(row.venue_latitude) : null,
-    venueLongitude: row.venue_longitude !== null ? Number(row.venue_longitude) : null,
-    eventDatetime: row.event_datetime,
-    isFree: row.is_free,
-    imageUrl: row.image_url,
-    ticketUrl: row.ticket_url,
-    matchedProfileId: row.matched_profile_id,
-    matchedProfileType: row.matched_profile_type,
-  }));
+  // Re-fetched live rather than trusting the sync-time match: a listing can
+  // be deactivated (confirmed dead, see lib/directory/websiteCheck.ts) or get
+  // its photo backfilled at any point after the event was synced, and this
+  // is the one query that decides what actually renders.
+  const directoryIds = [
+    ...new Set(
+      data
+        .map((row) => row.matched_directory_business_id)
+        .filter((id): id is string => typeof id === "string"),
+    ),
+  ];
+
+  const directoryById = new Map<
+    string,
+    { ogImageUrl: string | null; screenshotUrl: string | null }
+  >();
+  if (directoryIds.length > 0) {
+    const { data: businesses } = await supabase
+      .from("directory_businesses")
+      .select("id, og_image_url, screenshot_url")
+      .in("id", directoryIds)
+      .eq("is_active", true);
+    for (const b of businesses ?? []) {
+      directoryById.set(b.id as string, {
+        ogImageUrl: b.og_image_url,
+        screenshotUrl: b.screenshot_url,
+      });
+    }
+  }
+
+  return data.map((row) => {
+    const directory = row.matched_directory_business_id
+      ? directoryById.get(row.matched_directory_business_id)
+      : undefined;
+
+    return {
+      id: row.id,
+      artistName: row.artist_name,
+      venueName: row.venue_name,
+      venueAddress: row.venue_address,
+      venueLatitude: row.venue_latitude !== null ? Number(row.venue_latitude) : null,
+      venueLongitude: row.venue_longitude !== null ? Number(row.venue_longitude) : null,
+      eventDatetime: row.event_datetime,
+      isFree: row.is_free,
+      imageUrl: row.image_url,
+      ticketUrl: row.ticket_url,
+      matchedProfileId: row.matched_profile_id,
+      matchedProfileType: row.matched_profile_type,
+      // Only surface the business as matched when it's still active — an id
+      // that didn't resolve (deactivated) is treated the same as no match.
+      directoryBusinessId: directory ? row.matched_directory_business_id : null,
+      directoryPhotoUrl: directory ? directory.ogImageUrl ?? directory.screenshotUrl : null,
+    };
+  });
 }

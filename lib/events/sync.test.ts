@@ -14,12 +14,16 @@ vi.mock("./do512", async () => {
 vi.mock("./matching", () => ({
   loadMatchCandidates: vi.fn().mockResolvedValue({ bands: [], venues: [] }),
   findMatch: vi.fn().mockReturnValue(null),
+  loadDirectoryVenueCandidates: vi.fn().mockResolvedValue([]),
+  findDirectoryVenueMatch: vi.fn().mockReturnValue(null),
 }));
 
 import { scrapeDo512Events } from "./do512";
+import { findDirectoryVenueMatch } from "./matching";
 import { syncLiveEvents } from "./sync";
 
 const mockScrape = vi.mocked(scrapeDo512Events);
+const mockFindDirectoryVenueMatch = vi.mocked(findDirectoryVenueMatch);
 
 const NOW = new Date("2026-08-15T12:00:00Z");
 
@@ -88,6 +92,7 @@ function fakeSupabase(overrides: Partial<Pick<FakeState, "upsertError" | "update
 
 beforeEach(() => {
   mockScrape.mockReset();
+  mockFindDirectoryVenueMatch.mockReset().mockReturnValue(null);
 });
 
 describe("syncLiveEvents", () => {
@@ -212,5 +217,28 @@ describe("syncLiveEvents", () => {
 
     expect(result.error).toContain("connection lost");
     expect(result.eventsUpserted).toBe(1);
+  });
+
+  it("attaches a matched directory venue independently of the profile match", async () => {
+    // Computed regardless of findMatch's result (mocked null throughout this
+    // file) — a band matching the artist must not suppress the venue lookup.
+    mockScrape.mockResolvedValue({ ok: true, data: [EVENT_A] });
+    mockFindDirectoryVenueMatch.mockReturnValue("biz-1");
+    const { client, state } = fakeSupabase();
+
+    await syncLiveEvents(client, { now: NOW });
+
+    expect((state.upsertRows[0] as { matched_directory_business_id: unknown }).matched_directory_business_id).toBe(
+      "biz-1",
+    );
+  });
+
+  it("sets matched_directory_business_id to null when nothing matches", async () => {
+    mockScrape.mockResolvedValue({ ok: true, data: [EVENT_A] });
+    const { client, state } = fakeSupabase();
+
+    await syncLiveEvents(client, { now: NOW });
+
+    expect((state.upsertRows[0] as { matched_directory_business_id: unknown }).matched_directory_business_id).toBeNull();
   });
 });

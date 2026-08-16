@@ -4,26 +4,36 @@ import { getUpcomingEvents } from "./queries";
 
 type FilterCall = { method: string; args: unknown[] };
 
-/** Records every filter call so tests can assert the query's actual bounds. */
-function fakeSupabase(rows: Record<string, unknown>[]) {
+/**
+ * Records every filter call so tests can assert the query's actual bounds.
+ * Distinguishes the two tables getUpcomingEvents touches: `live_events`
+ * (select ... order, resolved in order()) and `directory_businesses` (select
+ * ... in ... eq, resolved in the trailing eq()) — the directory lookup only
+ * ever runs when at least one row has a matched_directory_business_id.
+ */
+function fakeSupabase(
+  rows: Record<string, unknown>[],
+  directoryRows: Record<string, unknown>[] = [],
+) {
   const calls: FilterCall[] = [];
+  const directoryCalls: FilterCall[] = [];
 
-  const builder: Record<string, unknown> = {
+  const liveEventsBuilder: Record<string, unknown> = {
     select: (...args: unknown[]) => {
       calls.push({ method: "select", args });
-      return builder;
+      return liveEventsBuilder;
     },
     eq: (...args: unknown[]) => {
       calls.push({ method: "eq", args });
-      return builder;
+      return liveEventsBuilder;
     },
     gte: (...args: unknown[]) => {
       calls.push({ method: "gte", args });
-      return builder;
+      return liveEventsBuilder;
     },
     lte: (...args: unknown[]) => {
       calls.push({ method: "lte", args });
-      return builder;
+      return liveEventsBuilder;
     },
     order: (...args: unknown[]) => {
       calls.push({ method: "order", args });
@@ -31,8 +41,27 @@ function fakeSupabase(rows: Record<string, unknown>[]) {
     },
   };
 
-  const client = { from: () => builder } as unknown as SupabaseClient;
-  return { client, calls };
+  const directoryBuilder: Record<string, unknown> = {
+    select: (...args: unknown[]) => {
+      directoryCalls.push({ method: "select", args });
+      return directoryBuilder;
+    },
+    in: (...args: unknown[]) => {
+      directoryCalls.push({ method: "in", args });
+      return directoryBuilder;
+    },
+    eq: (...args: unknown[]) => {
+      directoryCalls.push({ method: "eq", args });
+      return Promise.resolve({ data: directoryRows, error: null });
+    },
+  };
+
+  const client = {
+    from: (table: string) =>
+      table === "directory_businesses" ? directoryBuilder : liveEventsBuilder,
+  } as unknown as SupabaseClient;
+
+  return { client, calls, directoryCalls };
 }
 
 const ROW = {
@@ -48,6 +77,7 @@ const ROW = {
   ticket_url: null,
   matched_profile_id: null,
   matched_profile_type: null,
+  matched_directory_business_id: null,
 };
 
 describe("getUpcomingEvents", () => {
@@ -108,7 +138,71 @@ describe("getUpcomingEvents", () => {
         ticketUrl: null,
         matchedProfileId: null,
         matchedProfileType: null,
+        directoryBusinessId: null,
+        directoryPhotoUrl: null,
       },
     ]);
+  });
+
+  describe("matched directory venue", () => {
+    it("skips the directory lookup entirely when nothing matched", async () => {
+      const { client, directoryCalls } = fakeSupabase([ROW]);
+      await getUpcomingEvents(client);
+      expect(directoryCalls).toEqual([]);
+    });
+
+    it("joins the matched business's Open Graph photo", async () => {
+      const row = { ...ROW, matched_directory_business_id: "biz-1" };
+      const { client, directoryCalls } = fakeSupabase(
+        [row],
+        [{ id: "biz-1", og_image_url: "https://og.example.com/1.jpg", screenshot_url: null }],
+      );
+
+      const result = await getUpcomingEvents(client);
+
+      expect(result[0].directoryBusinessId).toBe("biz-1");
+      expect(result[0].directoryPhotoUrl).toBe("https://og.example.com/1.jpg");
+      // Re-checked live, not just trusted from the sync-time snapshot.
+      expect(directoryCalls).toContainEqual({ method: "eq", args: ["is_active", true] });
+    });
+
+    it("falls back to the screenshot when there's no Open Graph image", async () => {
+      const row = { ...ROW, matched_directory_business_id: "biz-1" };
+      const { client } = fakeSupabase(
+        [row],
+        [{ id: "biz-1", og_image_url: null, screenshot_url: "https://shot.example.com/1.jpg" }],
+      );
+
+      const result = await getUpcomingEvents(client);
+
+      expect(result[0].directoryPhotoUrl).toBe("https://shot.example.com/1.jpg");
+    });
+
+    it("treats a deactivated match as no match at all", async () => {
+      // The business row not coming back (filtered by is_active=true on the
+      // directory side) means the id simply isn't in the response set.
+      const row = { ...ROW, matched_directory_business_id: "biz-dead" };
+      const { client } = fakeSupabase([row], []);
+
+      const result = await getUpcomingEvents(client);
+
+      expect(result[0].directoryBusinessId).toBeNull();
+      expect(result[0].directoryPhotoUrl).toBeNull();
+    });
+
+    it("de-duplicates repeated business ids across multiple events into one lookup", async () => {
+      const rowA = { ...ROW, id: "1", matched_directory_business_id: "biz-1" };
+      const rowB = { ...ROW, id: "2", matched_directory_business_id: "biz-1" };
+      const { client, directoryCalls } = fakeSupabase(
+        [rowA, rowB],
+        [{ id: "biz-1", og_image_url: "https://og.example.com/1.jpg", screenshot_url: null }],
+      );
+
+      const result = await getUpcomingEvents(client);
+
+      const inCall = directoryCalls.find((c) => c.method === "in");
+      expect(inCall?.args[1]).toEqual(["biz-1"]);
+      expect(result.every((r) => r.directoryPhotoUrl === "https://og.example.com/1.jpg")).toBe(true);
+    });
   });
 });

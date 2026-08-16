@@ -114,3 +114,45 @@ export function findMatch(
 
   return null;
 }
+
+// ── Directory venue matching ────────────────────────────────────────────────
+//
+// A second, independent cross-reference: the scraped business directory
+// (`directory_businesses`, category = 'venue') is a much larger set of real
+// Austin venues than the handful with actual SplitMic accounts, so most event
+// cards can only ever get a "more about this venue" link through this path.
+// Kept separate from findMatch above rather than folded in, because
+// findMatch's band-first short-circuit means a band match leaves the venue
+// unchecked entirely — this needs an answer regardless of what the artist
+// matched.
+
+export type DirectoryVenueCandidate = { businessId: string; name: string };
+
+/**
+ * Loads every active directory venue's id + name for matching. Scoped to
+ * category = 'venue' and is_active = true — matching a live show's venue
+ * name against, say, record labels would be nonsensical, and a deactivated
+ * (confirmed-dead) listing is not a page worth sending anyone to.
+ */
+export async function loadDirectoryVenueCandidates(
+  supabase: SupabaseClient,
+): Promise<DirectoryVenueCandidate[]> {
+  const { data } = await supabase
+    .from("directory_businesses")
+    .select("id, business_name")
+    .eq("category", "venue")
+    .eq("is_active", true);
+
+  return (data ?? []).map((row) => ({
+    businessId: row.id as string,
+    name: row.business_name as string,
+  }));
+}
+
+export function findDirectoryVenueMatch(
+  candidates: DirectoryVenueCandidate[],
+  venueName: string,
+): string | null {
+  const match = candidates.find((c) => namesLikelyMatch(c.name, venueName));
+  return match ? match.businessId : null;
+}
