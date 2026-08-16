@@ -224,6 +224,23 @@ curl -H "Authorization: Bearer $CRON_SECRET" \
 Runs weekly. Retention can be overridden per call (`?retentionDays=730`), but
 anything under 30 days is rejected — that would delete history still in use.
 
+## Skipping deploys for docs-only changes
+
+`scripts/vercel-ignore-build-step.sh` skips the Vercel build when a push
+touches nothing but Markdown — a `PROGRESS.md` update doesn't need a full
+Next.js build. This is a **project setting, not something `vercel.json`
+controls**: in Vercel → Project → Settings → Git → Ignored Build Step, set
+
+```
+bash scripts/vercel-ignore-build-step.sh
+```
+
+The script fails open — any deploy on a fresh branch or a shallow clone
+missing history builds anyway rather than risk silently skipping a build that
+was actually needed. Verified locally against real commits: `git diff --quiet`
+correctly distinguished the docs-only `PROGRESS.md` commit from mixed and
+code-only ones (exit 0 vs. exit 1) before this was wired up in the dashboard.
+
 ## Testing
 
 ```bash
