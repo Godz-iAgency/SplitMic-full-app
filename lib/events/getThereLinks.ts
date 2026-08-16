@@ -15,22 +15,38 @@ export function buildDirectionsUrl(event: LiveEventCard): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
 }
 
+/**
+ * Uber's current documented Universal Deep Link
+ * (developer.uber.com/docs/riders/ride-requests/tutorials/deep-links/introduction).
+ * `m.uber.com/ul/?action=setPickup&dropoff[...]=...` — what this used to
+ * build — isn't a documented endpoint at all; it silently redirected to
+ * Uber's plain marketing page with nothing filled in, on both desktop and a
+ * real phone. The real format is `m.uber.com/looking`, and drop-off is a
+ * single URL-encoded JSON object under `drop[0]`, not bracketed query keys.
+ * Pickup is intentionally omitted — the docs' own guidance for "use the
+ * rider's current location" is to leave `pickup` out entirely, which is
+ * exactly what we want since we only ever know the venue (the drop-off).
+ */
 export function buildUberUrl(event: LiveEventCard): string {
-  const params = new URLSearchParams({
-    action: "setPickup",
-    "dropoff[formatted_address]": event.venueAddress || `${event.venueName}, Austin, TX`,
-  });
+  const drop: { latitude?: number; longitude?: number; addressLine1: string; addressLine2?: string } = {
+    addressLine1: event.venueName,
+  };
   if (event.venueLatitude != null && event.venueLongitude != null) {
-    params.set("dropoff[latitude]", String(event.venueLatitude));
-    params.set("dropoff[longitude]", String(event.venueLongitude));
+    drop.latitude = event.venueLatitude;
+    drop.longitude = event.venueLongitude;
   }
-  // Uber's web fallback stopped honoring guest prefill without a registered
-  // app identifying the request (see PROGRESS.md §4 #1). Omitted entirely
-  // when unset rather than sent empty, so a missing env var degrades to the
-  // prior (broken-prefill) behavior instead of a malformed request.
+  if (event.venueAddress) {
+    drop.addressLine2 = event.venueAddress;
+  }
+
+  const params = new URLSearchParams({ "drop[0]": JSON.stringify(drop) });
+
+  // The Client ID is public by design — it identifies the requesting app and
+  // travels in the URL's query string regardless, not a secret.
   const clientId = process.env.NEXT_PUBLIC_UBER_CLIENT_ID;
   if (clientId) {
     params.set("client_id", clientId);
   }
-  return `https://m.uber.com/ul/?${params.toString()}`;
+
+  return `https://m.uber.com/looking?${params.toString()}`;
 }

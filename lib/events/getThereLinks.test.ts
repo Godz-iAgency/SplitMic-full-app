@@ -42,23 +42,49 @@ describe("buildDirectionsUrl", () => {
 });
 
 describe("buildUberUrl", () => {
-  it("includes lat/lng params when coordinates are known", () => {
-    const url = buildUberUrl(makeEvent({ venueLatitude: 30.267, venueLongitude: -97.74 }));
-    expect(url).toContain("dropoff%5Blatitude%5D=30.267");
-    expect(url).toContain("dropoff%5Blongitude%5D=-97.74");
+  function dropParam(url: string): Record<string, unknown> {
+    const raw = new URL(url).searchParams.get("drop[0]");
+    expect(raw).not.toBeNull();
+    return JSON.parse(raw as string);
+  }
+
+  it("uses the current documented m.uber.com/looking endpoint", () => {
+    const url = buildUberUrl(makeEvent());
+    expect(url.startsWith("https://m.uber.com/looking?")).toBe(true);
   });
 
-  it("omits lat/lng params when coordinates are unknown", () => {
-    const url = buildUberUrl(makeEvent());
-    expect(url).not.toContain("latitude");
+  it("includes lat/lng in the drop[0] object when coordinates are known", () => {
+    const drop = dropParam(
+      buildUberUrl(makeEvent({ venueLatitude: 30.267, venueLongitude: -97.74 })),
+    );
+    expect(drop.latitude).toBe(30.267);
+    expect(drop.longitude).toBe(-97.74);
   });
 
-  it("uses the venue name scoped to Austin when there's no stored address", () => {
-    // URLSearchParams encodes spaces as "+", not "%20" — assert via decoded
-    // params rather than a raw substring match.
+  it("omits latitude/longitude keys entirely when coordinates are unknown", () => {
+    const drop = dropParam(buildUberUrl(makeEvent()));
+    expect(drop).not.toHaveProperty("latitude");
+    expect(drop).not.toHaveProperty("longitude");
+  });
+
+  it("always sets addressLine1 to the venue name", () => {
+    const drop = dropParam(buildUberUrl(makeEvent({ venueName: "Mohawk Austin" })));
+    expect(drop.addressLine1).toBe("Mohawk Austin");
+  });
+
+  it("sets addressLine2 to the street address when one is stored", () => {
+    const drop = dropParam(buildUberUrl(makeEvent({ venueAddress: "912 Red River St" })));
+    expect(drop.addressLine2).toBe("912 Red River St");
+  });
+
+  it("omits addressLine2 when there's no stored address", () => {
+    const drop = dropParam(buildUberUrl(makeEvent()));
+    expect(drop).not.toHaveProperty("addressLine2");
+  });
+
+  it("never sends a pickup param, so Uber uses the rider's current location", () => {
     const url = buildUberUrl(makeEvent());
-    const params = new URL(url).searchParams;
-    expect(params.get("dropoff[formatted_address]")).toBe("Mohawk Austin, Austin, TX");
+    expect(new URL(url).searchParams.has("pickup")).toBe(false);
   });
 
   describe("client_id", () => {
