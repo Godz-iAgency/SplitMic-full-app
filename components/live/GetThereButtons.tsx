@@ -1,5 +1,6 @@
 import { Navigation, Car } from "lucide-react";
 import type { LiveEventCard } from "@/lib/events/queries";
+import { buildDirectionsUrl, buildUberUrl } from "@/lib/events/getThereLinks";
 
 type Props = {
   event: LiveEventCard;
@@ -12,22 +13,8 @@ type Props = {
  * otherwise, no API key required for either.
  */
 export function GetThereButtons({ event }: Props) {
-  const destination =
-    event.venueLatitude != null && event.venueLongitude != null
-      ? `${event.venueLatitude},${event.venueLongitude}`
-      : event.venueAddress || `${event.venueName}, Austin, TX`;
-
-  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
-
-  const uberParams = new URLSearchParams({
-    action: "setPickup",
-    "dropoff[formatted_address]": event.venueAddress || `${event.venueName}, Austin, TX`,
-  });
-  if (event.venueLatitude != null && event.venueLongitude != null) {
-    uberParams.set("dropoff[latitude]", String(event.venueLatitude));
-    uberParams.set("dropoff[longitude]", String(event.venueLongitude));
-  }
-  const uberUrl = `https://m.uber.com/ul/?${uberParams.toString()}`;
+  const directionsUrl = buildDirectionsUrl(event);
+  const uberUrl = buildUberUrl(event);
 
   return (
     // relative + z-10: sits above EventCard's stretched venue-link overlay

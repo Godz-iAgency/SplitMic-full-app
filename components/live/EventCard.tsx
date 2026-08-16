@@ -1,31 +1,27 @@
-import Link from "next/link";
 import { MapPin, ChevronRight } from "lucide-react";
 import type { LiveEventCard as EventCardData } from "@/lib/events/queries";
 import { formatEventDayLabel, formatEventTime } from "@/lib/events/time";
 import { CATEGORY_META } from "@/lib/directory/categories";
-import { reviewsUrl } from "@/lib/directory/media";
 import { GetThereButtons } from "./GetThereButtons";
 import { EventImageBand } from "./EventImageBand";
+import { VenueLinkOverlay } from "./VenueLinkOverlay";
 
 type Props = {
   event: EventCardData;
 };
 
 export function EventCard({ event }: Props) {
-  // Every card is clickable through to "more about this venue" — a real
-  // SplitMic venue profile if one exists, else the matched directory
-  // listing, else a Google Maps search for the venue by name (the same
-  // technique the directory's own Reviews button already uses: reliable for
-  // a named local business, no stored address needed). An unclickable card
-  // was tried first and rejected after seeing it live — it reads as broken
-  // more than it reads as "no data available."
+  // A real venue page to send someone to: a SplitMic profile if one exists,
+  // else the matched directory listing. Null when neither matched — in that
+  // case VenueLinkOverlay offers wayfinding instead of pretending a page
+  // exists (see that file). Every card is still clickable either way; an
+  // unclickable card was tried first and rejected after seeing it live.
   const venueHref =
     event.matchedProfileType === "venue" && event.matchedProfileId
       ? `/profile/${event.matchedProfileId}`
       : event.directoryBusinessId
         ? `/directory/${CATEGORY_META.venue.slug}#b-${event.directoryBusinessId}`
-        : reviewsUrl(event.venueName);
-  const venueHrefIsExternal = venueHref.startsWith("http");
+        : null;
 
   // Do512's own event poster is more specific than the venue's general
   // photo, so it wins when present.
@@ -65,21 +61,14 @@ export function EventCard({ event }: Props) {
         <GetThereButtons event={event} />
       </div>
 
-      {/* Stretched link: makes the whole card clickable through to "more
-          about this venue" without wrapping the Directions/Uber links in a
-          nested <a> (invalid HTML, and unpredictable click targeting). It's
-          a sibling overlay instead, sitting at a low z-index so the two
-          buttons above (z-10) stay independently clickable; everything else
-          in the card is plain static content, which a positioned sibling
-          paints over regardless of DOM order. */}
-      <Link
-        href={venueHref}
-        className="absolute inset-0 z-[1]"
-        aria-label={`More about ${event.venueName}`}
-        {...(venueHrefIsExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-      >
-        <span className="sr-only">More about {event.venueName}</span>
-      </Link>
+      {/* Stretched overlay: makes the whole card clickable without wrapping
+          the Directions/Uber links in a nested <a> (invalid HTML,
+          unpredictable click targeting). It's a sibling overlay instead,
+          sitting at a low z-index so the two buttons above (z-10) stay
+          independently clickable; everything else in the card is plain
+          static content, which a positioned sibling paints over regardless
+          of DOM order. */}
+      <VenueLinkOverlay event={event} venueHref={venueHref} />
     </article>
   );
 }

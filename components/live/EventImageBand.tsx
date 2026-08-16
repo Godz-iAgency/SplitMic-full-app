@@ -1,8 +1,18 @@
-import { Music } from "lucide-react";
+import { CATEGORY_META } from "@/lib/directory/categories";
+
+/**
+ * SplitMic's own generic venue photo — the same asset used for the Venues
+ * player-type tile and the directory's Venues category page
+ * (lib/directory/categories.ts), so a card with no real photo still reads as
+ * "us," not a placeholder. Falls back to the literal path only in the
+ * unreachable case that entry loses its image.
+ */
+const GENERIC_VENUE_PHOTO = CATEGORY_META.venue.image ?? "/players/venue.jpg";
 
 /**
  * Top-of-card photo band for an event: Do512's event poster when it has one,
- * else the matched venue's own directory photo, else fallback art.
+ * else the matched venue's own directory photo, else SplitMic's generic venue
+ * photo.
  *
  * Height uses the same md/lg pattern as the directory's BusinessCard image
  * band, for the same reason: this grid is also `grid-cols-1 sm:grid-cols-2
@@ -20,48 +30,14 @@ export function EventImageBand({
 }) {
   return (
     <div className="relative h-28 w-full shrink-0 overflow-hidden md:h-36 lg:h-28">
-      {imageUrl ? (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imageUrl}
-            alt={alt}
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/5" />
-        </>
-      ) : (
-        <FallbackArt />
-      )}
-    </div>
-  );
-}
-
-/**
- * The pre-photo look, ported from the directory's BusinessCard FallbackArt —
- * same glow + dot-grid + oversized watermark treatment, proven there to read
- * as "designed" rather than "empty" (PROGRESS.md §2 #25). A flat gradient
- * with one small centered icon was tried first and looked dead; a card grid
- * with several of these sitting side by side needs it to hold up as a
- * pattern, not just avoid being literally blank.
- */
-function FallbackArt() {
-  return (
-    <div className="relative h-full w-full overflow-hidden bg-gradient-to-br from-brand-gray-900 via-brand-gray-900 to-black">
-      {/* Two off-center glows instead of one centered wash — reads as stage
-          lighting instead of a flat tint. */}
-      <div className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-brand-orange/25 blur-3xl" />
-      <div className="absolute -bottom-12 -right-8 h-36 w-36 rounded-full bg-brand-orange/10 blur-3xl" />
-
-      <div className="absolute inset-0 opacity-[0.15] [background-image:radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.5)_1px,transparent_0)] [background-size:18px_18px]" />
-
-      {/* Oversized, tilted watermark — brightens slightly on hover (the
-          parent <article> carries `group`). */}
-      <Music
-        strokeWidth={1}
-        className="absolute -bottom-5 -right-5 h-28 w-28 rotate-[-10deg] text-brand-orange/[0.12] transition-colors duration-300 group-hover:text-brand-orange/25"
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={imageUrl ?? GENERIC_VENUE_PHOTO}
+        alt={alt}
+        className="h-full w-full object-cover"
+        loading="lazy"
       />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/5" />
     </div>
   );
 }
