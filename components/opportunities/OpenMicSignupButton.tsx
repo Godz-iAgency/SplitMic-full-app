@@ -90,7 +90,7 @@ export function OpenMicSignupButton({
               type="button"
               onClick={handleCancel}
               disabled={isPending}
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-50"
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white tappable hover:bg-white/10 disabled:opacity-50"
             >
               <X className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
               {isPending ? "Withdrawing…" : "Withdraw signup"}

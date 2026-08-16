@@ -26,7 +26,7 @@ type Props = {
 };
 
 const DEFAULT_TRIGGER =
-  "inline-flex items-center justify-between gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-brand-orange/40 hover:bg-white/10 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40";
+  "tappable inline-flex items-center justify-between gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:border-brand-orange/40 hover:bg-white/10 focus:border-brand-orange/50 focus:outline-none focus:ring-1 focus:ring-brand-orange/40";
 
 export function Dropdown({
   value,
@@ -180,7 +180,10 @@ export function Dropdown({
             highlighted >= 0 ? `${listboxId}-opt-${highlighted}` : undefined
           }
           autoFocus
-          className="absolute left-0 right-0 z-50 mt-2 max-h-72 overflow-y-auto rounded-xl border border-white/15 bg-brand-gray-900 py-1.5 shadow-xl shadow-black/60 ring-1 ring-black/40 focus:outline-none"
+          // origin-top anchors the pop-in growth to the trigger directly
+          // above it, so the list reads as coming out of the control that
+          // opened it rather than appearing on its own.
+          className="animate-pop-in absolute left-0 right-0 z-50 mt-2 max-h-72 origin-top overflow-y-auto rounded-xl border border-white/15 bg-brand-gray-900 py-1.5 shadow-xl shadow-black/60 ring-1 ring-black/40 focus:outline-none"
         >
           {options.map((opt, i) => {
             const isSelected = opt.value === value;

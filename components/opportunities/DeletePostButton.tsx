@@ -37,7 +37,7 @@ export function DeletePostButton({ postId }: { postId: string }) {
           type="button"
           onClick={() => setConfirming(false)}
           disabled={isPending}
-          className="rounded-full border border-white/15 bg-white/5 px-4 py-1.5 font-semibold text-white transition hover:bg-white/10 disabled:opacity-50"
+          className="rounded-full border border-white/15 bg-white/5 px-4 py-1.5 font-semibold text-white tappable hover:bg-white/10 disabled:opacity-50"
         >
           Cancel
         </button>

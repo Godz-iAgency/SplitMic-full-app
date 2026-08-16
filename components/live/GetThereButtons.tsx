@@ -27,7 +27,7 @@ export function GetThereButtons({ event }: Props) {
         href={directionsUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-300 transition hover:border-blue-400/60 hover:bg-blue-500/20"
+        className="tappable inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-300 hover:border-blue-400/60 hover:bg-blue-500/20"
       >
         <Navigation className="h-3.5 w-3.5" aria-hidden="true" />
         Directions
@@ -36,7 +36,7 @@ export function GetThereButtons({ event }: Props) {
         href={uberUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-black px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/10"
+        className="tappable inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/10"
       >
         <Car className="h-3.5 w-3.5" aria-hidden="true" />
         Get an Uber

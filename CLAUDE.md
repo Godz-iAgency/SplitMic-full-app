@@ -284,6 +284,16 @@ unused. That is mostly deliberate, not neglect:
 - Offline and slow-network behavior matters more here than in a normal web app
   because the app is installable. A failed fetch should degrade to a clear
   state, never a blank screen.
+- **Interactive elements need a press state, not just a hover state.** `hover:`
+  barely fires on the touch devices this app is installed on, so a control
+  styled only for hover gives no response until navigation completes. Apply
+  `.tappable` (or `.tappable-lg` on full-width surfaces) from `globals.css`
+  rather than hand-rolling `active:scale-*` — the native tap highlight is
+  suppressed globally, so an element with neither is genuinely silent when
+  pressed. Note that a literal `transition` utility on the same element
+  overrides those classes' timing (utilities are emitted after components);
+  where an element needs both, declare the transition once. See
+  `PROGRESS.md` §2 #15.
 
 ---
 

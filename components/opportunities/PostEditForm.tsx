@@ -308,14 +308,14 @@ export function PostEditForm({
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
           <Link
             href={`/opportunities/${postId}`}
-            className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/10"
+            className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-center text-sm font-semibold text-white tappable hover:bg-white/10"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={isPending}
-            className="rounded-full bg-brand-orange px-8 py-3 text-sm font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50"
+            className="rounded-full bg-brand-orange px-8 py-3 text-sm font-bold text-black tappable hover:bg-brand-orange/90 disabled:opacity-50"
           >
             {isPending ? "Saving…" : "Save changes"}
           </button>

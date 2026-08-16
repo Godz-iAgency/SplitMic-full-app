@@ -304,7 +304,7 @@ function ActionRow({ card, primary }: { card: DirectoryCard; primary?: boolean }
             rel="noopener noreferrer"
             className={
               primary
-                ? "inline-flex items-center gap-1.5 rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black transition hover:bg-brand-orange/90"
+                ? "inline-flex items-center gap-1.5 rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black tappable hover:bg-brand-orange/90"
                 : pill
             }
           >

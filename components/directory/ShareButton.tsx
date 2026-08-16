@@ -49,7 +49,7 @@ export function ShareButton({ businessName, path, className }: Props) {
       className={
         className ??
         // Taller on mobile for a comfortable tap target, tighter at sm:.
-        "inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/60 px-3 py-2.5 text-xs font-semibold text-white backdrop-blur transition hover:border-brand-orange/50 hover:text-brand-orange sm:px-2.5 sm:py-1.5"
+        "tappable inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/60 px-3 py-2.5 text-xs font-semibold text-white backdrop-blur hover:border-brand-orange/50 hover:text-brand-orange sm:px-2.5 sm:py-1.5"
       }
     >
       {copied ? (

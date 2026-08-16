@@ -57,7 +57,7 @@ export function ConnectionCard({ connection }: { connection: Connection }) {
       <Link
         href={`/inbox/${connection.thread_id}`}
         aria-label={`Message ${connection.name}`}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand-orange px-3.5 py-2 text-sm font-bold text-black transition hover:bg-brand-orange/90"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand-orange px-3.5 py-2 text-sm font-bold text-black tappable hover:bg-brand-orange/90"
       >
         <MessageCircle className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
         <span className="hidden sm:inline">Message</span>

@@ -64,7 +64,7 @@ export function SupportForm({ defaultName = "", defaultEmail = "" }: Props) {
             setMessage("");
             setTopic(TOPICS[0]);
           }}
-          className="mt-6 rounded-full border border-white/15 bg-white/5 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+          className="mt-6 rounded-full border border-white/15 bg-white/5 px-6 py-2.5 text-sm font-semibold text-white tappable hover:bg-white/10"
         >
           Send another message
         </button>

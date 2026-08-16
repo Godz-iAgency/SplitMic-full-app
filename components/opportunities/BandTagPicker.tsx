@@ -115,7 +115,7 @@ export function BandTagPicker({ selected, onChange }: Props) {
                     key={b.profile_id}
                     onClick={() => addBand(b)}
                     disabled={alreadySelected}
-                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm tappable-lg hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {b.avatar_url ? (
                       // eslint-disable-next-line @next/next/no-img-element

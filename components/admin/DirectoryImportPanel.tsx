@@ -40,7 +40,7 @@ export function DirectoryImportPanel({ currentTotal }: { currentTotal: number })
             type="button"
             onClick={() => run(true)}
             disabled={pending}
-            className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-50"
+            className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white tappable hover:bg-white/10 disabled:opacity-50"
           >
             {pending ? "Working…" : "Dry run"}
           </button>
@@ -48,7 +48,7 @@ export function DirectoryImportPanel({ currentTotal }: { currentTotal: number })
             type="button"
             onClick={() => run(false)}
             disabled={pending}
-            className="rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50"
+            className="rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black tappable hover:bg-brand-orange/90 disabled:opacity-50"
           >
             Import now
           </button>

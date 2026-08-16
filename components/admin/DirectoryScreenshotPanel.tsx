@@ -88,7 +88,7 @@ export function DirectoryScreenshotPanel({ done, pending, failed }: Props) {
             type="button"
             onClick={run}
             disabled={busy || pending === 0}
-            className="rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50"
+            className="rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black tappable hover:bg-brand-orange/90 disabled:opacity-50"
           >
             {busy ? "Capturing…" : "Generate screenshots"}
           </button>
@@ -98,7 +98,7 @@ export function DirectoryScreenshotPanel({ done, pending, failed }: Props) {
               type="button"
               onClick={retryFailed}
               disabled={busy}
-              className="rounded-full border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-50"
+              className="rounded-full border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-white tappable hover:bg-white/10 disabled:opacity-50"
             >
               Retry failed
             </button>

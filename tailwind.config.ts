@@ -44,9 +44,29 @@ const config: Config = {
           "sans-serif",
         ],
       },
+      // House easing curves, so timing is a deliberate choice rather than
+      // whatever Tailwind's default happened to be at each call site.
+      transitionTimingFunction: {
+        // Decelerating, no overshoot — the default for anything that simply
+        // needs to arrive (Apple's critically-damped case).
+        settle: "cubic-bezier(0.22, 1, 0.36, 1)",
+        // Slight overshoot, for motion that follows a deliberate user action
+        // and should feel physical rather than merely correct. Reserved for
+        // surfaces the user summoned, never for ambient or passive motion.
+        spring: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+      },
       animation: {
         "fade-in": "fadeIn 0.4s ease-out",
         "slide-up": "slideUp 0.4s ease-out",
+        // Popovers/menus: scale up from the edge nearest their trigger rather
+        // than fading in place, so the surface reads as coming *from* the
+        // control that opened it. Fast (0.16s) because it sits directly
+        // between a tap and the user reading the result.
+        "pop-in": "popIn 0.16s cubic-bezier(0.22, 1, 0.36, 1) both",
+        // Modal panels: scale and fade together so a glass surface reads as
+        // materialising rather than sliding a solid rectangle into place.
+        "materialize-in": "materializeIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "scrim-in": "fadeIn 0.22s ease-out both",
         // Hero entrance — CSS-driven so it plays on first paint without waiting
         // for JS hydration. `both` fill-mode holds the final (visible) state.
         "hero-rise": "heroRise 0.6s cubic-bezier(0.22,1,0.36,1) both",
@@ -69,6 +89,16 @@ const config: Config = {
         slideUp: {
           "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        // Pairs with `transform-origin` set at the call site (e.g. `origin-top`
+        // under a trigger), which is what anchors the growth to the control.
+        popIn: {
+          "0%": { opacity: "0", transform: "scale(0.96) translateY(-4px)" },
+          "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
+        },
+        materializeIn: {
+          "0%": { opacity: "0", transform: "scale(0.94)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
         },
         heroRise: {
           "0%": { opacity: "0", transform: "translateY(20px)" },

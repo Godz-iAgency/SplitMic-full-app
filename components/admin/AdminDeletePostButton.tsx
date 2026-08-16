@@ -50,7 +50,7 @@ export function AdminDeletePostButton({
         <button
           onClick={() => setConfirming(false)}
           disabled={pending}
-          className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-white transition hover:bg-white/10"
+          className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-white tappable hover:bg-white/10"
         >
           Cancel
         </button>

@@ -62,7 +62,7 @@ export function SuspendUserButton({ profileId }: { profileId: string }) {
             setError(null);
           }}
           disabled={pending}
-          className="rounded-full border border-white/15 px-3 py-2 text-sm text-white transition hover:bg-white/10"
+          className="rounded-full border border-white/15 px-3 py-2 text-sm text-white tappable hover:bg-white/10"
         >
           Cancel
         </button>

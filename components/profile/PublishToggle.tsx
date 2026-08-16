@@ -75,7 +75,7 @@ export function PublishToggle({ profileId, isPublished }: Props) {
           type="button"
           onClick={handlePublish}
           disabled={busy}
-          className="whitespace-nowrap rounded-full bg-brand-orange px-2.5 py-1.5 text-xs font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50 sm:px-4 sm:py-2 sm:text-sm"
+          className="whitespace-nowrap rounded-full bg-brand-orange px-2.5 py-1.5 text-xs font-bold text-black tappable hover:bg-brand-orange/90 disabled:opacity-50 sm:px-4 sm:py-2 sm:text-sm"
         >
           {busy ? "Publishing…" : "Publish"}
         </button>

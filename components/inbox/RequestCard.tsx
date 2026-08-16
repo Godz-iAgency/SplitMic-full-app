@@ -129,7 +129,7 @@ export function RequestCard({ request }: { request: IncomingRequest }) {
               type="button"
               onClick={() => respond("accepted")}
               disabled={isPending}
-              className="rounded-full bg-brand-orange px-5 py-1.5 text-xs font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50"
+              className="rounded-full bg-brand-orange px-5 py-1.5 text-xs font-bold text-black tappable hover:bg-brand-orange/90 disabled:opacity-50"
             >
               {isPending ? "…" : "Accept"}
             </button>
@@ -137,7 +137,7 @@ export function RequestCard({ request }: { request: IncomingRequest }) {
               type="button"
               onClick={() => respond("declined")}
               disabled={isPending}
-              className="rounded-full border border-white/15 bg-white/5 px-5 py-1.5 text-xs font-semibold text-white transition hover:bg-white/10 disabled:opacity-50"
+              className="rounded-full border border-white/15 bg-white/5 px-5 py-1.5 text-xs font-semibold text-white tappable hover:bg-white/10 disabled:opacity-50"
             >
               Decline
             </button>

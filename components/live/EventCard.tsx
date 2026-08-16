@@ -30,7 +30,7 @@ export function EventCard({ event }: Props) {
   return (
     <article
       id={`event-${event.id}`}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-brand-gray-900 to-black transition-colors duration-200 hover:border-brand-orange/40"
+      className="card-pressable group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-brand-gray-900 to-black hover:border-brand-orange/40"
     >
       <EventImageBand imageUrl={cardImageUrl} alt={event.venueName} />
 

@@ -12,6 +12,38 @@ body {
   color: #ffffff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Mobile browsers paint their own grey flash box on every tap, which fires
+     before (and fights with) our own press feedback. Suppressed here so the
+     `.tappable` scale below is the single, deliberate response to a press —
+     this app is installed and used primarily by touch. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Opts out of the legacy ~300ms double-tap-to-zoom delay on interactive
+   elements. That delay sits directly on the input path, and latency is what
+   makes a touch UI stop feeling direct. Scoped to controls, so pinch-zoom on
+   page content itself is untouched. */
+button,
+a,
+[role="button"],
+label,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+/* Suppressing the native tap highlight above removes feedback from every
+   control, but only the `.tappable` ones get a press scale to replace it —
+   which would leave plain text links, icon buttons and nav items with no
+   response at all on touch. This is the floor: anything interactive that
+   isn't already handling its own press dips instead, so no control is left
+   silent. Opacity (not transform) so it costs nothing on the compositor and
+   survives the reduced-motion rule above. */
+a:not(.tappable):not(.tappable-lg):active,
+button:not(.tappable):not(.tappable-lg):not(:disabled):active,
+[role="button"]:not(.tappable):not(.tappable-lg):active {
+  opacity: 0.65;
 }
 
 body {
@@ -28,27 +60,115 @@ h3 {
   letter-spacing: -0.02em;
 }
 
-/* Accessibility + safety backstop: for users who prefer reduced motion, snap
-   every animation/transition to its final (visible) state instantly. Also
-   guarantees no content can be left stuck mid-animation. */
+/* Accessibility + safety backstop for users who prefer reduced motion.
+   Keyframe animations (entrances, loops, floats) are the vestibular hazard,
+   so they're snapped to their final visible frame outright — this also
+   guarantees nothing can be left stuck mid-animation.
+
+   Transitions are treated differently rather than being killed wholesale.
+   Reduced motion means *gentler feedback*, not *no feedback*: a colour or
+   opacity change carries meaning and triggers no motion sensitivity, while
+   travel and scaling do. So transitions survive at a short duration but are
+   narrowed to non-vestibular properties. Transform-based feedback (the press
+   scale below) still applies — it just arrives instantly instead of easing,
+   which keeps a press legible without animating movement. */
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
   ::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+    transition-duration: 120ms !important;
+    transition-property: opacity, color, background-color, border-color,
+      box-shadow, fill, stroke !important;
+  }
+}
+
+/* Translucent chrome (the sticky header, bottom nav, and overlay panels) is a
+   readability problem for some users: content moving underneath a blurred
+   surface competes with the text on top of it. Both signals below are honoured
+   by making those surfaces opaque rather than by removing them, so layout and
+   hierarchy are unchanged — only the see-through quality goes away.
+
+   Targeted via the blur utilities themselves so any current or future
+   translucent surface is covered without needing to remember to opt in. */
+@media (prefers-reduced-transparency: reduce) {
+  .backdrop-blur,
+  .backdrop-blur-sm,
+  .backdrop-blur-md,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl {
+    backdrop-filter: none !important;
+    background-color: #000000 !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .backdrop-blur,
+  .backdrop-blur-sm,
+  .backdrop-blur-md,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl {
+    backdrop-filter: none !important;
+    background-color: #000000 !important;
+    border-color: rgba(255, 255, 255, 0.6) !important;
   }
 }
 
 @layer components {
+  /* Tactile press feedback, as one definition rather than a scale value
+     copy-pasted per button. Feedback fires on press (`:active`) rather than
+     on release, because waiting for the click to confirm a tap is what makes
+     an interface feel dead — hover states, which most of this app relied on,
+     barely exist on the touch devices it's installed on.
+
+     `duration-100` is deliberately faster than the app's 150ms default: a
+     press is an acknowledgement, not a transition, and it has to feel
+     immediate. `disabled:active:scale-100` keeps a disabled control from
+     depressing and implying it did something. */
+  .tappable {
+    @apply transition duration-100 ease-out active:scale-[0.97] disabled:active:scale-100;
+  }
+
+  /* Same idea, for large surfaces. A full-width button or a whole card
+     travels far more pixels at the same ratio, so the scale is softened to
+     keep the movement proportional rather than alarming.
+
+     Note when composing either class onto an element that already carries a
+     literal `transition` utility: Tailwind emits utilities after components,
+     so that utility wins the timing and the press settles at the 150ms
+     default instead of 100ms. The scale itself still applies — the press is
+     never lost, only slightly slower — so composition is safe either way. */
+  .tappable-lg {
+    @apply transition duration-100 ease-out active:scale-[0.99] disabled:active:scale-100;
+  }
+
+  /* For a card whose click target is a transparent stretched overlay (see
+     EventCard/VenueLinkOverlay): the overlay itself has nothing to dim or
+     scale, so the press has to be reflected by the card behind it. The child
+     combinator is deliberate — it matches only the stretched overlay, never
+     the real buttons nested deeper inside the card, so pressing "Directions"
+     depresses that button alone rather than the whole card.
+
+     Covers colour as well as transform in one declaration: a separate
+     `transition-colors` utility on the card would sit in Tailwind's utilities
+     layer, override this component-layer rule's transition-property, and
+     leave the press scale snapping instead of easing. */
+  .card-pressable {
+    @apply transition duration-150 ease-out;
+  }
+  .card-pressable:has(> a:active),
+  .card-pressable:has(> button:active) {
+    transform: scale(0.99);
+  }
+
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-orange px-6 py-3 text-base font-semibold text-white transition hover:bg-brand-orange-dark focus:outline-none focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 focus:ring-offset-black disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-orange px-6 py-3 text-base font-semibold text-white transition duration-100 ease-out hover:bg-brand-orange-dark focus:outline-none focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 focus:ring-offset-black active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 bg-transparent px-6 py-3 text-base font-semibold text-white transition hover:border-white hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/40 focus:ring-offset-2 focus:ring-offset-black disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 bg-transparent px-6 py-3 text-base font-semibold text-white transition duration-100 ease-out hover:border-white hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/40 focus:ring-offset-2 focus:ring-offset-black active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100;
   }
 
   .input-field {

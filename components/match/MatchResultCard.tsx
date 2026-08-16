@@ -150,7 +150,7 @@ export function MatchResultCard({ card, rank }: Props) {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="flex-1 rounded-full border border-white/15 bg-white/5 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                  className="flex-1 rounded-full border border-white/15 bg-white/5 py-2 text-sm font-semibold text-white tappable hover:bg-white/10"
                 >
                   Cancel
                 </button>
@@ -158,7 +158,7 @@ export function MatchResultCard({ card, rank }: Props) {
                   type="button"
                   onClick={handleSend}
                   disabled={isPending || !message.trim()}
-                  className="flex-1 rounded-full bg-brand-orange py-2 text-sm font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50"
+                  className="flex-1 rounded-full bg-brand-orange py-2 text-sm font-bold text-black tappable hover:bg-brand-orange/90 disabled:opacity-50"
                 >
                   {isPending ? "Sending…" : "Send"}
                 </button>
@@ -169,7 +169,7 @@ export function MatchResultCard({ card, rank }: Props) {
               <button
                 type="button"
                 onClick={() => setOpen(true)}
-                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black transition hover:bg-brand-orange/90"
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand-orange px-4 py-2 text-sm font-bold text-black tappable hover:bg-brand-orange/90"
               >
                 <MessageCircle
                   className="h-4 w-4"
@@ -180,7 +180,7 @@ export function MatchResultCard({ card, rank }: Props) {
               </button>
               <Link
                 href={`/profile/${card.profile_id}`}
-                className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white tappable hover:bg-white/10"
               >
                 Profile
               </Link>

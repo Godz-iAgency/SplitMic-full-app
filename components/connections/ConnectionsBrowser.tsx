@@ -117,7 +117,7 @@ function FilterPill({
       className={
         active
           ? "rounded-full bg-brand-orange px-4 py-1.5 text-sm font-semibold text-black"
-          : "rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm font-semibold text-brand-gray-300 transition hover:bg-white/10 hover:text-white"
+          : "rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm font-semibold text-brand-gray-300 tappable hover:bg-white/10 hover:text-white"
       }
     >
       {label}

@@ -35,7 +35,7 @@ export function ProfileIncompleteBanner() {
         </div>
         <Link
           href="/onboarding"
-          className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-brand-orange px-5 py-2.5 text-sm font-bold text-black transition hover:bg-brand-orange/90"
+          className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-brand-orange px-5 py-2.5 text-sm font-bold text-black tappable hover:bg-brand-orange/90"
         >
           Finish my profile
           <ArrowRight className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
@@ -74,7 +74,7 @@ export function ProfileIncompleteCard({
       <p className="mt-1 text-xs text-brand-gray-200">{body}</p>
       <Link
         href={href}
-        className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand-orange px-4 py-2 text-xs font-bold text-black transition hover:bg-brand-orange/90"
+        className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand-orange px-4 py-2 text-xs font-bold text-black tappable hover:bg-brand-orange/90"
       >
         {cta}
         <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />

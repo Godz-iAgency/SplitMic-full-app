@@ -36,7 +36,7 @@ export function PasswordInput({
         aria-label={visible ? "Hide password" : "Show password"}
         aria-pressed={visible}
         tabIndex={-1}
-        className="absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-md text-brand-gray-400 transition hover:bg-white/5 hover:text-white focus:outline-none focus:ring-1 focus:ring-brand-orange/50"
+        className="absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-md text-brand-gray-400 tappable hover:bg-white/5 hover:text-white focus:outline-none focus:ring-1 focus:ring-brand-orange/50"
       >
         {visible ? (
           // Eye-off icon — password is currently visible

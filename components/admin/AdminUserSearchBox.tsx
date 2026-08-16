@@ -37,7 +37,7 @@ export function AdminUserSearchBox({
       />
       <button
         type="submit"
-        className="rounded-full bg-brand-orange px-5 py-2 text-sm font-semibold text-black transition hover:bg-brand-orange/90"
+        className="rounded-full bg-brand-orange px-5 py-2 text-sm font-semibold text-black tappable hover:bg-brand-orange/90"
       >
         Search
       </button>

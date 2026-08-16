@@ -87,7 +87,7 @@ export function VideoLinkSlot({
             type="button"
             onClick={save}
             disabled={busy || !dirty || (trimmed !== "" && !preview?.ok)}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-brand-orange px-4 py-2.5 text-sm font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-brand-orange px-4 py-2.5 text-sm font-bold text-black tappable hover:bg-brand-orange/90 disabled:opacity-40"
           >
             <Check className="h-4 w-4" aria-hidden="true" />
             {busy ? "Saving…" : "Save"}
@@ -98,7 +98,7 @@ export function VideoLinkSlot({
               type="button"
               onClick={clear}
               disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-sm font-semibold text-white tappable hover:bg-white/10 disabled:opacity-40"
             >
               <X className="h-4 w-4" aria-hidden="true" />
               Remove

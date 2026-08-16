@@ -46,7 +46,7 @@ export function LandingNav() {
         >
           {TABS.map(({ href, label, Icon, external }) => {
             const className =
-              "flex shrink-0 items-center justify-center rounded-full p-2.5 text-brand-gray-300 transition hover:bg-white/5 hover:text-white sm:gap-1.5 sm:px-3 sm:py-1.5";
+              "flex shrink-0 items-center justify-center rounded-full p-2.5 text-brand-gray-300 tappable hover:bg-white/5 hover:text-white sm:gap-1.5 sm:px-3 sm:py-1.5";
             const inner = (
               <>
                 {/* Icon — mobile only */}

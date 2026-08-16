@@ -58,7 +58,7 @@ export function RespondPanel({ postId, alreadyResponded, isOwnPost }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full rounded-full bg-brand-orange py-3 text-sm font-bold text-black transition hover:bg-brand-orange/90"
+        className="w-full rounded-full bg-brand-orange py-3 text-sm font-bold text-black tappable hover:bg-brand-orange/90"
       >
         I&apos;m interested
       </button>
@@ -102,14 +102,14 @@ export function RespondPanel({ postId, alreadyResponded, isOwnPost }: Props) {
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="flex-1 rounded-full border border-white/15 bg-white/5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+          className="flex-1 rounded-full border border-white/15 bg-white/5 py-2.5 text-sm font-semibold text-white tappable hover:bg-white/10"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isPending}
-          className="flex-1 rounded-full bg-brand-orange py-2.5 text-sm font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50"
+          className="flex-1 rounded-full bg-brand-orange py-2.5 text-sm font-bold text-black tappable hover:bg-brand-orange/90 disabled:opacity-50"
         >
           {isPending ? "Sending…" : "Send request"}
         </button>

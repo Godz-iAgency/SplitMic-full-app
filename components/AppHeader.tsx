@@ -47,7 +47,13 @@ export function AppHeader({
 
   return (
     <>
-      <header className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-3 shadow-sm shadow-black/40 lg:px-8 lg:py-4">
+      {/* Sticky translucent chrome, matching LandingNav's existing treatment so
+          the signed-in app and the marketing site read as one product. The
+          background is required, not decorative: once the bar stops scrolling
+          away, content passes underneath it and would otherwise show through.
+          z-40 sits above page content but below every modal (z-50/z-[60]), and
+          matches the bottom nav so the two pieces of chrome share a layer. */}
+      <header className="sticky top-0 z-40 flex items-center justify-between gap-2 border-b border-white/10 bg-black/80 px-4 py-3 shadow-sm shadow-black/40 backdrop-blur-xl lg:px-8 lg:py-4">
         {/* Left: logo → Home */}
         <Link
           href="/home"
@@ -94,7 +100,7 @@ export function AppHeader({
             href="/support"
             aria-label="Help & Support"
             title="Help & Support"
-            className="hidden h-9 w-9 items-center justify-center rounded-full text-brand-gray-400 transition hover:bg-white/5 hover:text-white lg:flex"
+            className="hidden h-9 w-9 items-center justify-center rounded-full text-brand-gray-400 tappable hover:bg-white/5 hover:text-white lg:flex"
           >
             <LifeBuoy className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
           </Link>
@@ -109,7 +115,7 @@ export function AppHeader({
           {showEdit ? (
             <Link
               href="/profile/edit"
-              className="hidden rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10 lg:block"
+              className="hidden rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white tappable hover:bg-white/10 lg:block"
             >
               Edit
             </Link>
@@ -125,7 +131,7 @@ export function AppHeader({
       {/* Mobile + tablet bottom nav — primary destinations, hidden at lg+ */}
       <nav
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-white/10 bg-black/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-white/10 bg-black/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
       >
         <BottomTab href="/home" label="Home" icon={Home} active={active === "home"} />
         <BottomTab
@@ -166,7 +172,7 @@ function BottomTab({
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 text-[11px] font-semibold transition ${
+      className={`tappable flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 text-[11px] font-semibold ${
         active ? "text-brand-orange" : "text-brand-gray-400 hover:text-white"
       }`}
     >

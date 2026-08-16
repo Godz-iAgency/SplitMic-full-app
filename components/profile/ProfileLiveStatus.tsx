@@ -125,7 +125,7 @@ export function ProfileLiveStatus({ profileId }: Props) {
                 type="button"
                 onClick={() => setConfirmingUnpublish(false)}
                 disabled={busy}
-                className="rounded-full border border-white/10 px-4 py-1.5 text-xs font-semibold text-brand-gray-300 transition hover:bg-white/5 disabled:opacity-50"
+                className="rounded-full border border-white/10 px-4 py-1.5 text-xs font-semibold text-brand-gray-300 tappable hover:bg-white/5 disabled:opacity-50"
               >
                 Cancel
               </button>

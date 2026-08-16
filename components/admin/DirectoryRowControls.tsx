@@ -108,7 +108,7 @@ export function DirectoryOutreachControl({ row }: { row: AdminDirectoryRow }) {
             type="button"
             onClick={save}
             disabled={pending}
-            className="rounded-full bg-brand-orange px-3 py-1 text-xs font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50"
+            className="rounded-full bg-brand-orange px-3 py-1 text-xs font-bold text-black tappable hover:bg-brand-orange/90 disabled:opacity-50"
           >
             {pending ? "Saving…" : "Save"}
           </button>
@@ -164,7 +164,7 @@ export function DirectoryActiveToggle({
         type="button"
         onClick={go}
         disabled={pending}
-        className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/10 disabled:opacity-50"
+        className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white tappable hover:bg-white/10 disabled:opacity-50"
       >
         {pending ? "…" : isActive ? "Hide from directory" : "Show in directory"}
       </button>
@@ -229,7 +229,7 @@ export function DirectoryClaimLink({
         type="button"
         onClick={() => submit(value)}
         disabled={pending || !value.trim()}
-        className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/10 disabled:opacity-40"
+        className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white tappable hover:bg-white/10 disabled:opacity-40"
       >
         Link
       </button>

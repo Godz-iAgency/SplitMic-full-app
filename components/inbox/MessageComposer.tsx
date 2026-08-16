@@ -60,7 +60,7 @@ export function MessageComposer({ threadId }: { threadId: string }) {
         <button
           type="submit"
           disabled={isPending || !body.trim()}
-          className="shrink-0 rounded-full bg-brand-orange px-4 py-2.5 text-sm font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50 sm:px-5"
+          className="shrink-0 rounded-full bg-brand-orange px-4 py-2.5 text-sm font-bold text-black tappable hover:bg-brand-orange/90 disabled:opacity-50 sm:px-5"
         >
           {isPending ? "…" : "Send"}
         </button>

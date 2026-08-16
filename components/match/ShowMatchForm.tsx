@@ -171,7 +171,7 @@ export function ShowMatchForm() {
               </p>
               <Link
                 href="/search?type=band"
-                className="mt-6 inline-flex rounded-full bg-brand-orange px-5 py-2 text-sm font-semibold text-black transition hover:bg-brand-orange/90"
+                className="mt-6 inline-flex rounded-full bg-brand-orange px-5 py-2 text-sm font-semibold text-black tappable hover:bg-brand-orange/90"
               >
                 Browse all bands
               </Link>

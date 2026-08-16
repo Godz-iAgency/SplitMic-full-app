@@ -36,7 +36,7 @@ export function ConnectButton({
     return (
       <Link
         href={`/inbox/${threadId}`}
-        className="inline-flex items-center gap-2 rounded-full bg-brand-orange px-5 py-2.5 text-sm font-bold text-black transition hover:bg-brand-orange/90"
+        className="inline-flex items-center gap-2 rounded-full bg-brand-orange px-5 py-2.5 text-sm font-bold text-black tappable hover:bg-brand-orange/90"
       >
         <MessageCircle className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
         Message
@@ -59,7 +59,7 @@ export function ConnectButton({
     return (
       <Link
         href="/inbox?tab=requests"
-        className="inline-flex items-center gap-2 rounded-full bg-brand-orange px-5 py-2.5 text-sm font-bold text-black transition hover:bg-brand-orange/90"
+        className="inline-flex items-center gap-2 rounded-full bg-brand-orange px-5 py-2.5 text-sm font-bold text-black tappable hover:bg-brand-orange/90"
       >
         <Mail className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
         Respond to their request
@@ -92,7 +92,7 @@ export function ConnectButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-full bg-brand-orange px-5 py-2.5 text-sm font-bold text-black transition hover:bg-brand-orange/90"
+        className="inline-flex items-center gap-2 rounded-full bg-brand-orange px-5 py-2.5 text-sm font-bold text-black tappable hover:bg-brand-orange/90"
       >
         {myMode === "industry" ? (
           <>
@@ -148,14 +148,14 @@ export function ConnectButton({
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="flex-1 rounded-full border border-white/15 bg-white/5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+          className="flex-1 rounded-full border border-white/15 bg-white/5 py-2.5 text-sm font-semibold text-white tappable hover:bg-white/10"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isPending}
-          className="flex-1 rounded-full bg-brand-orange py-2.5 text-sm font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50"
+          className="flex-1 rounded-full bg-brand-orange py-2.5 text-sm font-bold text-black tappable hover:bg-brand-orange/90 disabled:opacity-50"
         >
           {isPending
             ? "Sending…"

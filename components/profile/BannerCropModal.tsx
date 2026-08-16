@@ -73,7 +73,7 @@ export function BannerCropModal({ file, onConfirm, onCancel }: Props) {
           type="button"
           onClick={onCancel}
           disabled={busy}
-          className="rounded-full p-2 text-brand-gray-300 transition hover:bg-white/5 hover:text-white disabled:opacity-50"
+          className="rounded-full p-2 text-brand-gray-300 tappable hover:bg-white/5 hover:text-white disabled:opacity-50"
           aria-label="Cancel"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -140,7 +140,7 @@ export function BannerCropModal({ file, onConfirm, onCancel }: Props) {
               type="button"
               onClick={onCancel}
               disabled={busy}
-              className="rounded-full border border-white/15 bg-white/5 px-5 py-2 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-50"
+              className="rounded-full border border-white/15 bg-white/5 px-5 py-2 text-sm font-semibold text-white tappable hover:bg-white/10 disabled:opacity-50"
             >
               Cancel
             </button>

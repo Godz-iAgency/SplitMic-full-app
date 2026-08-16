@@ -447,7 +447,7 @@ function PostFields({
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-full bg-brand-orange py-3 text-sm font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50 sm:w-auto sm:px-8"
+        className="w-full rounded-full bg-brand-orange py-3 text-sm font-bold text-black tappable hover:bg-brand-orange/90 disabled:opacity-50 sm:w-auto sm:px-8"
       >
         {isPending ? "Posting…" : "Post to marketplace"}
       </button>

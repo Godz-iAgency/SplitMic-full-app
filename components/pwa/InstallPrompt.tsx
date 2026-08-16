@@ -144,7 +144,7 @@ export function InstallPrompt() {
             <button
               type="button"
               onClick={handleInstall}
-              className="rounded-full bg-brand-orange px-4 py-1.5 text-xs font-bold text-black transition hover:bg-brand-orange/90"
+              className="rounded-full bg-brand-orange px-4 py-1.5 text-xs font-bold text-black tappable hover:bg-brand-orange/90"
             >
               Install
             </button>
@@ -161,7 +161,7 @@ export function InstallPrompt() {
           type="button"
           onClick={handleDismiss}
           aria-label="Dismiss"
-          className="shrink-0 rounded-full p-1 text-brand-gray-400 transition hover:bg-white/5 hover:text-white"
+          className="shrink-0 rounded-full p-1 text-brand-gray-400 tappable hover:bg-white/5 hover:text-white"
         >
           <X className="h-4 w-4" />
         </button>

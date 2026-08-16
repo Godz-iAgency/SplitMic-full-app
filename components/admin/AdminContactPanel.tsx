@@ -30,7 +30,7 @@ export function AdminContactPanel({
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => setMode("message")}
-            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-orange px-3 py-2 text-xs font-bold text-black transition hover:bg-brand-orange/90"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-orange px-3 py-2 text-xs font-bold text-black tappable hover:bg-brand-orange/90"
           >
             <MessageCircle className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
             Send in-app message
@@ -38,7 +38,7 @@ export function AdminContactPanel({
           <button
             onClick={() => setMode("email")}
             disabled={!email}
-            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10 disabled:opacity-40"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-white tappable hover:bg-white/10 disabled:opacity-40"
           >
             <Mail className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
             Send email
@@ -113,14 +113,14 @@ function InAppMessageForm({
         <button
           onClick={submit}
           disabled={pending || !body.trim()}
-          className="flex-1 rounded-full bg-brand-orange px-3 py-2 text-xs font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50"
+          className="flex-1 rounded-full bg-brand-orange px-3 py-2 text-xs font-bold text-black tappable hover:bg-brand-orange/90 disabled:opacity-50"
         >
           {pending ? "Sending..." : "Send message"}
         </button>
         <button
           onClick={onDone}
           disabled={pending}
-          className="rounded-full border border-white/15 px-3 py-2 text-xs text-white transition hover:bg-white/10"
+          className="rounded-full border border-white/15 px-3 py-2 text-xs text-white tappable hover:bg-white/10"
         >
           Cancel
         </button>
@@ -193,14 +193,14 @@ function EmailForm({
         <button
           onClick={openMail}
           disabled={pending}
-          className="flex-1 rounded-full bg-brand-orange px-3 py-2 text-xs font-bold text-black transition hover:bg-brand-orange/90 disabled:opacity-50"
+          className="flex-1 rounded-full bg-brand-orange px-3 py-2 text-xs font-bold text-black tappable hover:bg-brand-orange/90 disabled:opacity-50"
         >
           Open in Gmail
         </button>
         <button
           onClick={onDone}
           disabled={pending}
-          className="rounded-full border border-white/15 px-3 py-2 text-xs text-white transition hover:bg-white/10"
+          className="rounded-full border border-white/15 px-3 py-2 text-xs text-white tappable hover:bg-white/10"
         >
           Cancel
         </button>
