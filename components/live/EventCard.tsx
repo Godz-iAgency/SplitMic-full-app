@@ -3,6 +3,7 @@ import { MapPin, ChevronRight } from "lucide-react";
 import type { LiveEventCard as EventCardData } from "@/lib/events/queries";
 import { formatEventDayLabel, formatEventTime } from "@/lib/events/time";
 import { CATEGORY_META } from "@/lib/directory/categories";
+import { reviewsUrl } from "@/lib/directory/media";
 import { GetThereButtons } from "./GetThereButtons";
 import { EventImageBand } from "./EventImageBand";
 
@@ -11,16 +12,20 @@ type Props = {
 };
 
 export function EventCard({ event }: Props) {
-  // Precedence: a real SplitMic venue profile beats a directory listing —
-  // it's the venue's own page, actively maintained by them. Falls all the
-  // way to null (no link at all) rather than a generic search, which
-  // wouldn't reliably be "this venue" specifically.
+  // Every card is clickable through to "more about this venue" — a real
+  // SplitMic venue profile if one exists, else the matched directory
+  // listing, else a Google Maps search for the venue by name (the same
+  // technique the directory's own Reviews button already uses: reliable for
+  // a named local business, no stored address needed). An unclickable card
+  // was tried first and rejected after seeing it live — it reads as broken
+  // more than it reads as "no data available."
   const venueHref =
     event.matchedProfileType === "venue" && event.matchedProfileId
       ? `/profile/${event.matchedProfileId}`
       : event.directoryBusinessId
         ? `/directory/${CATEGORY_META.venue.slug}#b-${event.directoryBusinessId}`
-        : null;
+        : reviewsUrl(event.venueName);
+  const venueHrefIsExternal = venueHref.startsWith("http");
 
   // Do512's own event poster is more specific than the venue's general
   // photo, so it wins when present.
@@ -40,12 +45,10 @@ export function EventCard({ event }: Props) {
         <div className="mt-1 flex items-center gap-1.5 text-sm text-brand-gray-300">
           <MapPin className="h-3.5 w-3.5 shrink-0 text-brand-gray-400" aria-hidden="true" />
           <span className="truncate">{event.venueName}</span>
-          {venueHref ? (
-            <ChevronRight
-              className="h-3.5 w-3.5 shrink-0 text-brand-gray-500 transition-transform group-hover:translate-x-0.5"
-              aria-hidden="true"
-            />
-          ) : null}
+          <ChevronRight
+            className="h-3.5 w-3.5 shrink-0 text-brand-gray-500 transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
         </div>
 
         <div className="mt-3 flex items-center gap-2 text-sm font-semibold">
@@ -69,15 +72,14 @@ export function EventCard({ event }: Props) {
           buttons above (z-10) stay independently clickable; everything else
           in the card is plain static content, which a positioned sibling
           paints over regardless of DOM order. */}
-      {venueHref ? (
-        <Link
-          href={venueHref}
-          className="absolute inset-0 z-[1]"
-          aria-label={`More about ${event.venueName}`}
-        >
-          <span className="sr-only">More about {event.venueName}</span>
-        </Link>
-      ) : null}
+      <Link
+        href={venueHref}
+        className="absolute inset-0 z-[1]"
+        aria-label={`More about ${event.venueName}`}
+        {...(venueHrefIsExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+      >
+        <span className="sr-only">More about {event.venueName}</span>
+      </Link>
     </article>
   );
 }

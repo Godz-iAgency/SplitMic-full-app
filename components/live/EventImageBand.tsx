@@ -2,7 +2,7 @@ import { Music } from "lucide-react";
 
 /**
  * Top-of-card photo band for an event: Do512's event poster when it has one,
- * else the matched venue's own directory photo, else a plain gradient.
+ * else the matched venue's own directory photo, else fallback art.
  *
  * Height uses the same md/lg pattern as the directory's BusinessCard image
  * band, for the same reason: this grid is also `grid-cols-1 sm:grid-cols-2
@@ -32,14 +32,36 @@ export function EventImageBand({
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/5" />
         </>
       ) : (
-        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-gray-800 to-black">
-          <Music
-            className="h-8 w-8 text-brand-orange/30"
-            aria-hidden="true"
-            strokeWidth={1.5}
-          />
-        </div>
+        <FallbackArt />
       )}
+    </div>
+  );
+}
+
+/**
+ * The pre-photo look, ported from the directory's BusinessCard FallbackArt —
+ * same glow + dot-grid + oversized watermark treatment, proven there to read
+ * as "designed" rather than "empty" (PROGRESS.md §2 #25). A flat gradient
+ * with one small centered icon was tried first and looked dead; a card grid
+ * with several of these sitting side by side needs it to hold up as a
+ * pattern, not just avoid being literally blank.
+ */
+function FallbackArt() {
+  return (
+    <div className="relative h-full w-full overflow-hidden bg-gradient-to-br from-brand-gray-900 via-brand-gray-900 to-black">
+      {/* Two off-center glows instead of one centered wash — reads as stage
+          lighting instead of a flat tint. */}
+      <div className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-brand-orange/25 blur-3xl" />
+      <div className="absolute -bottom-12 -right-8 h-36 w-36 rounded-full bg-brand-orange/10 blur-3xl" />
+
+      <div className="absolute inset-0 opacity-[0.15] [background-image:radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.5)_1px,transparent_0)] [background-size:18px_18px]" />
+
+      {/* Oversized, tilted watermark — brightens slightly on hover (the
+          parent <article> carries `group`). */}
+      <Music
+        strokeWidth={1}
+        className="absolute -bottom-5 -right-5 h-28 w-28 rotate-[-10deg] text-brand-orange/[0.12] transition-colors duration-300 group-hover:text-brand-orange/25"
+      />
     </div>
   );
 }
