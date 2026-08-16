@@ -4,6 +4,14 @@ import { isAuthorizedCronRequest } from "@/lib/http/cronAuth";
 import { syncLiveEvents } from "@/lib/events/sync";
 
 export const dynamic = "force-dynamic";
+// 5 Do512 scrapes now run per sync (today + weekend + 3 upcoming weekday
+// pages — see lib/events/do512.ts's DO512_WEEKDAY_LOOKAHEAD_DAYS and
+// sync.ts's SCRAPE_CONCURRENCY), measured at ~39s wall-clock against the
+// real API. Vercel's Hobby tier defaults to well under that, so this must be
+// set explicitly — 60 is Hobby's own maximum, chosen so this works on any
+// plan tier without relying on a specific one, with real margin to spare
+// even so (a killed function drops the entire run, not just the new pages).
+export const maxDuration = 60;
 
 /**
  * Scheduled sync of Austin live-music listings from Do512 into `live_events`.

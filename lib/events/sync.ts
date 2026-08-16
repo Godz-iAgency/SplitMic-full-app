@@ -2,10 +2,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   DO512_TODAY_URL,
   DO512_WEEK_URL,
+  buildUpcomingDo512DateUrls,
   scrapeDo512Events,
   mapEventToRow,
   type LiveEventInsert,
   type RawDo512Event,
+  type Do512Result,
 } from "./do512";
 import {
   loadMatchCandidates,
@@ -33,7 +35,7 @@ export type SyncResult = {
    * the source page is stale, not that the night is over.
    */
   eventsSkippedPast: number;
-  /** True when only one of the two Do512 pages could be scraped this run. */
+  /** True when at least one (but not all) of this run's Do512 pages could be scraped. */
   partial: boolean;
   dryRun: boolean;
   error?: string;
@@ -43,6 +45,47 @@ export type SyncOptions = {
   dryRun?: boolean;
   now?: Date;
 };
+
+/**
+ * How many Do512 scrapes run at once. Measured directly against the real
+ * Firecrawl API before choosing this number, in two rounds:
+ *
+ * First, at the original 6-day weekday lookahead (8 scrapes total): firing
+ * all 8 at once left Firecrawl's own processing time degrading under the
+ * concurrent load — 6 of 8 calls blew past scrapeDo512Events' timeout.
+ * Sequential fixed reliability but took ~90s for all 8, and this app's cron
+ * functions run on Vercel's Hobby tier, which hard-kills a function at 60s
+ * with no partial result — sequential didn't fit. Concurrency 2 landed
+ * 49-59s across repeated runs — fast enough, but one run only completed 7/8
+ * before a timeout, and 59s left almost no margin under the 60s ceiling.
+ *
+ * That reliability gap (not this setting) is why DO512_WEEKDAY_LOOKAHEAD_DAYS
+ * is 3 rather than a full week: with 5 total scrapes, concurrency 2
+ * (2 rounds of 2, then 1) measured a consistent ~39s with real margin to
+ * spare. See that constant for the full reasoning.
+ */
+const SCRAPE_CONCURRENCY = 2;
+
+/**
+ * Runs `fn` over `items` with at most `limit` in flight at once, preserving
+ * result order regardless of which call resolves first.
+ */
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let cursor = 0;
+  async function worker() {
+    while (cursor < items.length) {
+      const i = cursor++;
+      results[i] = await fn(items[i]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
 
 const emptyResult = (dryRun: boolean): SyncResult => ({
   eventsScraped: 0,
@@ -60,24 +103,28 @@ export async function syncLiveEvents(
   const dryRun = options.dryRun ?? false;
   const now = options.now ?? new Date();
 
-  const [today, week] = await Promise.all([
-    scrapeDo512Events(DO512_TODAY_URL),
-    scrapeDo512Events(DO512_WEEK_URL),
-  ]);
+  // today + weekend (as before) plus one page per upcoming weekday — see
+  // DO512_WEEKDAY_LOOKAHEAD_DAYS for why neither of the first two alone
+  // covers a full week. Concurrency is deliberately limited — see
+  // SCRAPE_CONCURRENCY for why running all 8 at once isn't safe.
+  const urls = [DO512_TODAY_URL, DO512_WEEK_URL, ...buildUpcomingDo512DateUrls(now)];
+  const results: Do512Result<RawDo512Event[]>[] = await mapWithConcurrency(
+    urls,
+    SCRAPE_CONCURRENCY,
+    scrapeDo512Events,
+  );
 
-  if (!today.ok && !week.ok) {
-    // Both pages failed — Do512/Firecrawl is down. Fail closed: don't touch
+  if (results.every((r) => !r.ok)) {
+    // Every page failed — Do512/Firecrawl is down. Fail closed: don't touch
     // the table at all, so a transient outage never wipes the feed.
+    const reasons = results.map((r) => (r as { reason: string }).reason).join(" / ");
     return {
       ...emptyResult(dryRun),
-      error: `Do512 scrape failed: ${today.reason} / ${week.reason}`,
+      error: `Do512 scrape failed: ${reasons}`,
     };
   }
 
-  const raw: RawDo512Event[] = [
-    ...(today.ok ? today.data : []),
-    ...(week.ok ? week.data : []),
-  ];
+  const raw: RawDo512Event[] = results.flatMap((r) => (r.ok ? r.data : []));
 
   // Map + dedupe by the derived source_event_id (the same show can appear on
   // both the "today" and "this week" pages).
@@ -115,7 +162,10 @@ export async function syncLiveEvents(
     };
   });
 
-  const partial = today.ok !== week.ok;
+  // Some sources failed while at least one succeeded (the all-failed case
+  // already returned above) — any missing page means the scraped set isn't
+  // the full picture this run.
+  const partial = results.some((r) => !r.ok);
 
   if (dryRun) {
     return {
@@ -143,7 +193,7 @@ export async function syncLiveEvents(
   }
 
   // Deactivate previously-seen future events that no longer appear on Do512
-  // (cancelled/removed) — only when BOTH pages scraped successfully this
+  // (cancelled/removed) — only when EVERY page scraped successfully this
   // run, so a partial scrape never wrongly hides a real, still-upcoming show
   // that just wasn't on the one page we managed to fetch.
   let eventsDeactivated = 0;

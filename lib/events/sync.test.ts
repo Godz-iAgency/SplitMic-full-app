@@ -18,7 +18,13 @@ vi.mock("./matching", () => ({
   findDirectoryVenueMatch: vi.fn().mockReturnValue(null),
 }));
 
-import { scrapeDo512Events } from "./do512";
+import {
+  scrapeDo512Events,
+  DO512_TODAY_URL,
+  DO512_WEEK_URL,
+  DO512_WEEKDAY_LOOKAHEAD_DAYS,
+  buildUpcomingDo512DateUrls,
+} from "./do512";
 import { findDirectoryVenueMatch } from "./matching";
 import { syncLiveEvents } from "./sync";
 
@@ -188,7 +194,8 @@ describe("syncLiveEvents", () => {
   it("skips deactivation on a partial scrape, so a transient failure never hides real events", async () => {
     mockScrape
       .mockResolvedValueOnce({ ok: true, data: [EVENT_A] }) // today
-      .mockResolvedValueOnce({ ok: false, reason: "timeout" }); // week
+      .mockResolvedValueOnce({ ok: false, reason: "timeout" }) // week
+      .mockResolvedValue({ ok: true, data: [] }); // the 6 weekday date pages
     const { client, state } = fakeSupabase();
 
     const result = await syncLiveEvents(client, { now: NOW });
@@ -217,6 +224,85 @@ describe("syncLiveEvents", () => {
 
     expect(result.error).toContain("connection lost");
     expect(result.eventsUpserted).toBe(1);
+  });
+
+  describe("weekday date-page coverage", () => {
+    // Regression guard for a real incident: neither the "today" page nor the
+    // "weekend" page reaches Mon-Thu, so "This Week" sat empty on a Sunday
+    // afternoon even though real shows existed later that week.
+    it("scrapes today, weekend, and one page per upcoming weekday", async () => {
+      mockScrape.mockResolvedValue({ ok: true, data: [] });
+      const { client } = fakeSupabase();
+
+      await syncLiveEvents(client, { now: NOW });
+
+      expect(mockScrape).toHaveBeenCalledTimes(2 + DO512_WEEKDAY_LOOKAHEAD_DAYS);
+    });
+
+    it("scrapes exactly today + weekend + the expected dated URLs, in order", async () => {
+      mockScrape.mockResolvedValue({ ok: true, data: [] });
+      const { client } = fakeSupabase();
+
+      await syncLiveEvents(client, { now: NOW });
+
+      const calledUrls = mockScrape.mock.calls.map((args) => args[0]);
+      expect(calledUrls[0]).toBe(DO512_TODAY_URL);
+      expect(calledUrls[1]).toBe(DO512_WEEK_URL);
+      expect(calledUrls.slice(2)).toEqual(buildUpcomingDo512DateUrls(NOW));
+    });
+
+    it("treats a failure on any single weekday page as partial, not just today/weekend", async () => {
+      mockScrape
+        .mockResolvedValueOnce({ ok: true, data: [EVENT_A] }) // today
+        .mockResolvedValueOnce({ ok: true, data: [] }) // weekend
+        .mockResolvedValueOnce({ ok: true, data: [] }) // weekday +1
+        .mockResolvedValueOnce({ ok: false, reason: "timeout" }) // weekday +2
+        .mockResolvedValue({ ok: true, data: [] }); // remaining weekday pages
+      const { client, state } = fakeSupabase();
+
+      const result = await syncLiveEvents(client, { now: NOW });
+
+      expect(result.partial).toBe(true);
+      expect(state.updateCalled).toBe(false);
+      // The successful pages' data is still upserted, not thrown away.
+      expect(state.upsertCalled).toBe(true);
+    });
+
+    it("never has more than 2 scrapes in flight at once", async () => {
+      // Regression guard for a real incident: running all 8 scrapes fully
+      // concurrently overwhelmed Firecrawl and 6 of 8 timed out in a real
+      // test against the live API; fully sequential fixed reliability but
+      // took ~90s, longer than Vercel Hobby's 60s function limit. Concurrency
+      // 2 was the fastest setting that stayed reliable — this proves the
+      // sync actually honors that cap rather than silently reverting to
+      // unlimited Promise.all.
+      let inFlight = 0;
+      let maxInFlight = 0;
+      mockScrape.mockImplementation(async () => {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        inFlight--;
+        return { ok: true, data: [] };
+      });
+      const { client } = fakeSupabase();
+
+      await syncLiveEvents(client, { now: NOW });
+
+      expect(maxInFlight).toBeLessThanOrEqual(2);
+      expect(mockScrape).toHaveBeenCalledTimes(2 + DO512_WEEKDAY_LOOKAHEAD_DAYS);
+    });
+
+    it("still fails closed when every page fails, including all weekday pages", async () => {
+      mockScrape.mockResolvedValue({ ok: false, reason: "down" });
+      const { client, state } = fakeSupabase();
+
+      const result = await syncLiveEvents(client, { now: NOW });
+
+      expect(result.error).toContain("down");
+      expect(state.upsertCalled).toBe(false);
+      expect(state.updateCalled).toBe(false);
+    });
   });
 
   it("attaches a matched directory venue independently of the profile match", async () => {

@@ -18,7 +18,14 @@ import { createHash } from "node:crypto";
 
 const ENDPOINT = "https://api.firecrawl.dev/v1/scrape";
 
-const TIMEOUT_MS = 20_000;
+// Kept low deliberately: this app's cron functions run on Vercel's Hobby
+// tier, which hard-kills a function at 60s with no partial result — and the
+// sync now runs several of these calls per invocation (see
+// DO512_WEEKDAY_LOOKAHEAD_DAYS and sync.ts's SCRAPE_CONCURRENCY), so each
+// call's worst case compounds into the total. 15s keeps 3 sequential rounds'
+// mathematical worst case (all three timing out back-to-back) at 45s,
+// leaving real margin under the 60s ceiling instead of landing exactly on it.
+const TIMEOUT_MS = 15_000;
 
 export const DO512_TODAY_URL = "https://do512.com/events/live-music/today";
 /**
@@ -27,6 +34,57 @@ export const DO512_TODAY_URL = "https://do512.com/events/live-music/today";
  * /weekend is the working multi-day listing.
  */
 export const DO512_WEEK_URL = "https://do512.com/events/live-music/weekend";
+
+/**
+ * How many days beyond today to cover with individual date-page scrapes.
+ * Neither DO512_TODAY_URL nor DO512_WEEK_URL reaches "the next 7 days" —
+ * /today is just today, and /weekend is Fri-Sun — so on a Sunday through
+ * Wednesday there was no source at all for the coming weekdays, and the
+ * "This Week" tab sat empty even when real shows existed. Do512 does have a
+ * working per-date page (confirmed live: /events/live-music/2026/08/18
+ * returns real events, statusCode 200), just no single page spanning a week.
+ *
+ * Deliberately 3, not a full week's worth of days (6), even though that
+ * leaves a day or two of the week still uncovered: measured directly against
+ * the real Firecrawl API, 8 total scrapes (today + weekend + 6 weekdays) at
+ * a safe concurrency of 2 landed at 49-59s wall-clock across repeated runs —
+ * one run only reached 7/8 before a timeout, and 59s left almost no margin
+ * under Vercel Hobby's 60s hard kill (which drops the *entire* run,
+ * including the previously-reliable today/weekend data, not just the new
+ * pages). 5 total scrapes (today + weekend + 3 weekdays) measured a
+ * consistent ~39s with real margin to spare. Reliable partial coverage over
+ * unreliable full coverage — the alternative was risking today's own sync
+ * failing outright because "This Week" wanted more.
+ */
+export const DO512_WEEKDAY_LOOKAHEAD_DAYS = 3;
+
+/** Do512's per-date listing, e.g. https://do512.com/events/live-music/2026/08/18. */
+export function buildDo512DateUrl(date: Date): string {
+  // Chicago, not UTC: the date that matters is Austin's calendar date, and a
+  // UTC-based YYYY-MM-DD would land on the wrong day for several hours around
+  // midnight Central.
+  const ymd = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+  return `https://do512.com/events/live-music/${ymd.replace(/-/g, "/")}`;
+}
+
+/**
+ * The individual-date URLs to scrape alongside DO512_TODAY_URL/DO512_WEEK_URL
+ * — one per day from tomorrow through DO512_WEEKDAY_LOOKAHEAD_DAYS days out,
+ * so the combined sources cover a full week regardless of what weekday
+ * "today" happens to be.
+ */
+export function buildUpcomingDo512DateUrls(now: Date = new Date()): string[] {
+  const urls: string[] = [];
+  for (let i = 1; i <= DO512_WEEKDAY_LOOKAHEAD_DAYS; i++) {
+    urls.push(buildDo512DateUrl(new Date(now.getTime() + i * 24 * 60 * 60 * 1000)));
+  }
+  return urls;
+}
 
 /**
  * How far ahead a scraped event may plausibly sit. A "today"/"this weekend"

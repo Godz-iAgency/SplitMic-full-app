@@ -4,6 +4,9 @@ import {
   chicagoWallTimeToUtcIso,
   buildSourceEventId,
   mapEventToRow,
+  buildDo512DateUrl,
+  buildUpcomingDo512DateUrls,
+  DO512_WEEKDAY_LOOKAHEAD_DAYS,
   type RawDo512Event,
 } from "./do512";
 
@@ -281,6 +284,51 @@ describe("mapEventToRow", () => {
         buildSourceEventId("Mohawk Austin", "Test Band", "2026-08-16T01:00:00.000Z"),
       );
     });
+  });
+});
+
+describe("buildDo512DateUrl", () => {
+  it("formats a date as Do512's YYYY/MM/DD path", () => {
+    // 2026-08-18T19:56:00Z is 2:56pm Chicago (CDT, UTC-5) on the same date —
+    // chosen away from any midnight boundary so the assertion is unambiguous.
+    expect(buildDo512DateUrl(new Date("2026-08-18T19:56:00.000Z"))).toBe(
+      "https://do512.com/events/live-music/2026/08/18",
+    );
+  });
+
+  it("uses the Chicago calendar date, not the UTC one", () => {
+    // 2026-08-19T02:00:00Z is 9:00pm Chicago Aug 18 — a UTC-based formatter
+    // would wrongly report the 19th.
+    expect(buildDo512DateUrl(new Date("2026-08-19T02:00:00.000Z"))).toBe(
+      "https://do512.com/events/live-music/2026/08/18",
+    );
+  });
+
+  it("zero-pads single-digit months and days", () => {
+    expect(buildDo512DateUrl(new Date("2026-01-05T18:00:00.000Z"))).toBe(
+      "https://do512.com/events/live-music/2026/01/05",
+    );
+  });
+});
+
+describe("buildUpcomingDo512DateUrls", () => {
+  it("returns one URL per day from tomorrow through the lookahead window", () => {
+    const now = new Date("2026-08-16T19:56:00.000Z"); // Sun, 2:56pm Chicago
+    const urls = buildUpcomingDo512DateUrls(now);
+
+    expect(urls).toHaveLength(DO512_WEEKDAY_LOOKAHEAD_DAYS);
+    expect(urls).toEqual([
+      "https://do512.com/events/live-music/2026/08/17",
+      "https://do512.com/events/live-music/2026/08/18",
+      "https://do512.com/events/live-music/2026/08/19",
+    ]);
+  });
+
+  it("never includes today's own date", () => {
+    const now = new Date("2026-08-16T19:56:00.000Z");
+    expect(buildUpcomingDo512DateUrls(now)).not.toContain(
+      "https://do512.com/events/live-music/2026/08/16",
+    );
   });
 });
 
