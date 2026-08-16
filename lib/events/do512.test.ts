@@ -135,6 +135,57 @@ describe("mapEventToRow", () => {
     };
     expect(mapEventToRow(raw, NOW)).not.toBeNull();
   });
+
+  describe("image_url / ticket_url validation", () => {
+    // Regression guard for a real incident: Firecrawl's extraction filled a
+    // missing image with the literal string "Unknown" instead of omitting
+    // the field, which then rendered live as <img src="…/Unknown"> resolved
+    // against our own origin. The schema types these as plain strings with
+    // no format constraint, so nothing else catches this.
+    it('rejects the literal string "Unknown" as an image_url', () => {
+      const raw: RawDo512Event = {
+        artist_name: "A",
+        venue_name: "B",
+        event_date: "2026-08-15",
+        event_time: "20:00",
+        image_url: "Unknown",
+      };
+      expect(mapEventToRow(raw, NOW)?.image_url).toBeNull();
+    });
+
+    it("rejects non-URL junk in ticket_url the same way", () => {
+      const raw: RawDo512Event = {
+        artist_name: "A",
+        venue_name: "B",
+        event_date: "2026-08-15",
+        event_time: "20:00",
+        ticket_url: "N/A",
+      };
+      expect(mapEventToRow(raw, NOW)?.ticket_url).toBeNull();
+    });
+
+    it("keeps a real http(s) image_url", () => {
+      const raw: RawDo512Event = {
+        artist_name: "A",
+        venue_name: "B",
+        event_date: "2026-08-15",
+        event_time: "20:00",
+        image_url: "https://example.com/poster.jpg",
+      };
+      expect(mapEventToRow(raw, NOW)?.image_url).toBe("https://example.com/poster.jpg");
+    });
+
+    it("rejects a non-http(s) scheme", () => {
+      const raw: RawDo512Event = {
+        artist_name: "A",
+        venue_name: "B",
+        event_date: "2026-08-15",
+        event_time: "20:00",
+        image_url: "javascript:alert(1)",
+      };
+      expect(mapEventToRow(raw, NOW)?.image_url).toBeNull();
+    });
+  });
 });
 
 describe("scrapeDo512Events", () => {

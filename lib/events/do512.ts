@@ -281,9 +281,28 @@ export function mapEventToRow(
     venue_address: event.venue_address?.trim() || null,
     event_datetime: eventDatetime,
     is_free: typeof event.is_free === "boolean" ? event.is_free : null,
-    image_url: event.image_url?.trim() || null,
-    ticket_url: event.ticket_url?.trim() || null,
+    image_url: httpUrlOrNull(event.image_url),
+    ticket_url: httpUrlOrNull(event.ticket_url),
     raw_payload: event,
     last_synced_at: now.toISOString(),
   };
+}
+
+/**
+ * Validates against reality, not just the schema: the extraction schema
+ * types image_url/ticket_url as plain strings with no format constraint, and
+ * observed live, Firecrawl fills the gap with the literal word "Unknown"
+ * rather than omitting the field when a page has no image — which then
+ * rendered as an <img src="…/Unknown"> resolved against our own origin.
+ * Schema-shaped output is not evidence a URL was actually present.
+ */
+function httpUrlOrNull(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === "http:" || url.protocol === "https:" ? trimmed : null;
+  } catch {
+    return null;
+  }
 }
