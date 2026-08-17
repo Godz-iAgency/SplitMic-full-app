@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { buildDirectionsUrl, buildUberUrl } from "./getThereLinks";
+import {
+  buildDirectionsUrl,
+  buildUberUrl,
+  buildUberAppIntentUrl,
+} from "./getThereLinks";
 import type { LiveEventCard } from "./queries";
 
 function makeEvent(overrides: Partial<LiveEventCard> = {}): LiveEventCard {
@@ -112,5 +116,78 @@ describe("buildUberUrl", () => {
       const url = buildUberUrl(makeEvent());
       expect(new URL(url).searchParams.has("client_id")).toBe(false);
     });
+  });
+});
+
+describe("buildUberAppIntentUrl", () => {
+  // An intent URL is opaque to the URL parser, and a malformed one fails
+  // silently — Chrome just does nothing or drops to the fallback — so these
+  // assert the exact structural pieces Chrome actually parses.
+  function intentQuery(url: string): URLSearchParams {
+    const query = url.slice(url.indexOf("?") + 1, url.indexOf("#Intent;"));
+    return new URLSearchParams(query);
+  }
+
+  it("targets the Uber rider app explicitly, which is the whole point", () => {
+    // package= is what makes this an explicit intent, bypassing the Android
+    // App Links verification that was failing on a real device.
+    const url = buildUberAppIntentUrl(makeEvent());
+    expect(url.startsWith("intent://riderequest?")).toBe(true);
+    expect(url).toContain("scheme=uber");
+    expect(url).toContain("package=com.ubercab");
+    expect(url.endsWith(";end")).toBe(true);
+  });
+
+  it("falls back to the https link when the app isn't installed", () => {
+    const event = makeEvent();
+    const url = buildUberAppIntentUrl(event);
+    const match = /S\.browser_fallback_url=([^;]+);/.exec(url);
+    expect(match).not.toBeNull();
+    expect(decodeURIComponent(match![1])).toBe(buildUberUrl(event));
+  });
+
+  it("always sends a dropoff name and address", () => {
+    // Uber's deep-link FAQ: the dropoff will not appear in the native app at
+    // all unless nickname or formatted_address is present.
+    const params = intentQuery(buildUberAppIntentUrl(makeEvent()));
+    expect(params.get("dropoff[nickname]")).toBe("Mohawk Austin");
+    expect(params.get("dropoff[formatted_address]")).toBe(
+      "Mohawk Austin, Austin, TX",
+    );
+  });
+
+  it("prefers the real street address for formatted_address", () => {
+    const params = intentQuery(
+      buildUberAppIntentUrl(makeEvent({ venueAddress: "912 Red River St" })),
+    );
+    expect(params.get("dropoff[formatted_address]")).toBe("912 Red River St");
+  });
+
+  it("starts the ride from the rider's current location", () => {
+    const params = intentQuery(buildUberAppIntentUrl(makeEvent()));
+    expect(params.get("action")).toBe("setPickup");
+    expect(params.get("pickup")).toBe("my_location");
+  });
+
+  it("includes dropoff coordinates when known, omits them when not", () => {
+    const withCoords = intentQuery(
+      buildUberAppIntentUrl(
+        makeEvent({ venueLatitude: 30.267, venueLongitude: -97.74 }),
+      ),
+    );
+    expect(withCoords.get("dropoff[latitude]")).toBe("30.267");
+    expect(withCoords.get("dropoff[longitude]")).toBe("-97.74");
+
+    const without = intentQuery(buildUberAppIntentUrl(makeEvent()));
+    expect(without.has("dropoff[latitude]")).toBe(false);
+    expect(without.has("dropoff[longitude]")).toBe(false);
+  });
+
+  it("uses the native bracket format, not the web link's drop[0] JSON", () => {
+    // The two documented formats are not interchangeable: drop[0] is for
+    // m.uber.com/looking, brackets are for the uber:// native scheme.
+    // Sending the wrong one is exactly how the dropoff silently goes missing.
+    const url = buildUberAppIntentUrl(makeEvent());
+    expect(intentQuery(url).has("drop[0]")).toBe(false);
   });
 });

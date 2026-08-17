@@ -1,6 +1,7 @@
 import { Navigation, Car } from "lucide-react";
 import type { LiveEventCard } from "@/lib/events/queries";
-import { buildDirectionsUrl, buildUberUrl } from "@/lib/events/getThereLinks";
+import { buildDirectionsUrl } from "@/lib/events/getThereLinks";
+import { UberLink } from "./UberLink";
 
 type Props = {
   event: LiveEventCard;
@@ -14,7 +15,6 @@ type Props = {
  */
 export function GetThereButtons({ event }: Props) {
   const directionsUrl = buildDirectionsUrl(event);
-  const uberUrl = buildUberUrl(event);
 
   return (
     // relative + z-10: sits above EventCard's stretched venue-link overlay
@@ -32,15 +32,13 @@ export function GetThereButtons({ event }: Props) {
         <Navigation className="h-3.5 w-3.5" aria-hidden="true" />
         Directions
       </a>
-      <a
-        href={uberUrl}
-        target="_blank"
-        rel="noopener noreferrer"
+      <UberLink
+        event={event}
         className="tappable inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/10"
       >
         <Car className="h-3.5 w-3.5" aria-hidden="true" />
         Get an Uber
-      </a>
+      </UberLink>
     </div>
   );
 }

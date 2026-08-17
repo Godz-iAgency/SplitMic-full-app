@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Navigation, Car, X } from "lucide-react";
 import type { LiveEventCard } from "@/lib/events/queries";
-import { buildDirectionsUrl, buildUberUrl } from "@/lib/events/getThereLinks";
+import { buildDirectionsUrl } from "@/lib/events/getThereLinks";
+import { UberLink } from "./UberLink";
 
 type Props = {
   event: LiveEventCard;
@@ -83,7 +84,6 @@ export function VenueLinkOverlay({ event, venueHref }: Props) {
   }
 
   const directionsUrl = buildDirectionsUrl(event);
-  const uberUrl = buildUberUrl(event);
 
   return (
     <>
@@ -123,15 +123,13 @@ export function VenueLinkOverlay({ event, venueHref }: Props) {
             <Navigation className="h-3.5 w-3.5" aria-hidden="true" />
             Google Maps
           </a>
-          <a
-            href={uberUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <UberLink
+            event={event}
             className="tappable inline-flex w-full max-w-[190px] items-center justify-center gap-1.5 rounded-full border border-white/15 bg-black px-3 py-2 text-xs font-semibold text-white hover:bg-white/10"
           >
             <Car className="h-3.5 w-3.5" aria-hidden="true" />
             Get an Uber
-          </a>
+          </UberLink>
         </div>
       ) : null}
     </>
