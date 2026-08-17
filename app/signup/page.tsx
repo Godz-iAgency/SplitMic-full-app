@@ -78,7 +78,7 @@ export default async function SignUpPage() {
         </div>
 
         <p className="mt-4 text-center text-xs text-brand-gray-400">
-          By signing up you agree to verify a physical Austin, TX address.
+          By signing up you agree to verify a physical Texas address.
         </p>
       </div>
     </main>

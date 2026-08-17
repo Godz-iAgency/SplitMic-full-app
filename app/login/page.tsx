@@ -78,7 +78,7 @@ export default async function LoginPage() {
         </div>
 
         <p className="mt-4 text-center text-xs text-brand-gray-400">
-          By continuing you agree to verify a physical Austin, TX address.
+          By continuing you agree to verify a physical Texas address.
         </p>
       </div>
     </main>

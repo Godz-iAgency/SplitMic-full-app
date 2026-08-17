@@ -1,4 +1,16 @@
 import { NextResponse } from "next/server";
+import { isValidTexasZip, TEXAS_ZIP_HELP } from "@/lib/address/texas";
+
+/**
+ * Server-side Google-geocoding check that an address is real and in Texas.
+ *
+ * NOTE: nothing currently calls this — onboarding validates client-side in
+ * components/onboarding/AddressStep.tsx. It's kept because it's the stricter
+ * check (it confirms the street actually exists, which a ZIP range can't),
+ * and updated in lockstep with the membership rule so it can be wired up
+ * later without silently re-imposing the old Austin-only boundary. Both read
+ * the ZIP rule from lib/address/texas.ts so the two cannot drift.
+ */
 
 type GeocodeResult = {
   formatted_address: string;
@@ -20,12 +32,6 @@ function findComponent(result: GeocodeResult, type: string) {
   return result.address_components.find((c) => c.types.includes(type));
 }
 
-function isValidAustinZip(zip: string) {
-  if (!/^\d{5}$/.test(zip)) return false;
-  const n = Number(zip);
-  return n >= 78701 && n <= 78799;
-}
-
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
@@ -42,11 +48,8 @@ export async function POST(request: Request) {
       );
     }
 
-    if (expectedZip && !isValidAustinZip(expectedZip)) {
-      return NextResponse.json({
-        valid: false,
-        error: "ZIP code must be in Austin (78701-78799)",
-      });
+    if (expectedZip && !isValidTexasZip(expectedZip)) {
+      return NextResponse.json({ valid: false, error: TEXAS_ZIP_HELP });
     }
 
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -59,7 +62,7 @@ export async function POST(request: Request) {
 
     const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
     url.searchParams.set("address", address);
-    url.searchParams.set("components", "country:US|administrative_area:TX|locality:Austin");
+    url.searchParams.set("components", "country:US|administrative_area:TX");
     url.searchParams.set("key", apiKey);
 
     const res = await fetch(url.toString(), { cache: "no-store" });
@@ -69,7 +72,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         valid: false,
         error:
-          "We couldn't find that address. Make sure it's a real Austin, TX street address.",
+          "We couldn't find that address. Make sure it's a real Texas street address.",
       });
     }
 
@@ -83,22 +86,15 @@ export async function POST(request: Request) {
     const geocodedZip = findComponent(result, "postal_code")?.long_name ?? "";
     const country = findComponent(result, "country")?.short_name ?? "";
 
-    if (
-      city.toLowerCase() !== "austin" ||
-      state !== "TX" ||
-      country !== "US"
-    ) {
+    if (state !== "TX" || country !== "US") {
       return NextResponse.json({
         valid: false,
-        error: "Address must be in Austin, TX. SplitMic is Austin-only.",
+        error: "Address must be in Texas.",
       });
     }
 
-    if (!isValidAustinZip(geocodedZip)) {
-      return NextResponse.json({
-        valid: false,
-        error: `ZIP code must be in Austin (78701-78799)`,
-      });
+    if (!isValidTexasZip(geocodedZip)) {
+      return NextResponse.json({ valid: false, error: TEXAS_ZIP_HELP });
     }
 
     if (expectedZip && expectedZip !== geocodedZip) {
@@ -111,6 +107,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       valid: true,
       formatted_address: result.formatted_address,
+      // Returned now that any Texas city is allowed: a caller shouldn't have
+      // to trust a typed-in city when the geocoder already resolved the real
+      // one. (Previously the city was known to be "Austin" by definition.)
+      city,
       zip: geocodedZip,
       latitude: result.geometry.location.lat,
       longitude: result.geometry.location.lng,

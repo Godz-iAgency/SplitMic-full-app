@@ -1,7 +1,9 @@
 # SplitMic
 
-Austin-only music-industry network connecting bands, venues, talent buyers,
-record labels, and festivals on one platform.
+Austin-focused music-industry network connecting bands, venues, talent buyers,
+record labels, and festivals on one platform. Everything the app surfaces —
+live shows, venues, the directory — is Austin-only; membership is open to
+anywhere in Texas, since plenty of players commute in for Austin gigs.
 
 For current status, in-flight work, and the decision log, see
 [`PROGRESS.md`](PROGRESS.md). For the engineering standards and guardrails that
@@ -15,7 +17,7 @@ This file covers setup and a tour of the codebase.
 - Next.js 14 (App Router, TypeScript, server actions)
 - Supabase (Postgres, Auth, Storage, Row Level Security)
 - Tailwind CSS
-- Google Maps Geocoding API (Austin address validation during onboarding)
+- Google Maps Geocoding API (`/api/validate-address` — built but **not currently wired into onboarding**, which validates client-side instead)
 - Google Gemini API (AI show-matching for talent buyers)
 - Resend (transactional email)
 - Firecrawl (scrapes Austin live-music listings for `/live`)
@@ -99,7 +101,7 @@ bio, contact info) plus a type-specific detail table.
 
 ## Core flows, in brief
 
-- **Onboarding** — 3 steps: player type → Google-Maps-validated Austin address → player-type-specific profile form. Immediately after, the user lands on `/profile/edit` to add photos/video, which auto-publishes the profile on save.
+- **Onboarding** — 3 steps: player type → Texas address (street, city, ZIP; the ZIP rule lives in `lib/address/texas.ts`) → player-type-specific profile form. Immediately after, the user lands on `/profile/edit` to add photos/video, which auto-publishes the profile on save.
 - **Discover** — browse/search published profiles by type, genre, and text query.
 - **Marketplace (Opportunities)** — industry players post events/opportunities/open mics; bands can be tagged, apply, or sign up (open mic).
 - **Connections & Messaging** — industry accounts can DM directly; bands send a Connect request that the other side accepts/declines, opening a thread.

@@ -48,7 +48,7 @@ export type InitialOnboardingState = {
 const STEP_LABELS = [
   "Account created",
   "Player type",
-  "Austin address",
+  "Your address",
   "Your profile",
   "Photos & publish",
 ];
@@ -73,13 +73,16 @@ export function OnboardingFlow({ initial }: { initial: InitialOnboardingState })
       ? {
           street_address: initial.street_address,
           address_line_2: initial.address_line_2,
-          city: "Austin",
+          // Rehydrated from the saved profile rather than assumed: members
+          // can now be anywhere in Texas, so hardcoding "Austin" here would
+          // overwrite a returning out-of-town member's real city on resume.
+          city: initial.city ?? "",
           state: "TX",
           zip_code: initial.zip_code,
           formatted_address: [
             initial.street_address,
             initial.address_line_2,
-            "Austin, TX",
+            initial.city ? `${initial.city}, TX` : "TX",
             initial.zip_code,
           ]
             .filter(Boolean)

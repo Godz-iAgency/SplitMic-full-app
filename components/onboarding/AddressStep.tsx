@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { isValidTexasZip, TEXAS_ZIP_HELP } from "@/lib/address/texas";
 
 export type ValidatedAddress = {
   street_address: string;
   address_line_2: string | null;
-  city: "Austin";
+  /** Any Texas city — see lib/address/texas.ts for why this isn't "Austin". */
+  city: string;
   state: "TX";
   zip_code: string;
   formatted_address: string;
@@ -18,12 +20,6 @@ type Props = {
   onBack: () => void;
   onConfirmed: (validated: ValidatedAddress) => void;
 };
-
-function isValidAustinZip(zip: string) {
-  if (!/^\d{5}$/.test(zip)) return false;
-  const n = Number(zip);
-  return n >= 78701 && n <= 78799;
-}
 
 export function AddressStep({
   initial,
@@ -38,8 +34,13 @@ export function AddressStep({
   const [addressLine2, setAddressLine2] = useState(
     initial?.address_line_2 ?? "",
   );
+  // Deliberately not prefilled with "Austin" even though most members are
+  // there: a prefilled city is one someone out of town can leave in by
+  // accident, and this field is the only record of where they actually are.
+  const [city, setCity] = useState(initial?.city ?? "");
   const [zipCode, setZipCode] = useState(initial?.zip_code ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [cityError, setCityError] = useState<string | null>(null);
   const [zipError, setZipError] = useState<string | null>(null);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -47,17 +48,18 @@ export function AddressStep({
 
     const trimmedStreet = streetAddress.trim();
     const trimmedLine2 = addressLine2.trim();
+    const trimmedCity = city.trim();
     const trimmedZip = zipCode.trim();
 
     const streetOk = trimmedStreet.length > 0;
-    const zipOk = isValidAustinZip(trimmedZip);
+    const cityOk = trimmedCity.length > 0;
+    const zipOk = isValidTexasZip(trimmedZip);
 
-    setZipError(zipOk ? null : "ZIP code must be in Austin (78701-78799)");
+    setCityError(cityOk ? null : "Enter your city.");
+    setZipError(zipOk ? null : TEXAS_ZIP_HELP);
 
-    if (!streetOk || !zipOk) {
-      setError(
-        "Please enter a valid Street Address and Austin ZIP code (78701-78799)",
-      );
+    if (!streetOk || !cityOk || !zipOk) {
+      setError("Please fill in your street address, city, and a Texas ZIP code.");
       return;
     }
 
@@ -65,7 +67,7 @@ export function AddressStep({
     const formatted = [
       trimmedStreet,
       trimmedLine2,
-      "Austin, TX",
+      `${trimmedCity}, TX`,
       trimmedZip,
     ]
       .filter(Boolean)
@@ -74,7 +76,7 @@ export function AddressStep({
     onConfirmed({
       street_address: trimmedStreet,
       address_line_2: trimmedLine2 || null,
-      city: "Austin",
+      city: trimmedCity,
       state: "TX",
       zip_code: trimmedZip,
       formatted_address: formatted,
@@ -84,9 +86,10 @@ export function AddressStep({
   return (
     <div className="animate-fade-in">
       <header className="mb-6">
-        <h1 className="text-2xl font-bold sm:text-3xl">Where in Austin?</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Where are you based?</h1>
         <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
-          SplitMic is Austin-only. Your ZIP must be in the 78701–78799 range.
+          Anywhere in Texas works — plenty of players drive in for Austin gigs.
+          Shows, venues, and everything in the app stay focused on Austin.
         </p>
       </header>
 
@@ -131,26 +134,44 @@ export function AddressStep({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="col-span-2">
             <label htmlFor="city" className="label-text">
               City
+              <span className="ml-1 text-brand-orange">*</span>
             </label>
             <input
               id="city"
               name="city"
               type="text"
-              value="Austin"
-              disabled
-              readOnly
-              className="input-field cursor-not-allowed bg-brand-gray-800 text-brand-gray-300"
-              aria-label="City (locked to Austin)"
+              required
+              autoComplete="address-level2"
+              placeholder="e.g., Austin"
+              value={city}
+              onChange={(event) => {
+                setCity(event.target.value);
+                setCityError(null);
+                setError(null);
+              }}
+              className={`input-field ${
+                cityError ? "border-red-500 focus:border-red-500" : ""
+              }`}
+              aria-invalid={cityError ? "true" : "false"}
+              aria-describedby={cityError ? "city_error" : undefined}
             />
+            {cityError ? (
+              <p id="city_error" className="mt-1 text-sm text-red-400">
+                {cityError}
+              </p>
+            ) : null}
           </div>
           <div>
             <label htmlFor="state" className="label-text">
               State
             </label>
+            {/* Still locked: Texas is the actual membership boundary, and
+                showing it fixed makes that constraint obvious rather than
+                letting someone type a state that would then be rejected. */}
             <input
               id="state"
               name="state"
@@ -198,7 +219,7 @@ export function AddressStep({
             </p>
           ) : (
             <p className="mt-1 text-xs text-brand-gray-400">
-              Valid ZIP codes: 78701–78799.
+              Any Texas ZIP code.
             </p>
           )}
         </div>
