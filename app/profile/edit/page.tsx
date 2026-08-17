@@ -88,7 +88,7 @@ export default async function ProfileEditPage({
     // their genres — a plausible starting point beats a blank textarea. Only
     // fires when bio has truly never been set (an explicitly-cleared "" bio
     // is left alone, since that's a deliberate choice, not an unset one).
-    bio: profile.bio ?? buildDefaultBio(playerType, details),
+    bio: profile.bio ?? buildDefaultBio(playerType, details, profile.city),
     phone_number: profile.phone_number ?? "",
     website_url: profile.website_url ?? "",
     instagram_handle: profile.instagram_handle ?? "",
@@ -183,7 +183,7 @@ export default async function ProfileEditPage({
 // already picked during onboarding, instead of leaving the field blank.
 // Returns "" (no default) if there are no genres to draw from yet.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function buildDefaultBio(playerType: PlayerType, d: any): string {
+function buildDefaultBio(playerType: PlayerType, d: any, city: string | null): string {
   const genreField: Record<PlayerType, string> = {
     band: "genres",
     venue: "genres_hosted",
@@ -194,18 +194,22 @@ function buildDefaultBio(playerType: PlayerType, d: any): string {
   const genres: string[] = d[genreField[playerType]] ?? [];
   if (genres.length === 0) return "";
   const list = genres.slice(0, 2).join("/");
+  // Members can be anywhere in Texas (see lib/address/texas.ts) — the bio
+  // should say where *they* are, not assume Austin. Falls back to "Austin"
+  // only for pre-existing rows saved before city became a required field.
+  const place = city || "Austin";
 
   switch (playerType) {
     case "band":
-      return `Austin ${list} act.`;
+      return `${place} ${list} act.`;
     case "venue":
-      return `Austin venue hosting ${list} acts.`;
+      return `${place} venue hosting ${list} acts.`;
     case "talent_buyer":
-      return `Booking ${list} acts around Austin.`;
+      return `Booking ${list} acts around ${place}.`;
     case "record_label":
-      return `Austin label scouting ${list} acts.`;
+      return `${place} label scouting ${list} acts.`;
     case "festival":
-      return `Austin festival featuring ${list} acts.`;
+      return `${place} festival featuring ${list} acts.`;
   }
 }
 
