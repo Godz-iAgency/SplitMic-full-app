@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { LiveEventCard } from "@/lib/events/queries";
 import { buildUberUrl, buildUberAppIntentUrl } from "@/lib/events/getThereLinks";
 
@@ -11,21 +11,41 @@ type Props = {
 };
 
 /**
- * "Get an Uber" link.
+ * "Get an Uber" link. The two mobile platforms need opposite handling, which
+ * is the whole reason this is a component rather than a plain <a>.
  *
- * Progressive enhancement, deliberately: the rendered `href` is always the
- * plain https link, so this works with no JS, is crawlable, and behaves
- * exactly as before on iOS and desktop. The only thing the click handler
- * changes is Android, where the https App Link was observed opening Chrome
- * instead of the app — see buildUberAppIntentUrl for why an explicit intent
- * is the one thing that can force the handoff there.
+ * **Android** ignores App Link verification if you hand Chrome an explicit
+ * `intent://…;package=…`, so the click is intercepted and redirected there
+ * (see buildUberAppIntentUrl). Android is happy to open an app from a
+ * JS-initiated navigation.
  *
- * Navigating the current tab rather than opening a new one is intentional
- * for the intent path: on success the Uber app takes over and the page is
- * left untouched behind it, so a `_blank` tab would just be orphaned.
+ * **iOS is the exact opposite and must NOT be intercepted:** Universal Links
+ * only fire for a genuine user tap on an anchor. Setting `window.location`
+ * from JS is explicitly not a user tap, so "helping" iOS the way we help
+ * Android would guarantee it never opens the app. All we can do for iOS is
+ * make the tap as plain as possible — which also means dropping
+ * `target="_blank"`, since opening a new tab is a known way to lose the
+ * Universal Link handoff.
+ *
+ * Desktop keeps `target="_blank"` so clicking doesn't navigate away from the
+ * feed. `_blank` is the SSR default and is only removed after mount on iOS,
+ * so the server and first client render agree (no hydration mismatch).
  */
 export function UberLink({ event, className, children }: Props) {
+  const [isIos, setIsIos] = useState(false);
+
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    // iPadOS 13+ reports a desktop Mac UA, so it's identified by the touch
+    // points a real Mac doesn't have.
+    const iOSLike =
+      /iPhone|iPad|iPod/i.test(ua) ||
+      (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+    setIsIos(iOSLike);
+  }, []);
+
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    // Android only — see the docstring for why iOS is deliberately untouched.
     if (!/Android/i.test(navigator.userAgent)) return;
     e.preventDefault();
     // Chrome falls back to S.browser_fallback_url (the same https link this
@@ -36,8 +56,7 @@ export function UberLink({ event, className, children }: Props) {
   return (
     <a
       href={buildUberUrl(event)}
-      target="_blank"
-      rel="noopener noreferrer"
+      {...(isIos ? {} : { target: "_blank", rel: "noopener noreferrer" })}
       className={className}
       onClick={handleClick}
     >
