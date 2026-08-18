@@ -26,7 +26,7 @@ function chicagoDateKey(date: Date): string {
  * 9am still keys to "yesterday", and anything at/after 9am keys to "today" —
  * exactly the boundary the sync itself runs on.
  */
-function cycleDateKey(date: Date): string {
+export function cycleDateKey(date: Date): string {
   const shifted = new Date(date.getTime() - CYCLE_START_HOUR * 60 * 60 * 1000);
   return chicagoDateKey(shifted);
 }

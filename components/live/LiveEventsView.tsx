@@ -2,8 +2,13 @@
 
 import { useMemo, useState } from "react";
 import type { LiveEventCard as EventCardData } from "@/lib/events/queries";
-import { isToday, isUpcoming } from "@/lib/events/time";
-import { matchesAllFilters, distinctValues, type FreePaid } from "@/lib/events/filters";
+import {
+  matchesAllFilters,
+  distinctValues,
+  selectTonightEvents,
+  selectThisWeekEvents,
+  type FreePaid,
+} from "@/lib/events/filters";
 import { Dropdown, type DropdownOption } from "@/components/ui/Dropdown";
 import { EventCard } from "./EventCard";
 import { EmptyState } from "./EmptyState";
@@ -40,21 +45,14 @@ export function LiveEventsView({ events }: Props) {
 
   // "This Week" is explicitly everything OTHER than tonight, not tonight plus
   // the rest of the week — the two tabs partition the list, they don't
-  // overlap. It also excludes anything already in the past: the underlying
-  // query has a 26-hour lookback so a show that's already started doesn't
-  // vanish from "Tonight" mid-way through, but that same lookback leaves
-  // yesterday's leftover shows in the fetched list — without the isUpcoming
-  // check, those showed up under "This Week" wearing a date already gone by.
-  // "Tonight" deliberately keeps already-started shows visible (isToday's
-  // docstring), so isUpcoming is never applied there.
+  // overlap. Both selectors fall back to the most recent available listings
+  // when a sync gap leaves nothing dated for the current window — see their
+  // docstrings in lib/events/filters.ts. Tonight and This Week must never
+  // render as blank; a stale-but-real show beats "no shows found."
   const visible = useMemo(() => {
     const now = new Date();
     const byRange =
-      range === "today"
-        ? events.filter((e) => isToday(e.eventDatetime, now))
-        : events.filter(
-            (e) => !isToday(e.eventDatetime, now) && isUpcoming(e.eventDatetime, now),
-          );
+      range === "today" ? selectTonightEvents(events, now) : selectThisWeekEvents(events, now);
 
     return byRange.filter((e) => matchesAllFilters(e, { freePaid, genre, venue }));
   }, [events, range, freePaid, genre, venue]);

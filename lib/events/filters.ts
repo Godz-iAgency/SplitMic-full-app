@@ -1,4 +1,5 @@
 import type { LiveEventCard } from "./queries";
+import { isToday, isUpcoming, cycleDateKey } from "./time";
 
 /**
  * Pure predicate logic for the /live Free/Paid/Genre/Venue filters —
@@ -7,6 +8,49 @@ import type { LiveEventCard } from "./queries";
  * unit-tested rather than only reachable by clicking through the rendered
  * page. LiveEventsView.tsx is the only caller.
  */
+
+/**
+ * Picks the "Tonight" tab's events. A sync gap (an upstream scrape outage, a
+ * cron that hasn't fired yet) must never make this tab show "no shows" — that
+ * reads as "nothing's happening in Austin tonight," which is virtually never
+ * true, when the real story is just "the data is a bit stale." So: if nothing
+ * is dated for today's 9am-9am cycle, fall back to the most recent day that
+ * does have listings among what was already fetched, rather than an empty
+ * list. Those listings stay up until the next successful sync actually
+ * produces something newer — never cleared just because the clock moved on.
+ */
+export function selectTonightEvents(
+  events: LiveEventCard[],
+  now: Date = new Date(),
+): LiveEventCard[] {
+  const todays = events.filter((e) => isToday(e.eventDatetime, now));
+  if (todays.length > 0) return todays;
+
+  const notFuture = events.filter((e) => new Date(e.eventDatetime).getTime() <= now.getTime());
+  if (notFuture.length === 0) return [];
+
+  const mostRecentKey = notFuture.reduce((latestKey, e) => {
+    const key = cycleDateKey(new Date(e.eventDatetime));
+    return key > latestKey ? key : latestKey;
+  }, "");
+
+  return notFuture.filter((e) => cycleDateKey(new Date(e.eventDatetime)) === mostRecentKey);
+}
+
+/**
+ * Picks the "This Week" tab's events: everything not tonight, still ahead of
+ * now. Same never-blank guarantee as selectTonightEvents — if every non-
+ * tonight row happens to have already passed (a stalled sync, not a real
+ * quiet week), showing those instead of nothing is still more useful.
+ */
+export function selectThisWeekEvents(
+  events: LiveEventCard[],
+  now: Date = new Date(),
+): LiveEventCard[] {
+  const notTonight = events.filter((e) => !isToday(e.eventDatetime, now));
+  const upcoming = notTonight.filter((e) => isUpcoming(e.eventDatetime, now));
+  return upcoming.length > 0 ? upcoming : notTonight;
+}
 
 export type FreePaid = "all" | "free" | "paid";
 
