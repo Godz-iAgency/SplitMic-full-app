@@ -1,0 +1,39 @@
+# Triggers the Ticketmaster sync every 4 hours.
+#
+# Why this exists instead of Vercel's own cron: Vercel's Hobby plan caps
+# cron jobs at once per day, which the app/api/cron/sync-events (Do512)
+# route already uses. /api/cron/sync-ticketmaster was deliberately built to
+# be scheduler-agnostic — it accepts any caller sending
+# `Authorization: Bearer $CRON_SECRET` — so this workflow can drive it on a
+# real 4-hour cadence for free, with no Vercel plan change.
+#
+# Setup (one-time): add a repository secret named CRON_SECRET with the same
+# value as the app's CRON_SECRET env var (Vercel → Settings → Environment
+# Variables). Nothing else to configure.
+name: Sync Ticketmaster events
+
+on:
+  schedule:
+    # GitHub's scheduler is UTC and, like Vercel's, only guarantees the job
+    # starts within the hour, not at the exact minute — fine for a sync that
+    # already runs every 4h regardless.
+    - cron: "0 */4 * * *"
+  # Lets you trigger a run manually from the Actions tab, e.g. right after
+  # first adding TICKETMASTER_API_KEY, without waiting up to 4 hours.
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call the sync-ticketmaster endpoint
+        run: |
+          status=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://www.splitmic.com/api/cron/sync-ticketmaster")
+          echo "HTTP $status"
+          cat /tmp/response.json
+          if [ "$status" -ge 300 ]; then
+            echo "Sync failed"
+            exit 1
+          fi

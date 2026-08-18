@@ -14,6 +14,8 @@ const EVENT: LiveEventCard = {
   isFree: true,
   imageUrl: "https://example.com/img.jpg",
   ticketUrl: "https://example.com/tickets",
+  genre: null,
+  source: "do512",
   matchedProfileId: "profile-1",
   matchedProfileType: "band",
   directoryBusinessId: null,

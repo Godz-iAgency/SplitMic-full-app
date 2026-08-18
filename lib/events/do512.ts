@@ -228,9 +228,18 @@ export async function scrapeDo512Events(
 
 // ── Pure mapping helpers (no fetch — unit-testable) ─────────────────────────
 
-/** Row shape accepted by the `live_events` upsert. */
+/**
+ * Row shape accepted by the `live_events` upsert. Provider-agnostic on
+ * purpose — this is what "provider → SplitMic events" actually means in
+ * code: every provider module (this file, lib/events/providers/*) maps its
+ * own raw shape into exactly this type, and the shared upsert/match/
+ * deactivate pipeline in sync.ts never needs to know which provider a row
+ * came from. `raw_payload` is `unknown` rather than tied to one provider's
+ * raw shape for the same reason — it's stored purely for debugging/
+ * reprocessing without re-scraping, never read back typed.
+ */
 export type LiveEventInsert = {
-  source: "do512";
+  source: string;
   source_event_id: string;
   artist_name: string;
   venue_name: string;
@@ -239,7 +248,10 @@ export type LiveEventInsert = {
   is_free: boolean | null;
   image_url: string | null;
   ticket_url: string | null;
-  raw_payload: RawDo512Event;
+  /** Ticketmaster classification genre (e.g. "Rock"). Do512 never scrapes
+   *  one, so its rows always set this null. */
+  genre: string | null;
+  raw_payload: unknown;
   last_synced_at: string;
 };
 
@@ -348,6 +360,7 @@ export function mapEventToRow(
     is_free: typeof event.is_free === "boolean" ? event.is_free : null,
     image_url: httpUrlOrNull(event.image_url),
     ticket_url: httpUrlOrNull(event.ticket_url),
+    genre: null,
     raw_payload: event,
     last_synced_at: now.toISOString(),
   };
@@ -396,13 +409,17 @@ const PLACEHOLDER_VALUES = new Set([
  * data. Nulling it here lets all three fall back to "<venue name>, Austin,
  * TX", which is what they already do when the field is genuinely absent.
  */
-function realValueOrNull(value: string | undefined): string | null {
+/** Exported for reuse by other providers (lib/events/providers/*) — the same
+ *  "LLM/API filled the gap with a sentinel word" problem isn't unique to
+ *  Do512; Ticketmaster's own placeholder ("Undefined" for an unclassified
+ *  genre) is already covered by PLACEHOLDER_VALUES below. */
+export function realValueOrNull(value: string | undefined): string | null {
   const trimmed = value?.trim();
   if (!trimmed) return null;
   return PLACEHOLDER_VALUES.has(trimmed.toLowerCase()) ? null : trimmed;
 }
 
-function httpUrlOrNull(value: string | undefined): string | null {
+export function httpUrlOrNull(value: string | undefined): string | null {
   const trimmed = value?.trim();
   if (!trimmed) return null;
   try {

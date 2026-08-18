@@ -50,6 +50,7 @@ type FakeState = {
   deactivateCount: number;
   updateError?: string;
   notArg: string | null;
+  eqArgs: [string, unknown][];
 };
 
 function fakeSupabase(overrides: Partial<Pick<FakeState, "upsertError" | "updateError" | "deactivateCount">> = {}) {
@@ -59,6 +60,7 @@ function fakeSupabase(overrides: Partial<Pick<FakeState, "upsertError" | "update
     updateCalled: false,
     deactivateCount: overrides.deactivateCount ?? 0,
     notArg: null,
+    eqArgs: [],
     ...overrides,
   };
 
@@ -77,7 +79,10 @@ function fakeSupabase(overrides: Partial<Pick<FakeState, "upsertError" | "update
           state.updateCalled = true;
           return builder;
         },
-        eq: () => builder,
+        eq: (col: string, value: unknown) => {
+          state.eqArgs.push([col, value]);
+          return builder;
+        },
         gte: () => builder,
         not: (_col: string, _op: string, value: string) => {
           state.notArg = value;
@@ -189,6 +194,19 @@ describe("syncLiveEvents", () => {
     expect(state.updateCalled).toBe(true);
     expect(result.eventsDeactivated).toBe(2);
     expect(result.partial).toBe(false);
+  });
+
+  it("scopes deactivation to this provider's own source, never another provider's rows", async () => {
+    // Regression guard: with two providers now writing to live_events on
+    // independent schedules, an unscoped deactivation query would treat
+    // every Ticketmaster row as "gone" the moment a Do512 sync ran, since
+    // Ticketmaster rows never appear in Do512's own scraped result set.
+    mockScrape.mockResolvedValue({ ok: true, data: [EVENT_A] });
+    const { client, state } = fakeSupabase();
+
+    await syncLiveEvents(client, { now: NOW });
+
+    expect(state.eqArgs).toContainEqual(["source", "do512"]);
   });
 
   it("skips deactivation on a partial scrape, so a transient failure never hides real events", async () => {

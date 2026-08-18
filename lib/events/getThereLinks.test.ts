@@ -3,6 +3,7 @@ import {
   buildDirectionsUrl,
   buildUberUrl,
   buildUberAppIntentUrl,
+  buildTicketUrl,
 } from "./getThereLinks";
 import type { LiveEventCard } from "./queries";
 
@@ -18,6 +19,8 @@ function makeEvent(overrides: Partial<LiveEventCard> = {}): LiveEventCard {
     isFree: null,
     imageUrl: null,
     ticketUrl: null,
+    genre: null,
+    source: "do512",
     matchedProfileId: null,
     matchedProfileType: null,
     directoryBusinessId: null,
@@ -25,6 +28,17 @@ function makeEvent(overrides: Partial<LiveEventCard> = {}): LiveEventCard {
     ...overrides,
   };
 }
+
+describe("buildTicketUrl", () => {
+  it("returns the stored ticket URL", () => {
+    const url = buildTicketUrl(makeEvent({ ticketUrl: "https://ticketmaster.com/event/1" }));
+    expect(url).toBe("https://ticketmaster.com/event/1");
+  });
+
+  it("returns null when there's no ticket URL, so the caller can hide the button", () => {
+    expect(buildTicketUrl(makeEvent({ ticketUrl: null }))).toBeNull();
+  });
+});
 
 describe("buildDirectionsUrl", () => {
   it("prefers coordinates over a street address", () => {

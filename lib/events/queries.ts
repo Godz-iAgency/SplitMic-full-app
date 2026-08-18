@@ -1,6 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { dedupeAcrossProviders } from "./dedupe";
 
-/** Card shape the public /live page renders. */
+/**
+ * Card shape the public /live page renders. Provider-agnostic by design —
+ * see lib/events/do512.ts's LiveEventInsert docstring for why. `source` is
+ * present for lib/events/dedupe.ts's cross-provider duplicate collapsing,
+ * not because the frontend needs to know it; components/live/* never
+ * branch on it.
+ */
 export type LiveEventCard = {
   id: string;
   artistName: string;
@@ -12,6 +19,8 @@ export type LiveEventCard = {
   isFree: boolean | null;
   imageUrl: string | null;
   ticketUrl: string | null;
+  genre: string | null;
+  source: string;
   matchedProfileId: string | null;
   matchedProfileType: "band" | "venue" | null;
   /** Matched directory venue listing, re-checked live (not the sync-time
@@ -61,7 +70,7 @@ export async function getUpcomingEvents(
   const { data, error } = await supabase
     .from("live_events")
     .select(
-      "id, artist_name, venue_name, venue_address, venue_latitude, venue_longitude, event_datetime, is_free, image_url, ticket_url, matched_profile_id, matched_profile_type, matched_directory_business_id",
+      "id, artist_name, venue_name, venue_address, venue_latitude, venue_longitude, event_datetime, is_free, image_url, ticket_url, genre, source, matched_profile_id, matched_profile_type, matched_directory_business_id",
     )
     .eq("is_active", true)
     .gte("event_datetime", rangeStart.toISOString())
@@ -100,7 +109,7 @@ export async function getUpcomingEvents(
     }
   }
 
-  return data.map((row) => {
+  const cards = data.map((row) => {
     const directory = row.matched_directory_business_id
       ? directoryById.get(row.matched_directory_business_id)
       : undefined;
@@ -116,6 +125,8 @@ export async function getUpcomingEvents(
       isFree: row.is_free,
       imageUrl: row.image_url,
       ticketUrl: row.ticket_url,
+      genre: row.genre,
+      source: row.source,
       matchedProfileId: row.matched_profile_id,
       matchedProfileType: row.matched_profile_type,
       // Only surface the business as matched when it's still active — an id
@@ -124,4 +135,11 @@ export async function getUpcomingEvents(
       directoryPhotoUrl: directory ? directory.ogImageUrl ?? directory.screenshotUrl : null,
     };
   });
+
+  // Collapse the same real-world show reported by two providers (e.g. Do512
+  // and Ticketmaster both listing the same gig) into one card. Non-
+  // destructive by construction — every row this reads stays in the
+  // database untouched; only the rendered list merges. See dedupe.ts for why
+  // this can't happen at sync time instead.
+  return dedupeAcrossProviders(cards);
 }

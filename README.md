@@ -48,7 +48,8 @@ NOTIFY_FROM_EMAIL=               # user notification emails; falls back to a Res
 SUPPORT_FROM_EMAIL=              # support form emails; same fallback
 GEMINI_API_KEY=                  # AI show-matching; needs the Generative Language API enabled
 FIRECRAWL_API_KEY=               # Scrapes Do512 for the /live page's daily sync job
-CRON_SECRET=                     # Shared by both scheduled endpoints (see "Scheduled jobs" below)
+TICKETMASTER_API_KEY=            # Discovery API — server-only, never exposed to the frontend
+CRON_SECRET=                     # Shared by every scheduled endpoint (see "Scheduled jobs" below)
 ```
 
 > **Never commit `.env.local`.** Rotate any credential that's been pasted into a chat, ticket, or doc.
@@ -84,7 +85,7 @@ components/               One folder per feature area, mirrors app/
 lib/
   ai/                     Gemini client + show-matching extraction
   directory/              CSV parsing/import + directory queries, JSON-LD, FAQ copy
-  events/                 Do512 scraping, event sync, profile matching, JSON-LD (see "Live events" below)
+  events/                 Do512 + Ticketmaster providers, sync, dedupe, filters, profile matching, JSON-LD (see "Live events" below)
   scoring/                Band Readiness Score
   supabase/               Server-side query/action helpers (search, messaging, marketplace, profile)
   notifications/          Transactional email
@@ -176,14 +177,42 @@ grant and re-grants only the public-facing columns. Don't remove that block.
 
 `/live` is a public, no-login page showing Austin live music happening today
 and this week — the entry point for "Austin live music" search traffic.
-Events come from Do512, scraped daily via Firecrawl (`lib/events/do512.ts`)
-by the `sync-events` cron job below, matched against SplitMic's own
-published band/venue profiles where possible (`lib/events/matching.ts`), and
-stored in `live_events` (public read, service-role-only writes — see
-`migrations/step10_live_events.sql`). The page also carries a 10-question FAQ
-and JSON-LD structured data (`MusicEvent` per show, `FAQPage`) built from the
-same content it renders, so search engines and AI answer engines see exactly
-what a visitor sees.
+
+Events come from two providers, each mapping its own raw data into the same
+provider-agnostic row shape (`LiveEventInsert`, defined in
+`lib/events/do512.ts`) before a single shared pipeline (`upsertProviderRows`
+in `lib/events/sync.ts`) matches, upserts, and deactivates — the frontend
+never needs to know which provider a row came from:
+
+- **Do512** (`lib/events/do512.ts`) — scraped daily via Firecrawl by the
+  `sync-events` cron job below. Especially useful for free/local shows Do512
+  covers that never touch Ticketmaster.
+- **Ticketmaster** (`lib/events/providers/ticketmaster.ts`) — the Discovery
+  API, filtered to Austin/TX music events, pulled every ~4 hours (see
+  "Scheduled jobs"). Requires `TICKETMASTER_API_KEY`. Especially useful for
+  ticketed shows with a real "Buy Tickets" link, genre, and image.
+
+The same real-world show occasionally appears in both — `lib/events/dedupe.ts`
+collapses those at read time (never at write time, and never by deleting
+anything) into one card, preferring Ticketmaster's richer data when both
+exist. Adding a third provider (Eventbrite, say) means a new file following
+the same "raw → `LiveEventInsert`" shape, not a change to the shared pipeline.
+
+Events are matched against SplitMic's own published band/venue profiles
+where possible (`lib/events/matching.ts`), and stored in `live_events`
+(public read, service-role-only writes — see `migrations/step10_live_events.sql`
+and `migrations/step18_live_events_ticketmaster.sql`). The page also carries a
+10-question FAQ and JSON-LD structured data (`MusicEvent` per show, `FAQPage`)
+built from the same content it renders, so search engines and AI answer
+engines see exactly what a visitor sees.
+
+Besides the Tonight/This Week toggle, cards can be filtered by Free/Paid,
+genre, and venue (`lib/events/filters.ts`, unit-tested pure predicates —
+same pattern as `time.ts`'s `isToday`/`isUpcoming`). Genre and venue options
+are built from whatever values are actually present in the current feed, not
+a fixed list — Ticketmaster's classification genres don't line up
+string-for-string with `lib/genres.ts`'s onboarding taxonomy, so that list
+isn't reused here.
 
 Each card also cross-references the venue name against the business
 directory (`matching.ts`'s `findDirectoryVenueMatch`, independent of the
@@ -198,17 +227,29 @@ sets — a show happening tonight only shows under the Tonight tab.
 
 ## Scheduled jobs
 
-Both jobs below share one `CRON_SECRET` and the same auth pattern
+Every job below shares one `CRON_SECRET` and the same auth pattern
 (`lib/http/cronAuth.ts`): `Authorization: Bearer $CRON_SECRET`, fails closed
-(never runs unauthenticated) if the secret is unset. `vercel.json` schedules
-both; on any other host, point that host's scheduler at the same URLs with
-the same header.
+(never runs unauthenticated) if the secret is unset — any scheduler that can
+send that header works, Vercel Cron is not required.
 
 ```bash
-# Live events — dry run (report only, writes nothing)
+# Do512 sync — dry run (report only, writes nothing)
 curl -H "Authorization: Bearer $CRON_SECRET" \
   "https://<your-domain>/api/cron/sync-events?dryRun=1"
+
+# Ticketmaster sync — dry run
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  "https://<your-domain>/api/cron/sync-ticketmaster?dryRun=1"
 ```
+
+`vercel.json` schedules the Do512 sync (`sync-events`) once daily — Vercel's
+Hobby tier hard-caps cron jobs at once per day, confirmed directly against
+their docs. Ticketmaster listings benefit from fresher data than that, so
+`sync-ticketmaster` is deliberately **not** on Vercel's own cron — instead,
+`.github/workflows/sync-ticketmaster.yml` triggers it externally every 4
+hours via GitHub Actions (free, no paid Vercel plan needed). One-time setup:
+add a `CRON_SECRET` repository secret with the same value as the deployed env
+var; nothing else to configure.
 
 ### Scheduled cleanup
 

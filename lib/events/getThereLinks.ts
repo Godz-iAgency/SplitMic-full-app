@@ -7,6 +7,19 @@ import type { LiveEventCard } from "./queries";
  * destination" instead of two copies that could drift.
  */
 
+/**
+ * The "Buy Tickets" destination — currently a passthrough to the stored
+ * `ticket_url`, but centralized here (rather than components reading
+ * `event.ticketUrl` directly) so that affiliate tracking, once the
+ * Ticketmaster affiliate program application is approved, is a one-line
+ * change in this one function instead of a change everywhere a ticket link
+ * is rendered. Returns null when there's nothing to link to — the caller
+ * decides whether that means hiding the button.
+ */
+export function buildTicketUrl(event: LiveEventCard): string | null {
+  return event.ticketUrl;
+}
+
 export function buildDirectionsUrl(event: LiveEventCard): string {
   const destination =
     event.venueLatitude != null && event.venueLongitude != null
