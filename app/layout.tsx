@@ -53,6 +53,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${dmSans.variable} scroll-smooth`}>
+      <head>
+        {/* Impact.com site verification for the Ticketmaster affiliate application.
+            Impact's snippet uses a non-standard "value" attribute instead of
+            "content", which React's <meta> typing doesn't allow — cast to render
+            the exact attribute their verifier expects. */}
+        <meta
+          name="impact-site-verification"
+          {...{ value: "e11d1960-fed4-4ea9-a8b6-24f60611ed39" }}
+        />
+      </head>
       <body className="min-h-screen overflow-x-clip bg-black text-white">
         {children}
         <ServiceWorkerRegister />
