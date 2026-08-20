@@ -1,6 +1,6 @@
-import { Navigation, Car, Ticket } from "lucide-react";
+import { Navigation, Car, Ticket, ExternalLink } from "lucide-react";
 import type { LiveEventCard } from "@/lib/events/queries";
-import { buildDirectionsUrl, buildTicketUrl } from "@/lib/events/getThereLinks";
+import { buildDirectionsUrl, buildTicketLink } from "@/lib/events/getThereLinks";
 import { UberLink } from "./UberLink";
 
 type Props = {
@@ -15,29 +15,36 @@ type Props = {
  */
 export function GetThereButtons({ event }: Props) {
   const directionsUrl = buildDirectionsUrl(event);
-  const ticketUrl = buildTicketUrl(event);
+  const ticketLink = buildTicketLink(event);
 
   return (
     // relative + z-10: sits above EventCard's stretched venue-link overlay
     // (z-[1]) so these stay independently clickable when the card itself is
     // wrapped in a link.
     <div className="relative z-10 mt-3 flex flex-col gap-2">
-      {/* Full-width and brand-colored on its own row when present — buying a
-          ticket is the primary action for a ticketed show, Directions/Uber
-          are secondary utility actions either way. Absent for most Do512
-          shows (no ticket link scraped) and present for most Ticketmaster
-          ones, but never branches on `source` — this only ever looks at
-          whether a ticket URL exists, matching every other unified-feed
-          component. */}
-      {ticketUrl ? (
+      {/* Full-width on its own row when present, since it's the primary action
+          for a ticketed show. The label and emphasis come from
+          buildTicketLink, not from this component: only a real point of sale
+          says "Buy Tickets" and gets the brand fill. A Do512 URL is that
+          show's page on a local events calendar, so promising a purchase there
+          would be a lie the user only discovers after tapping. */}
+      {ticketLink ? (
         <a
-          href={ticketUrl}
+          href={ticketLink.href}
           target="_blank"
           rel="noopener noreferrer"
-          className="tappable inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-orange px-3 py-1.5 text-xs font-bold text-black hover:bg-brand-orange/90"
+          className={
+            ticketLink.isCheckout
+              ? "tappable inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-orange px-3 py-1.5 text-xs font-bold text-black hover:bg-brand-orange/90"
+              : "tappable inline-flex items-center justify-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/10"
+          }
         >
-          <Ticket className="h-3.5 w-3.5" aria-hidden="true" />
-          Buy Tickets
+          {ticketLink.isCheckout ? (
+            <Ticket className="h-3.5 w-3.5" aria-hidden="true" />
+          ) : (
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
+          {ticketLink.label}
         </a>
       ) : null}
       <div className="flex gap-2">

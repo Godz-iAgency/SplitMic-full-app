@@ -4,6 +4,7 @@ import {
   buildUberUrl,
   buildUberAppIntentUrl,
   buildTicketUrl,
+  buildTicketLink,
 } from "./getThereLinks";
 import type { LiveEventCard } from "./queries";
 
@@ -28,6 +29,48 @@ function makeEvent(overrides: Partial<LiveEventCard> = {}): LiveEventCard {
     ...overrides,
   };
 }
+
+describe("buildTicketLink", () => {
+  it("labels a Ticketmaster link as a real purchase", () => {
+    const link = buildTicketLink(
+      makeEvent({ source: "ticketmaster", ticketUrl: "https://ticketmaster.com/event/1" }),
+    );
+    expect(link).toEqual({
+      href: "https://ticketmaster.com/event/1",
+      label: "Buy Tickets",
+      isCheckout: true,
+    });
+  });
+
+  it("never labels a Do512 link as a purchase", () => {
+    // The regression this guards, observed live: every Do512 row carries a
+    // do512.com/events/... URL, which is that show's page on a local events
+    // calendar — not a checkout. Before this split, free open-mic nights
+    // rendered a "Buy Tickets" button promising a purchase that doesn't exist
+    // at the other end.
+    const link = buildTicketLink(
+      makeEvent({
+        source: "do512",
+        ticketUrl: "https://do512.com/events/2026/8/19/open-mic-tickets",
+      }),
+    );
+    expect(link?.isCheckout).toBe(false);
+    expect(link?.label).toBe("Event details");
+  });
+
+  it("returns null when there is no link at all, rather than inventing one", () => {
+    expect(buildTicketLink(makeEvent({ ticketUrl: null }))).toBeNull();
+  });
+
+  it("treats an unrecognized future source as a listing, not a checkout", () => {
+    // Fail safe: a provider added later is not assumed to sell tickets until
+    // it's explicitly added to TICKETING_SOURCES.
+    const link = buildTicketLink(
+      makeEvent({ source: "eventbrite", ticketUrl: "https://example.com/e/1" }),
+    );
+    expect(link?.isCheckout).toBe(false);
+  });
+});
 
 describe("buildTicketUrl", () => {
   it("returns the stored ticket URL", () => {

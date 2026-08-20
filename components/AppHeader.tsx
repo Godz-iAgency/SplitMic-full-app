@@ -5,6 +5,7 @@ import {
   Newspaper,
   UserCircle,
   LifeBuoy,
+  Sparkles,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -12,7 +13,7 @@ import { InboxBell } from "@/components/inbox/InboxBell";
 import { AdminLink } from "@/components/admin/AdminLink";
 import { HeaderMessagesLink } from "@/components/HeaderMessagesLink";
 
-type Active = "home" | "discover" | "feed" | "inbox" | "profile" | null;
+type Active = "home" | "discover" | "assistant" | "feed" | "inbox" | "profile" | null;
 
 type Props = {
   /** Which destination is currently active (for nav highlight). */
@@ -26,6 +27,7 @@ type Props = {
 const DESKTOP_NAV: { key: Active; href: string; label: string }[] = [
   { key: "home", href: "/home", label: "Home" },
   { key: "discover", href: "/search", label: "Discover" },
+  { key: "assistant", href: "/assistant", label: "Ask AI" },
   { key: "feed", href: "/opportunities", label: "Feed" },
 ];
 
@@ -139,6 +141,15 @@ export function AppHeader({
           label="Discover"
           icon={Compass}
           active={active === "discover"}
+        />
+        {/* Five tabs is the practical ceiling here: at 375px each gets ~75px,
+            still well clear of the 44px touch minimum. A sixth would start
+            truncating labels on the narrowest phones. */}
+        <BottomTab
+          href="/assistant"
+          label="Ask AI"
+          icon={Sparkles}
+          active={active === "assistant"}
         />
         <BottomTab
           href="/opportunities"

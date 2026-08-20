@@ -20,6 +20,42 @@ export function buildTicketUrl(event: LiveEventCard): string | null {
   return event.ticketUrl;
 }
 
+/**
+ * Sources that actually sell tickets, as opposed to sources whose "ticket_url"
+ * is really a listing page that happens to be where you'd go next.
+ *
+ * This distinction is not cosmetic. A Do512 URL points at that show's page on
+ * a local events calendar — it is not a checkout, and labelling it "Buy
+ * Tickets" tells the user they're about to purchase something they aren't.
+ * Observed live: every Do512 row carries a do512.com/events/... URL, so before
+ * this split every free open-mic night rendered a Buy Tickets button.
+ */
+const TICKETING_SOURCES = new Set(["ticketmaster"]);
+
+export type TicketLink = {
+  href: string;
+  label: string;
+  /** True only when the destination is a real point of sale. */
+  isCheckout: boolean;
+};
+
+/**
+ * The single decision for "what does this event's outbound link say". Shared
+ * by the /live cards and the AI assistant so the two can never disagree about
+ * whether something is for sale.
+ */
+export function buildTicketLink(event: LiveEventCard): TicketLink | null {
+  const href = buildTicketUrl(event);
+  if (!href) return null;
+
+  const isCheckout = TICKETING_SOURCES.has(event.source);
+  return {
+    href,
+    label: isCheckout ? "Buy Tickets" : "Event details",
+    isCheckout,
+  };
+}
+
 export function buildDirectionsUrl(event: LiveEventCard): string {
   const destination =
     event.venueLatitude != null && event.venueLongitude != null

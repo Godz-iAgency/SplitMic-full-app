@@ -46,7 +46,11 @@ NEXT_PUBLIC_APP_URL=             # site origin for links in emails; defaults to 
 RESEND_API_KEY=
 NOTIFY_FROM_EMAIL=               # user notification emails; falls back to a Resend shared address
 SUPPORT_FROM_EMAIL=              # support form emails; same fallback
-GEMINI_API_KEY=                  # AI show-matching; needs the Generative Language API enabled
+GEMINI_API_KEY=                  # AI show-matching + SplitMic AI (primary); needs the Generative Language API enabled
+GEMINI_MODEL=                    # optional override; defaults to gemini-2.5-flash
+GROQ_API_KEY=                    # SplitMic AI fallback provider — optional but strongly recommended
+GROQ_MODEL=                      # optional override; catalog is account-scoped, see "SplitMic AI" below
+FREE_AI_MESSAGES_PER_DAY=        # assistant questions per account per day; defaults to 50
 FIRECRAWL_API_KEY=               # Scrapes Do512 for the /live page's daily sync job
 TICKETMASTER_API_KEY=            # Discovery API — server-only, never exposed to the frontend
 CRON_SECRET=                     # Shared by every scheduled endpoint (see "Scheduled jobs" below)
@@ -224,6 +228,62 @@ deactivated (confirmed-dead) directory listing is treated as no match, since
 that's re-checked live in `getUpcomingEvents`, not trusted from the sync-time
 snapshot. "Tonight" and "This Week" are a strict partition, not overlapping
 sets — a show happening tonight only shows under the Tonight tab.
+
+Neither tab ever renders empty. If a sync gap leaves nothing dated for the
+current window, `selectTonightEvents` / `selectThisWeekEvents`
+(`lib/events/filters.ts`) fall back to the most recent listings that did sync,
+because "no shows tonight in Austin" is almost never true and reads as a broken
+page rather than as stale data.
+
+An event's outbound link is decided by `buildTicketLink`, not by whether a URL
+exists. Only sources that genuinely sell tickets (currently Ticketmaster) get
+**Buy Tickets**; everything else gets **Event details**, because a Do512 URL is
+that show's page on an events calendar, not a checkout. A new provider is
+treated as a listing until it's explicitly added to `TICKETING_SOURCES`.
+
+## SplitMic AI (`/assistant`)
+
+An authenticated conversational layer over the data the directory, search, and
+`/live` already expose. It adds no new data — it's a different way in.
+
+**Flow:** the user's message and the prior turns go to a model with three
+read-only tools; the model picks one, the backend runs the real query, and the
+model writes prose around the results while the UI renders the rows as cards.
+
+| Tool | Backed by |
+|---|---|
+| `search_splitmic_members` | `searchProfiles` — the 5 real player types |
+| `search_austin_directory` | `directory_businesses` — the 8 scraped categories |
+| `search_live_events` | `getUpcomingEvents` + the `/live` selectors |
+
+**Providers** (`lib/ai/providers/`): Gemini primary, Groq fallback. Only
+*retryable* failures (429, 5xx, timeout) fall through — a bad key or malformed
+request fails identically on both, so retrying would just burn the second
+quota. The conversation is provider-independent, so a mid-conversation switch
+carries full context. Groq's model catalog is **account-scoped**: check
+`https://api.groq.com/openai/v1/models` before setting `GROQ_MODEL` — the
+common Llama ids 404 on some accounts.
+
+**Three things are load-bearing and shouldn't be "simplified":**
+
+1. **The model never emits a URL.** Tool results handed back to it contain no
+   URLs at all; every link is built server-side into `AssistantCard.actions`
+   and rendered by the UI. `stripUrls` removes any address that appears anyway.
+   This is what makes "never invent a link" structural rather than a request.
+2. **Tools run on the caller's own Supabase client**, so RLS and the
+   directory's column grants (which hide scraped contact emails) apply to the
+   AI unchanged. The AI gets no privilege the signed-in user lacks.
+3. **Only plain user/assistant text is accepted from the browser.** Tool calls
+   and results are never replayed from the client — a forged tool result would
+   let a caller feed invented "search results" in and have them narrated as
+   fact.
+
+**Limits and logging:** `ai_usage_events` (migration `step19`) backs a
+per-account daily cap — our number, not a provider's, since free tiers change
+without notice. It deliberately stores no message text, only shape: provider,
+model, whether the request fell back, tool-call and result counts, latency.
+`checkDailyLimit` fails *open* on a query error; the cap is a cost guardrail,
+not a security control.
 
 ## Scheduled jobs
 
