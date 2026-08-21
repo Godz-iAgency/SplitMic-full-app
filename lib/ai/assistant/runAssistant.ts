@@ -102,7 +102,7 @@ export async function runAssistant(options: {
 
     if (reply.kind === "text") {
       return {
-        text: stripUrls(reply.text),
+        text: cleanModelText(reply.text),
         cards: dedupeCards(cards),
         degraded: fellBack,
         telemetry: {
@@ -172,12 +172,19 @@ function sanitizeHistory(history: AssistantTurn[]): ProviderTurn[] {
 }
 
 /**
- * Defense in depth for the no-URL rule. The system prompt forbids links and
- * tool results contain none for the model to copy, but a model can still
- * produce a plausible-looking address from its own training data — and a
- * fabricated link that 404s (or worse, resolves somewhere unrelated) is
- * exactly the failure the rule exists to prevent. Enforced here rather than
- * merely requested.
+ * Both cleanups here are defense in depth, not the primary defense. The
+ * system prompt already forbids links and em dashes, and tool results contain
+ * no URLs for the model to copy, but a model can still ignore an instruction.
+ * Enforcing it in code, not just requesting it in the prompt, is what makes it
+ * a guarantee.
+ */
+function cleanModelText(text: string): string {
+  return stripEmDashes(stripUrls(text));
+}
+
+/**
+ * A fabricated link that 404s (or worse, resolves somewhere unrelated) is
+ * exactly the failure the no-URL rule exists to prevent.
  */
 export function stripUrls(text: string): string {
   return text
@@ -186,6 +193,24 @@ export function stripUrls(text: string): string {
     // Bare URLs, with any trailing sentence punctuation left in place.
     .replace(/\b(?:https?:\/\/|www\.)[^\s<>()]+/gi, "")
     // Collapse the whitespace the removals leave behind.
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/ +([.,!?;:])/g, "$1")
+    .trim();
+}
+
+/**
+ * Em dashes read as an unmistakable "written by a language model" tell to
+ * most people at this point, which defeats the point of a tool meant to feel
+ * like a normal part of the product rather than a bolted-on chatbot. The
+ * common LLM pattern is a spaced em dash joining two clauses, which reads
+ * naturally as a comma; a rarer unspaced one (a date or number range) reads
+ * naturally as a hyphen instead.
+ */
+export function stripEmDashes(text: string): string {
+  return text
+    .replace(/\s+—\s+/g, ", ")
+    .replace(/—/g, "-")
+    .replace(/,\s*,/g, ",")
     .replace(/[ \t]{2,}/g, " ")
     .replace(/ +([.,!?;:])/g, "$1")
     .trim();

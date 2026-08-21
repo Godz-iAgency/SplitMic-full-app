@@ -135,7 +135,7 @@ export function AssistantChat() {
 
                 {bubble.degraded ? (
                   <p className="text-xs text-brand-gray-400">
-                    Answered by the backup model — results are still real, but
+                    Answered by the backup model. Results are still real, but
                     the wording may be rougher than usual.
                   </p>
                 ) : null}

@@ -92,7 +92,7 @@ const KNOWN_BLOCKED: { match: RegExp; name: string }[] = [
 ];
 
 const SUPPORTED_LIST =
-  "YouTube, Vimeo, Loom, SoundCloud, Spotify, or Google Drive — or a direct link to a video file (.mp4, .webm)";
+  "YouTube, Vimeo, Loom, SoundCloud, Spotify, or Google Drive, or a direct link to a video file (.mp4, .webm)";
 
 /**
  * Resolves a user-pasted link to an embed. Accepts a bare host too

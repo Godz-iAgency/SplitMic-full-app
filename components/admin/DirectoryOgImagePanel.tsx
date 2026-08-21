@@ -63,7 +63,7 @@ export function DirectoryOgImagePanel({ done, pending, failed }: Props) {
           <p className="mt-1 text-sm text-brand-gray-300">
             {done} found · {pending} waiting
             {failed > 0 ? ` · ${failed} failed` : ""}. Pulls each business's own
-            website preview photo — no API key, no cost. Safe to stop and
+            website preview photo, no API key, no cost. Safe to stop and
             continue later.
           </p>
         </div>
@@ -109,7 +109,7 @@ export function DirectoryOgImagePanel({ done, pending, failed }: Props) {
 
       {busy ? (
         <p className="mt-3 text-sm text-brand-gray-400">
-          Checking up to {batch} sites. This takes a few seconds each — leave
+          Checking up to {batch} sites. This takes a few seconds each, leave
           the page open.
         </p>
       ) : null}
@@ -135,7 +135,7 @@ export function DirectoryOgImagePanel({ done, pending, failed }: Props) {
             <ul className="space-y-0.5 text-xs text-brand-gray-400">
               {result.failures.slice(0, 10).map((f) => (
                 <li key={f.businessName}>
-                  <span className="text-brand-gray-300">{f.businessName}</span> —{" "}
+                  <span className="text-brand-gray-300">{f.businessName}</span>:{" "}
                   {f.reason}
                 </li>
               ))}

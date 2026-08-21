@@ -88,7 +88,7 @@ export function AddressStep({
       <header className="mb-6">
         <h1 className="text-2xl font-bold sm:text-3xl">Where are you based?</h1>
         <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
-          Anywhere in Texas works — plenty of players drive in for Austin gigs.
+          Anywhere in Texas works, plenty of players drive in for Austin gigs.
           Shows, venues, and everything in the app stay focused on Austin.
         </p>
       </header>

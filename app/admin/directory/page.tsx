@@ -179,7 +179,7 @@ export default async function AdminDirectoryPage({
 
       <p className="text-sm text-brand-gray-300">
         {truncated
-          ? `Showing ${rows.length} of ${total} — narrow the filters to see the rest.`
+          ? `Showing ${rows.length} of ${total}. Narrow the filters to see the rest.`
           : `${total} ${total === 1 ? "business" : "businesses"}.`}
       </p>
 

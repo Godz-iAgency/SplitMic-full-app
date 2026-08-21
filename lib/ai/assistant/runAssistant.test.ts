@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { stripUrls } from "./runAssistant";
+import { stripUrls, stripEmDashes } from "./runAssistant";
 
 /**
  * stripUrls is the enforcement half of the no-fabricated-URL rule. The system
@@ -51,5 +51,44 @@ describe("stripUrls", () => {
 
   it("leaves an empty string when the text was only a link", () => {
     expect(stripUrls("https://example.com")).toBe("");
+  });
+});
+
+/**
+ * stripEmDashes is the enforcement half of the "never use an em dash" rule in
+ * systemPrompt.ts. Both Gemini and Groq reach for a spaced em dash constantly
+ * in freeform prose (observed live during testing), and it's one of the more
+ * recognizable "this was written by a model" tells, which undercuts the whole
+ * point of an assistant meant to feel like a normal part of the product.
+ * Asking the model not to is not a guarantee, so this backstop is.
+ */
+describe("stripEmDashes", () => {
+  it("keeps ordinary prose untouched", () => {
+    const text = "I found 3 bands that play reggae in Austin.";
+    expect(stripEmDashes(text)).toBe(text);
+  });
+
+  it("replaces a spaced em dash joining two clauses with a comma", () => {
+    expect(
+      stripEmDashes("I found 12 shows tonight — three are ticketed through Ticketmaster."),
+    ).toBe("I found 12 shows tonight, three are ticketed through Ticketmaster.");
+  });
+
+  it("replaces an unspaced em dash (a range) with a hyphen", () => {
+    expect(stripEmDashes("The festival runs Aug 20—Aug 22.")).toBe(
+      "The festival runs Aug 20-Aug 22.",
+    );
+  });
+
+  it("handles several em dashes in one message", () => {
+    expect(
+      stripEmDashes("Rock — Country — Blues are all represented tonight."),
+    ).toBe("Rock, Country, Blues are all represented tonight.");
+  });
+
+  it("does not leave a space before trailing punctuation", () => {
+    expect(stripEmDashes("Doors at 8pm — early by local standards.")).toBe(
+      "Doors at 8pm, early by local standards.",
+    );
   });
 });

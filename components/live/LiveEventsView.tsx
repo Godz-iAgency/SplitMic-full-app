@@ -65,7 +65,7 @@ export function LiveEventsView({ events }: Props) {
         <header className="text-center">
           <h1 className="text-3xl font-bold sm:text-4xl">Austin Live Music</h1>
           <p className="mt-2 text-brand-gray-300">
-            Real shows happening in Austin, TX — updated daily.
+            Real shows happening in Austin, TX, updated daily.
           </p>
         </header>
 

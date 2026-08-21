@@ -70,7 +70,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "search_splitmic_members",
     description:
-      "Search real SplitMic member accounts: bands, venues, talent buyers, record labels, and festivals. These are signed-up users with profiles the viewer can open and contact. Prefer this over the directory when the user wants someone to work with, book, or contact. Does not cover rehearsal studios, backline, or instrument rental — those are directory-only.",
+      "Search real SplitMic member accounts: bands, venues, talent buyers, record labels, and festivals. These are signed-up users with profiles the viewer can open and contact. Prefer this over the directory when the user wants someone to work with, book, or contact. Does not cover rehearsal studios, backline, or instrument rental; those are directory-only.",
     parameters: {
       type: "object",
       properties: {
@@ -97,7 +97,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "search_austin_directory",
     description:
-      "Search the curated Austin music-business directory. This is the ONLY source for rehearsal studios, backline companies, and instrument rental. Listings carry a name, website, phone, and description — they do NOT carry availability, pricing, or booking data, so never state or imply that a listing is available or bookable.",
+      "Search the curated Austin music-business directory. This is the ONLY source for rehearsal studios, backline companies, and instrument rental. Listings carry a name, website, phone, and description. They do NOT carry availability, pricing, or booking data, so never state or imply that a listing is available or bookable.",
     parameters: {
       type: "object",
       properties: {

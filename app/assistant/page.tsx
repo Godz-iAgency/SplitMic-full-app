@@ -41,7 +41,7 @@ export default async function AssistantPage() {
           </h1>
           <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
             Ask for bands, venues, rehearsal rooms, gear, or tonight&apos;s
-            shows. Every result is a real SplitMic record — nothing invented.
+            shows. Every result is a real SplitMic record, nothing invented.
           </p>
         </div>
 

@@ -138,7 +138,7 @@ export function VideoLinkSlot({
       {!trimmed ? (
         <p className="text-xs leading-relaxed text-brand-gray-400">
           Works with YouTube, Vimeo, Loom, SoundCloud, Spotify, Google Drive,
-          and Dropbox — or a direct link to a video file (.mp4, .webm) hosted
+          and Dropbox, or a direct link to a video file (.mp4, .webm) hosted
           anywhere. It plays right on your profile, so visitors never leave
           SplitMic. No length limit.
         </p>

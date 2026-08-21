@@ -13,7 +13,7 @@ export function EmptyState({ range }: Props) {
         No listed shows found for {range === "today" ? "tonight" : "this week"} yet
       </p>
       <p className="max-w-sm text-sm text-brand-gray-400">
-        Austin&rsquo;s live music calendar updates daily — check back soon, or
+        Austin&rsquo;s live music calendar updates daily, check back soon, or
         browse the{" "}
         <Link href="/directory" className="text-brand-orange hover:underline">
           directory of Austin bands and venues

@@ -88,7 +88,7 @@ function ImportReport({ result }: { result: DirectoryImportResult & { error?: st
         <p className="text-sm font-semibold text-red-300">{result.error}</p>
       ) : (
         <p className="text-sm font-semibold text-emerald-300">
-          {result.dryRun ? "Dry run — nothing was written." : "Import complete."}
+          {result.dryRun ? "Dry run: nothing was written." : "Import complete."}
         </p>
       )}
 

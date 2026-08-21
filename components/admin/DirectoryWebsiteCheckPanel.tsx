@@ -131,7 +131,7 @@ export function DirectoryWebsiteCheckPanel({
     if (businesses.length === 0) return;
     const ok = window.confirm(
       `Hide ${businesses.length} listing(s) with a confirmed-dead website from the public directory?\n\n` +
-        `This sets them inactive — reversible any time from a row's "Show in directory" toggle, not a permanent delete.`,
+        `This sets them inactive, reversible any time from a row's "Show in directory" toggle, not a permanent delete.`,
     );
     if (!ok) return;
 
@@ -163,7 +163,7 @@ export function DirectoryWebsiteCheckPanel({
           <p className="mt-1 text-sm text-brand-gray-300">
             {tally.live} live · {tally.dead} dead · {tally.uncertain} uncertain
             {noWebsite > 0 ? ` · ${noWebsite} no website` : ""} · {pending}{" "}
-            waiting. Confirms each business's site still responds — no API
+            waiting. Confirms each business's site still responds, no API
             key, no cost. Safe to stop and continue later.
           </p>
         </div>
@@ -223,7 +223,7 @@ export function DirectoryWebsiteCheckPanel({
 
       {autoRun ? (
         <p className="mt-3 text-sm text-brand-gray-400">
-          Auto-checking {pending} remaining site{pending === 1 ? "" : "s"} —
+          Auto-checking {pending} remaining site{pending === 1 ? "" : "s"},
           leave this tab open. Checked {totalChecked} so far.
         </p>
       ) : null}
@@ -239,7 +239,7 @@ export function DirectoryWebsiteCheckPanel({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-semibold text-red-300">
               {deadList.size} listing{deadList.size === 1 ? "" : "s"} confirmed
-              dead — website returned a hard 404/410, or the domain no longer
+              dead: website returned a hard 404/410, or the domain no longer
               resolves.
             </p>
             <button
@@ -254,8 +254,8 @@ export function DirectoryWebsiteCheckPanel({
           <ul className="mt-3 space-y-1 text-xs text-brand-gray-400">
             {[...deadList.values()].slice(0, 15).map((d) => (
               <li key={d.id}>
-                <span className="text-brand-gray-200">{d.businessName}</span> —{" "}
-                {d.websiteUrl} — {d.reason}
+                <span className="text-brand-gray-200">{d.businessName}</span>:{" "}
+                {d.websiteUrl} ({d.reason})
               </li>
             ))}
             {deadList.size > 15 ? <li>…and {deadList.size - 15} more.</li> : null}

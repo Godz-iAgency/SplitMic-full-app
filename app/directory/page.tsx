@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Austin Live Music Directory | SplitMic",
     description:
-      "Venues, bands, talent buyers, labels, festivals, studios, and gear — the Austin music industry in one place.",
+      "Venues, bands, talent buyers, labels, festivals, studios, and gear: the Austin music industry in one place.",
     type: "website",
   },
 };
@@ -69,7 +69,7 @@ export default async function DirectoryHubPage({
           </h1>
           <p className="mx-auto mt-2 max-w-2xl text-brand-gray-300">
             Venues, bands, talent buyers, labels, festivals, rehearsal studios,
-            instrument rental, and backline — the people who actually make
+            instrument rental, and backline: the people who actually make
             Austin&rsquo;s music scene run.
           </p>
         </header>

@@ -16,12 +16,12 @@ export const metadata: Metadata = {
   // repeat the suffix here (it doubled up before this fix).
   title: "Austin Live Music Tonight & This Week",
   description:
-    "Live bands and shows happening in Austin, TX today — venue, time, and directions for every show. Updated daily.",
+    "Live bands and shows happening in Austin, TX today: venue, time, and directions for every show. Updated daily.",
   alternates: { canonical: "/live" },
   openGraph: {
     title: "Austin Live Music Tonight & This Week | SplitMic",
     description:
-      "Live bands and shows happening in Austin, TX today — venue, time, and directions for every show. Updated daily.",
+      "Live bands and shows happening in Austin, TX today: venue, time, and directions for every show. Updated daily.",
     type: "website",
   },
 };

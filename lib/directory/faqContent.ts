@@ -74,7 +74,7 @@ export const FAQ_BY_CATEGORY: Record<DirectoryCategory, FaqItem[]> = {
     {
       question: "How do I submit music to a label?",
       answer:
-        "Check the label's own site first — most publish submission guidelines, and many don't take unsolicited demos. Sending the wrong thing to the wrong label is the most common mistake.",
+        "Check the label's own site first: most publish submission guidelines, and many don't take unsolicited demos. Sending the wrong thing to the wrong label is the most common mistake.",
     },
   ],
   festival: [
@@ -122,7 +122,7 @@ export const FAQ_BY_CATEGORY: Record<DirectoryCategory, FaqItem[]> = {
     {
       question: "What is backline?",
       answer:
-        "Backline is the stage gear a band plays through — drums, amps, keyboards — as opposed to the PA the venue provides. Touring acts and festivals often rent it locally instead of hauling it.",
+        "Backline is the stage gear a band plays through (drums, amps, keyboards), as opposed to the PA the venue provides. Touring acts and festivals often rent it locally instead of hauling it.",
     },
     {
       question: "When do I need a backline company?",

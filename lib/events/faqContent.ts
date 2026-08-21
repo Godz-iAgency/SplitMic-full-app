@@ -15,7 +15,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     question: "Where can I find live music in Austin tonight?",
     answer:
-      "The feed above lists tonight's shows in Austin, with the venue, artist, and start time for each — pulled fresh every day.",
+      "The feed above lists tonight's shows in Austin, with the venue, artist, and start time for each, pulled fresh every day.",
   },
   {
     question: "What are the best live music venues in Austin, TX?",
@@ -25,7 +25,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     question: "Is there free live music in Austin?",
     answer:
-      "Yes — many Austin bars and venues host free shows on weeknights, and some run free live music every night of the week. Free shows are marked on the events above when the listing indicates no cover.",
+      "Yes, many Austin bars and venues host free shows on weeknights, and some run free live music every night of the week. Free shows are marked on the events above when the listing indicates no cover.",
   },
   {
     question: 'Why is Austin called the "Live Music Capital of the World"?',
@@ -45,7 +45,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     question: "Where can I see live music on 6th Street?",
     answer:
-      "6th Street is Austin's densest strip of bars and clubs, many with live music every night — walk a few blocks and you'll pass several stages. Check the feed above for who's actually playing there tonight.",
+      "6th Street is Austin's densest strip of bars and clubs, many with live music every night. Walk a few blocks and you'll pass several stages. Check the feed above for who's actually playing there tonight.",
   },
   {
     question: "What neighborhood in Austin has the best live music scene?",
@@ -55,7 +55,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     question: "Does Austin have live music every night of the week?",
     answer:
-      "Yes — a number of Austin venues book live music seven nights a week, which is part of why the city earned its \"Live Music Capital\" reputation.",
+      "Yes, a number of Austin venues book live music seven nights a week, which is part of why the city earned its \"Live Music Capital\" reputation.",
   },
   {
     question: "How do I find local bands playing in Austin?",
