@@ -1,16 +1,24 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Home, Music, BookOpen } from "lucide-react";
+import { Home } from "lucide-react";
 
 /**
- * Home first, then the two public destinations. Home anchors to the player-type
- * section — the "what is this" answer — rather than the very top, which the
- * logo already covers.
+ * Home anchors to the player-type section — the "what is this" answer —
+ * rather than the very top, which the logo already covers. Icon-only on
+ * mobile, text label at sm+; unchanged from before.
  */
-const TABS = [
-  { href: "#who-its-for", label: "Home", Icon: Home, external: false },
-  { href: "/live", label: "Live Music", Icon: Music, external: true },
-  { href: "/directory", label: "Directory", Icon: BookOpen, external: true },
+const HOME_TAB = { href: "#who-its-for", label: "Home" };
+
+/**
+ * Directory and Live Music sit on the right, in the header's former "Log in"
+ * slot. There is no login entry point in the header at all anymore — Sign Up
+ * Free / Log In are already prominent buttons in the hero, so the header's
+ * copy was purely redundant, and removing it is what frees the room for these
+ * two to read as text at every width instead of icon-only on mobile.
+ */
+const RIGHT_TABS = [
+  { href: "/directory", label: "Directory" },
+  { href: "/live", label: "Live Music" },
 ];
 
 export function LandingNav() {
@@ -36,51 +44,36 @@ export function LandingNav() {
           </span>
         </a>
 
-        {/* Section tabs — icons on mobile, text labels on sm+.
-            No min-w-0: the tab buttons are shrink-0, so without this the nav
-            container could be squeezed narrower than its own content and the
-            overflow would visually collide with the auth actions next to it. */}
-        <nav
-          aria-label="Page sections"
-          className="flex flex-1 items-center gap-1"
+        {/* Home — stays right next to the logo, icon on mobile / text on sm+. */}
+        <a
+          href={HOME_TAB.href}
+          aria-label={HOME_TAB.label}
+          className="flex shrink-0 items-center justify-center rounded-full p-2.5 text-brand-gray-300 tappable hover:bg-white/5 hover:text-white sm:gap-1.5 sm:px-3 sm:py-1.5"
         >
-          {TABS.map(({ href, label, Icon, external }) => {
-            const className =
-              "flex shrink-0 items-center justify-center rounded-full p-2.5 text-brand-gray-300 tappable hover:bg-white/5 hover:text-white sm:gap-1.5 sm:px-3 sm:py-1.5";
-            const inner = (
-              <>
-                {/* Icon — mobile only */}
-                <Icon className="h-4 w-4 sm:hidden" aria-hidden="true" />
-                {/* Text — sm+ only */}
-                <span className="hidden whitespace-nowrap text-sm font-semibold sm:inline">
-                  {label}
-                </span>
-              </>
-            );
+          <Home className="h-4 w-4 sm:hidden" aria-hidden="true" />
+          <span className="hidden whitespace-nowrap text-sm font-semibold sm:inline">
+            {HOME_TAB.label}
+          </span>
+        </a>
 
-            // Hash anchors stay plain <a> so they scroll; real routes use Link
-            // for client-side navigation.
-            return external ? (
-              <Link key={href} href={href} aria-label={label} className={className}>
-                {inner}
-              </Link>
-            ) : (
-              <a key={href} href={href} aria-label={label} className={className}>
-                {inner}
-              </a>
-            );
-          })}
+        {/* Spacer pushes Directory/Live Music to the far right, matching
+            where "Log in" used to sit. */}
+        <div className="flex-1" />
+
+        {/* Directory, then Live Music — always plain text, every width, no
+            icon-only mobile state. These are real routes, so Link for
+            client-side navigation. */}
+        <nav aria-label="Directory and live music" className="flex shrink-0 items-center gap-1">
+          {RIGHT_TABS.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              className="whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold text-brand-gray-300 tappable hover:bg-white/5 hover:text-white"
+            >
+              {label}
+            </Link>
+          ))}
         </nav>
-
-        {/* Auth actions — Sign Up lives in the hero CTA; header keeps just Log in */}
-        <div className="flex shrink-0 items-center">
-          <Link
-            href="/login"
-            className="rounded-full px-3 py-1.5 text-sm font-semibold text-brand-gray-300 transition hover:text-white"
-          >
-            Log in
-          </Link>
-        </div>
       </div>
     </header>
   );
