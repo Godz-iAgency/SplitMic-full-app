@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Home } from "lucide-react";
+import { ThemeSongButton } from "./ThemeSongButton";
 
 /**
  * Home anchors to the player-type section — the "what is this" answer —
@@ -24,7 +25,9 @@ const RIGHT_TABS = [
 export function LandingNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-black/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
+      {/* `relative` anchors ThemeSongButton's hidden player, which is
+          absolutely positioned so it occupies no layout space. */}
+      <div className="relative mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
         {/* Logo — plain <a> so it always hard-navigates to / and replays the hero animation */}
         <a
           href="/"
@@ -55,6 +58,11 @@ export function LandingNav() {
             {HOME_TAB.label}
           </span>
         </a>
+
+        {/* The one control here that isn't navigation, so it stays orange at
+            every width rather than following the icon-on-mobile pattern —
+            being the odd one out is what makes it noticeable. */}
+        <ThemeSongButton />
 
         {/* Spacer pushes Directory/Live Music to the far right, matching
             where "Log in" used to sit. */}

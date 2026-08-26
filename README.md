@@ -112,6 +112,7 @@ bio, contact info) plus a type-specific detail table.
 - **Connections & Messaging** — industry accounts can DM directly; bands send a Connect request that the other side accepts/declines, opening a thread.
 - **AI show-matching** (`/match`, talent buyers only) — describe a show in plain English, Gemini extracts genre/draw/size/vibe criteria, we rank published bands against it using our own data (Gemini never ranks or sees band data directly).
 - **Admin console** (`/admin`) — gated to a hardcoded email allowlist in `lib/supabase/admin.ts`.
+- **Theme song** — the play/pause toggle in the landing nav (`components/landing/ThemeSongButton.tsx`) plays the SplitMic Anthem from YouTube with no visible player. The IFrame API script is fetched on the **first click, never on page load**, so `/` pays nothing for it until someone actually presses play. The hidden player is `opacity-0` at 1px rather than `display: none`, which browsers can treat as unplayable. Audio stops when you navigate away, since the nav unmounts with the page.
 
 ## Business directory
 
