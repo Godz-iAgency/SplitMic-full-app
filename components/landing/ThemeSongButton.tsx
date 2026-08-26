@@ -27,6 +27,16 @@ const THEME_SONG_URL = `https://www.youtube.com/watch?v=${THEME_SONG_VIDEO_ID}`;
 /** Long enough for a slow phone connection, short enough to not hang forever. */
 const API_TIMEOUT_MS = 10_000;
 
+/**
+ * How long to wait for playback to actually begin before giving up on the
+ * spinner. A browser can refuse to start audio without ever reporting an
+ * error — most likely on iOS, or whenever the play was not driven by a
+ * genuine tap — and without this the button spins forever with no way out.
+ * Dropping back to the paused look lets a second, definitely-user-driven tap
+ * succeed.
+ */
+const PLAYBACK_START_TIMEOUT_MS = 8_000;
+
 type PlaybackState = "idle" | "loading" | "playing" | "paused" | "unavailable";
 
 // Minimal shape of the parts of YouTube's IFrame Player API used here.
@@ -53,7 +63,15 @@ type YouTubeApi = {
       };
     },
   ) => YouTubePlayer;
-  PlayerState: { ENDED: number; PLAYING: number; PAUSED: number };
+  // CUED is the one that matters beyond the obvious three: it means "video is
+  // loaded but not playing", which is exactly what a browser reports when it
+  // has quietly refused to autoplay.
+  PlayerState: {
+    ENDED: number;
+    PLAYING: number;
+    PAUSED: number;
+    CUED: number;
+  };
 };
 
 declare global {
@@ -117,15 +135,33 @@ export function ThemeSongButton() {
   const [state, setState] = useState<PlaybackState>("idle");
   const playerRef = useRef<YouTubePlayer | null>(null);
   const hostRef = useRef<HTMLDivElement>(null);
+  const startWatchdogRef = useRef<number | null>(null);
+
+  const clearStartWatchdog = useCallback(() => {
+    if (startWatchdogRef.current !== null) {
+      window.clearTimeout(startWatchdogRef.current);
+      startWatchdogRef.current = null;
+    }
+  }, []);
 
   // Audio must stop when the page does. Navigating to /live or /directory
   // unmounts this nav, which lands here and tears the player down.
   useEffect(() => {
     return () => {
+      clearStartWatchdog();
       playerRef.current?.destroy();
       playerRef.current = null;
     };
-  }, []);
+  }, [clearStartWatchdog]);
+
+  /** Falls back to the paused look if playback never actually starts. */
+  const armStartWatchdog = useCallback(() => {
+    clearStartWatchdog();
+    startWatchdogRef.current = window.setTimeout(() => {
+      startWatchdogRef.current = null;
+      setState((current) => (current === "playing" ? current : "paused"));
+    }, PLAYBACK_START_TIMEOUT_MS);
+  }, [clearStartWatchdog]);
 
   const toggle = useCallback(async () => {
     if (state === "loading") return;
@@ -139,12 +175,18 @@ export function ThemeSongButton() {
     }
 
     if (playerRef.current) {
-      if (state === "playing") playerRef.current.pauseVideo();
-      else playerRef.current.playVideo();
+      if (state === "playing") {
+        clearStartWatchdog();
+        playerRef.current.pauseVideo();
+      } else {
+        armStartWatchdog();
+        playerRef.current.playVideo();
+      }
       return;
     }
 
     setState("loading");
+    armStartWatchdog();
     try {
       const YT = await loadYouTubeApi();
       const host = hostRef.current;
@@ -175,19 +217,37 @@ export function ThemeSongButton() {
           // ready is the belt to its braces.
           onReady: (event) => event.target.playVideo(),
           onStateChange: (event) => {
-            if (event.data === YT.PlayerState.PLAYING) setState("playing");
-            else if (event.data === YT.PlayerState.PAUSED) setState("paused");
-            // Treated as paused so the button offers a replay rather than
-            // sitting in a dead "finished" state.
-            else if (event.data === YT.PlayerState.ENDED) setState("paused");
+            if (event.data === YT.PlayerState.PLAYING) {
+              clearStartWatchdog();
+              setState("playing");
+            } else if (
+              event.data === YT.PlayerState.PAUSED ||
+              // Treated as paused so the button offers a replay rather than
+              // sitting in a dead "finished" state.
+              event.data === YT.PlayerState.ENDED ||
+              // CUED means loaded but not playing: the browser declined to
+              // start the audio. Showing Play (not a spinner) makes the
+              // second, unambiguously user-driven tap the fix.
+              event.data === YT.PlayerState.CUED
+            ) {
+              clearStartWatchdog();
+              setState("paused");
+            }
+            // BUFFERING and UNSTARTED are left alone deliberately: they are
+            // normal transient steps on the way to playing, and the watchdog
+            // is what catches the case where they never resolve.
           },
-          onError: () => setState("unavailable"),
+          onError: () => {
+            clearStartWatchdog();
+            setState("unavailable");
+          },
         },
       });
     } catch {
+      clearStartWatchdog();
       setState("unavailable");
     }
-  }, [state]);
+  }, [state, armStartWatchdog, clearStartWatchdog]);
 
   const { Icon, label } = describe(state);
   const isPlaying = state === "playing";

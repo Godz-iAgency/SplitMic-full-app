@@ -182,4 +182,21 @@ h3 {
   .card {
     @apply rounded-2xl border border-white/10 bg-brand-gray-900/60 p-6 backdrop-blur;
   }
+
+  /* Keeps a horizontally scrollable row swipeable without drawing the
+     scrollbar. Intended for short pill/nav rows that are sized to fit and
+     only scroll as a fallback — on Android, Chrome renders that fallback as
+     a bright bar across the bottom of the element, which reads as a broken
+     underline rather than as a scrollbar (observed on a real Samsung A16).
+
+     Deliberately NOT for genuinely wide content like tables or code blocks:
+     there the scrollbar is the only cue that more exists off-screen, and
+     hiding it hides the content. */
+  .no-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* legacy Edge */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+  }
 }

@@ -28,20 +28,22 @@ export function LandingNav() {
       {/* `relative` anchors ThemeSongButton's hidden player, which is
           absolutely positioned so it occupies no layout space.
 
-          `overflow-x-auto` is a safety net, not the primary fix: `<body>`
-          has `overflow-x-clip` (LandingPage.tsx), which SILENTLY SLICES OFF
-          anything wider than the viewport with no scrollbar and no visual
-          warning at all — confirmed live on a real Samsung A16, where "Live
-          Music" was cut mid-word with nothing to indicate more content
-          existed. A 375px emulator missed this because the row's measured
-          width (368px) left only 7px of margin, and real devices vary in
-          ways an emulator doesn't: Samsung's default accessibility font/
-          display scaling in particular runs larger than a standard 375px
-          test accounts for. The gap/padding tightening below buys back real
-          margin for the common case; this scroll container means that if
-          it's ever still too tight, the result is "swipe to see the rest"
-          instead of "invisible, with no indication anything is missing." */}
-      <div className="relative mx-auto flex h-14 max-w-6xl items-center gap-2 overflow-x-auto px-3 sm:gap-3 sm:overflow-visible sm:px-6">
+          The row is sized to FIT rather than to scroll: `<body>` carries
+          `overflow-x-clip`, which silently slices off anything wider than the
+          viewport with no warning, so anything that does not fit simply
+          disappears. Confirmed on a real Samsung A16 that the previous sizing
+          still overflowed — "Live Music" ran flush to the screen edge and
+          Chrome drew its scrollbar as a bright bar under the row, which read
+          as a broken underline. The labels drop to 14px below `sm` (see the
+          links themselves) to buy that room back.
+
+          `overflow-x-auto` stays purely as a fallback for extreme font
+          scaling, now with the scrollbar hidden: at normal settings nothing
+          scrolls, and the failure mode if it ever does is "swipe to see the
+          rest" rather than "content vanishes." Reverts to `visible` at `sm`,
+          where there is abundant room and a scroll container would only risk
+          trapping wheel gestures. */}
+      <div className="no-scrollbar relative mx-auto flex h-14 max-w-6xl items-center gap-1 overflow-x-auto px-4 sm:gap-3 sm:overflow-visible sm:px-6">
         {/* Logo — plain <a> so it always hard-navigates to / and replays the hero animation */}
         <a
           href="/"
@@ -85,15 +87,19 @@ export function LandingNav() {
         {/* Directory, then Live Music — always plain text, every width, no
             icon-only mobile state. These are real routes, so Link for
             client-side navigation. */}
+        {/* `text-xs` below `sm` is 14px here, not 12px — this config scales
+            the whole type ramp up one step (tailwind.config.ts), so these
+            stay comfortably legible while giving back the ~20px that kept
+            "Live Music" pinned against the screen edge on a 412px phone. */}
         <nav
           aria-label="Directory and live music"
-          className="flex shrink-0 items-center gap-0.5 sm:gap-1"
+          className="flex shrink-0 items-center gap-1"
         >
           {RIGHT_TABS.map(({ href, label }) => (
             <Link
               key={href}
               href={href}
-              className="whitespace-nowrap rounded-full px-2 py-1.5 text-sm font-semibold text-brand-gray-300 tappable hover:bg-white/5 hover:text-white sm:px-3"
+              className="whitespace-nowrap rounded-full px-2 py-1.5 text-xs font-semibold text-brand-gray-300 tappable hover:bg-white/5 hover:text-white sm:px-3 sm:text-sm"
             >
               {label}
             </Link>
