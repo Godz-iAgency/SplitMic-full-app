@@ -16,6 +16,7 @@ import {
 } from "./forms/RecordLabelForm";
 import { FestivalForm, type FestivalFormValues } from "./forms/FestivalForm";
 import { EMPTY_SOCIAL_VALUES } from "@/lib/profile/socialLinks";
+import { validateProfilePayload } from "@/lib/profile/validation";
 
 export type ProfilePayload =
   | { kind: "band"; common: CommonFieldValues; specific: BandFormValues }
@@ -208,6 +209,10 @@ export function ProfileStep({
   const [specific, setSpecific] = useState<ProfilePayload["specific"]>(
     initialSpecific ?? emptySpecific(playerType),
   );
+  // Client-side only, checked before onSubmit ever runs — see
+  // lib/profile/validation.ts for why this can't be a native `required`
+  // attribute on the genre picker itself.
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // A user resuming onboarding lands straight on this step, so this component
   // can mount before the parent's mount effect has read the saved mini-builder
@@ -238,7 +243,14 @@ export function ProfileStep({
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSubmit({ kind: playerType, common, specific } as ProfilePayload);
+    const payload = { kind: playerType, common, specific } as ProfilePayload;
+    const message = validateProfilePayload(payload);
+    if (message) {
+      setValidationError(message);
+      return;
+    }
+    setValidationError(null);
+    onSubmit(payload);
   }
 
   return (
@@ -329,12 +341,12 @@ export function ProfileStep({
           />
         </section>
 
-        {error ? (
+        {validationError || error ? (
           <div
             role="alert"
             className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300"
           >
-            {error}
+            {validationError || error}
           </div>
         ) : null}
 

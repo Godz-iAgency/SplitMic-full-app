@@ -12,6 +12,7 @@ import { FestivalForm, type FestivalFormValues } from "@/components/onboarding/f
 import type { ProfilePayload } from "@/components/onboarding/ProfileStep";
 import { saveProfileInfo } from "@/app/profile/edit/actions";
 import { publishProfile } from "@/app/profile/[id]/actions";
+import { validateProfilePayload } from "@/lib/profile/validation";
 
 export type SpecificValues =
   | BandFormValues
@@ -65,7 +66,6 @@ function EditInfoFormInner(
   // this exact save — edits are never dropped, whichever button the user
   // clicks to finish.
   async function save(): Promise<boolean> {
-    setSaving(true);
     setError(null);
 
     const payload = {
@@ -73,6 +73,19 @@ function EditInfoFormInner(
       common,
       specific,
     } as ProfilePayload;
+
+    // Checked before the "saving" state ever shows — a validation failure
+    // here is instant, not a round trip. See lib/profile/validation.ts: this
+    // is also reachable from the Photos section's "Done" button (both share
+    // this same save via the imperative handle below), so it has to live
+    // here rather than in a submit handler that only one of them calls.
+    const validationMessage = validateProfilePayload(payload);
+    if (validationMessage) {
+      setError(validationMessage);
+      return false;
+    }
+
+    setSaving(true);
 
     const result = await saveProfileInfo(profileId, payload);
 
