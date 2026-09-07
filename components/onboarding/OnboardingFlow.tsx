@@ -11,6 +11,7 @@ import {
   readPendingProfile,
 } from "@/lib/pendingProfile";
 import { normalizeWebsiteUrl } from "@/lib/url";
+import { buildSocialLinks } from "@/lib/profile/socialLinks";
 import { type PlayerType } from "@/lib/types";
 import { PlayerTypeStep } from "./PlayerTypeStep";
 import { AddressStep, type ValidatedAddress } from "./AddressStep";
@@ -255,7 +256,12 @@ export function OnboardingFlow({ initial }: { initial: InitialOnboardingState })
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
-          bio: payload.common.bio,
+          // NULL, not "": onboarding no longer asks for a bio, and the editor
+          // only offers its generated starter bio when this has never been set
+          // (an explicit "" means the user deliberately cleared it). Writing ""
+          // here would silently defeat that default and hand every new member a
+          // blank box instead.
+          bio: payload.common.bio || null,
           phone_number: payload.common.phone_number || null,
           website_url: normalizeWebsiteUrl(payload.common.website_url),
           instagram_handle: payload.common.instagram_handle || null,
@@ -290,7 +296,7 @@ export function OnboardingFlow({ initial }: { initial: InitialOnboardingState })
       await checkOffStep(2);
 
       // 3c. Replace profile_links (social URLs)
-      const links = buildProfileLinks(profileId, payload);
+      const links = buildSocialLinks(profileId, payload.common);
       // Wipe existing links for this profile, then insert fresh
       await supabase.from("profile_links").delete().eq("profile_id", profileId);
       if (links.length > 0) {
@@ -500,64 +506,3 @@ function buildDetailRow(
   }
 }
 
-// Build profile_links rows for social URLs.
-// All player types: twitter / X (from common fields).
-// Bands additionally: spotify, youtube, tiktok, facebook.
-function buildProfileLinks(
-  profileId: string,
-  payload: ProfilePayload,
-): Array<{ profile_id: string; platform: string; url: string }> {
-  const links: Array<{ profile_id: string; platform: string; url: string }> =
-    [];
-
-  // Twitter / X — everyone
-  const twitter = payload.common.twitter_handle?.trim();
-  if (twitter) {
-    const handle = twitter.replace(/^@/, "");
-    const url = handle.startsWith("http")
-      ? handle
-      : `https://x.com/${handle}`;
-    links.push({ profile_id: profileId, platform: "twitter", url });
-  }
-
-  // Band-only social platforms
-  if (payload.kind === "band") {
-    const {
-      spotify_artist_url,
-      youtube_channel_url,
-      tiktok_handle,
-      facebook_url,
-    } = payload.specific;
-
-    if (spotify_artist_url?.trim()) {
-      links.push({
-        profile_id: profileId,
-        platform: "spotify",
-        url: spotify_artist_url.trim(),
-      });
-    }
-    if (youtube_channel_url?.trim()) {
-      links.push({
-        profile_id: profileId,
-        platform: "youtube",
-        url: youtube_channel_url.trim(),
-      });
-    }
-    if (tiktok_handle?.trim()) {
-      const handle = tiktok_handle.trim().replace(/^@/, "");
-      const url = handle.startsWith("http")
-        ? handle
-        : `https://tiktok.com/@${handle}`;
-      links.push({ profile_id: profileId, platform: "tiktok", url });
-    }
-    if (facebook_url?.trim()) {
-      links.push({
-        profile_id: profileId,
-        platform: "facebook",
-        url: facebook_url.trim(),
-      });
-    }
-  }
-
-  return links;
-}

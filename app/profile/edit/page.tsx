@@ -14,6 +14,7 @@ import type { VenueFormValues } from "@/components/onboarding/forms/VenueForm";
 import type { TalentBuyerFormValues } from "@/components/onboarding/forms/TalentBuyerForm";
 import type { RecordLabelFormValues } from "@/components/onboarding/forms/RecordLabelForm";
 import type { FestivalFormValues } from "@/components/onboarding/forms/FestivalForm";
+import { socialValuesFromLinks } from "@/lib/profile/socialLinks";
 
 export const dynamic = "force-dynamic";
 
@@ -76,13 +77,13 @@ export default async function ProfileEditPage({
 
   // ── Map DB → form values ──────────────────────────────────────────────────
 
-  // Extract twitter handle from profile_links
-  const twitterLink = links.find((l) => l.platform === "twitter");
-  const twitterHandle = twitterLink
-    ? twitterLink.url.replace(/^https?:\/\/(x|twitter)\.com\/@?/, "")
-    : "";
+  // Every social platform, not just twitter: saving does a delete-then-insert
+  // of profile_links, so a link that fails to load here is a link the next
+  // save silently deletes.
+  const social = socialValuesFromLinks(links, profile.instagram_handle);
 
   const initialCommon: CommonFieldValues = {
+    ...social,
     full_name: fullName,
     // Smart default: a bio is never empty on first visit if we already know
     // their genres — a plausible starting point beats a blank textarea. Only
@@ -91,12 +92,10 @@ export default async function ProfileEditPage({
     bio: profile.bio ?? buildDefaultBio(playerType, details, profile.city),
     phone_number: profile.phone_number ?? "",
     website_url: profile.website_url ?? "",
-    instagram_handle: profile.instagram_handle ?? "",
     instagram_followers: profile.instagram_followers ?? "",
-    twitter_handle: twitterHandle,
   };
 
-  const initialSpecific = buildInitialSpecific(playerType, details, links);
+  const initialSpecific = buildInitialSpecific(playerType, details);
 
   // Goal gradient: bands see their Readiness Score immediately after
   // onboarding — each photo/field added visibly moves them toward 10.
@@ -215,24 +214,17 @@ function buildDefaultBio(playerType: PlayerType, d: any, city: string | null): s
 
 // ── Map detail DB row → typed form values ────────────────────────────────────
 
+// Social links are no longer read here: they belong to every player type now,
+// so they load into initialCommon via socialValuesFromLinks instead.
 function buildInitialSpecific(
   playerType: PlayerType,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   d: any,
-  links: { platform: string; url: string }[],
 ) {
   const n = (v: number | null | undefined): number | "" => v ?? "";
 
   switch (playerType) {
     case "band": {
-      const spotify = links.find((l) => l.platform === "spotify")?.url ?? "";
-      const youtube = links.find((l) => l.platform === "youtube")?.url ?? "";
-      const tiktokLink = links.find((l) => l.platform === "tiktok")?.url ?? "";
-      const tiktokHandle = tiktokLink
-        ? tiktokLink.replace(/^https?:\/\/tiktok\.com\/@?/, "")
-        : "";
-      const facebook = links.find((l) => l.platform === "facebook")?.url ?? "";
-
       return {
         band_name: d.band_name ?? "",
         genres: d.genres ?? [],
@@ -247,10 +239,6 @@ function buildInitialSpecific(
         booking_email: d.booking_email ?? "",
         booking_fee_min: n(d.booking_fee_min),
         booking_fee_max: n(d.booking_fee_max),
-        spotify_artist_url: spotify,
-        youtube_channel_url: youtube,
-        tiktok_handle: tiktokHandle,
-        facebook_url: facebook,
       } satisfies BandFormValues;
     }
 

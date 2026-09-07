@@ -5,6 +5,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { tableForPlayerType } from "@/lib/supabase/profile";
 import { normalizeWebsiteUrl } from "@/lib/url";
 import { resolveVideoEmbed } from "@/lib/media/videoEmbed";
+import { buildSocialLinks } from "@/lib/profile/socialLinks";
 import type { ProfilePayload } from "@/components/onboarding/ProfileStep";
 
 export async function saveProfileInfo(
@@ -58,7 +59,7 @@ export async function saveProfileInfo(
   if (detailError) return { error: detailError.message };
 
   // 3. Replace profile_links
-  const links = buildProfileLinks(profileId, payload);
+  const links = buildSocialLinks(profileId, payload.common);
   await supabase.from("profile_links").delete().eq("profile_id", profileId);
   if (links.length > 0) {
     const { error: linksError } = await supabase
@@ -217,37 +218,3 @@ function buildDetailRow(
   }
 }
 
-function buildProfileLinks(
-  profileId: string,
-  payload: ProfilePayload,
-): Array<{ profile_id: string; platform: string; url: string }> {
-  const links: Array<{ profile_id: string; platform: string; url: string }> =
-    [];
-
-  const twitter = payload.common.twitter_handle?.trim();
-  if (twitter) {
-    const handle = twitter.replace(/^@/, "");
-    const url = handle.startsWith("http")
-      ? handle
-      : `https://x.com/${handle}`;
-    links.push({ profile_id: profileId, platform: "twitter", url });
-  }
-
-  if (payload.kind === "band") {
-    const { spotify_artist_url, youtube_channel_url, tiktok_handle, facebook_url } =
-      payload.specific;
-    if (spotify_artist_url?.trim())
-      links.push({ profile_id: profileId, platform: "spotify", url: spotify_artist_url.trim() });
-    if (youtube_channel_url?.trim())
-      links.push({ profile_id: profileId, platform: "youtube", url: youtube_channel_url.trim() });
-    if (tiktok_handle?.trim()) {
-      const handle = tiktok_handle.trim().replace(/^@/, "");
-      const url = handle.startsWith("http") ? handle : `https://tiktok.com/@${handle}`;
-      links.push({ profile_id: profileId, platform: "tiktok", url });
-    }
-    if (facebook_url?.trim())
-      links.push({ profile_id: profileId, platform: "facebook", url: facebook_url.trim() });
-  }
-
-  return links;
-}

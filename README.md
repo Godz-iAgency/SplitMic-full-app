@@ -106,7 +106,11 @@ bio, contact info) plus a type-specific detail table.
 
 ## Core flows, in brief
 
-- **Onboarding** — 3 steps: player type → Texas address (street, city, ZIP; the ZIP rule lives in `lib/address/texas.ts`) → player-type-specific profile form. Immediately after, the user lands on `/profile/edit` to add photos/video, which auto-publishes the profile on save.
+- **Onboarding** — 3 steps: player type → Texas address (street, city, ZIP; the ZIP rule lives in `lib/address/texas.ts`) → a short profile form. Immediately after, the user lands on `/profile/edit` to add photos/video, which auto-publishes the profile on save.
+
+  Step 3 asks only what a profile needs to be recognisable and findable (for a band: name, genres, member count, one-line sound description, plus their own name). Everything else — bio, phone, website, draw/reach numbers, fee ranges, booking contacts — is deferred to `/profile/edit`. That is not two forms: `/profile/edit` imports the *same* components, and a `mode` prop (`onboarding` | `full`, see `components/onboarding/forms/mode.ts`) decides which subset renders. Deleting fields to shorten signup would make them unreachable, since the editor is the only other place they appear.
+
+  Social links use a picker rather than a wall of inputs: tap the platforms you actually have and only those reveal a field. All six live on `CommonFieldValues` for every player type, and `lib/profile/socialLinks.ts` is the single definition of which platforms exist and how each value maps to and from a stored URL. Saving does a **delete-then-insert** on `profile_links`, so anything the editor fails to load back is something the next save would delete — hence the round-trip test in `socialLinks.test.ts`.
 - **Discover** — browse/search published profiles by type, genre, and text query.
 - **Marketplace (Opportunities)** — industry players post events/opportunities/open mics; bands can be tagged, apply, or sign up (open mic).
 - **Connections & Messaging** — industry accounts can DM directly; bands send a Connect request that the other side accepts/declines, opening a thread.

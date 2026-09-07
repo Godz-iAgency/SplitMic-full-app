@@ -6,13 +6,13 @@ import { NumberField } from "@/components/onboarding/fields/NumberField";
 import { SelectField } from "@/components/onboarding/fields/SelectField";
 import { GenreMultiSelect } from "@/components/onboarding/fields/GenreMultiSelect";
 import { MultiSelectChips } from "@/components/onboarding/fields/MultiSelectChips";
+import type { FormMode } from "./mode";
 
 export type RecordLabelFormValues = {
   label_name: string;
   label_type: "" | "indie" | "major" | "distributed" | "other";
   genres_focus: string[];
   artists_signed: number | "";
-  // New fields
   submission_email: string;
   deal_types: string[];
   looking_for: string;
@@ -24,6 +24,7 @@ type Props = {
     key: K,
     value: RecordLabelFormValues[K],
   ) => void;
+  mode?: FormMode;
 };
 
 const DEAL_TYPE_OPTIONS = [
@@ -34,7 +35,9 @@ const DEAL_TYPE_OPTIONS = [
   { value: "single_deal", label: "Single Deal" },
 ];
 
-export function RecordLabelForm({ values, onChange }: Props) {
+export function RecordLabelForm({ values, onChange, mode = "full" }: Props) {
+  const full = mode === "full";
+
   return (
     <div className="space-y-4">
       <TextField
@@ -64,43 +67,54 @@ export function RecordLabelForm({ values, onChange }: Props) {
         onChange={(v) => onChange("genres_focus", v)}
         required
       />
-      <NumberField
-        id="artists_signed"
-        label="Artists Currently Signed"
-        value={values.artists_signed}
-        onChange={(v) => onChange("artists_signed", v)}
-        required
-        min={0}
-      />
-      <TextField
-        id="submission_email"
-        label="Demo Submission Email"
-        type="email"
-        value={values.submission_email}
-        onChange={(v) => onChange("submission_email", v)}
-        required
-        autoComplete="email"
-        placeholder="demos@yourlabel.com"
-        hint="Where artists send their music. Required so bands know how to reach you."
-      />
-      <MultiSelectChips
-        id="deal_types"
-        label="Deal Types Offered"
-        value={values.deal_types}
-        onChange={(v) => onChange("deal_types", v)}
-        options={DEAL_TYPE_OPTIONS}
-        hint="Optional: pick all that apply"
-      />
-      <TextareaField
-        id="looking_for"
-        label="What You're Looking For"
-        value={values.looking_for}
-        onChange={(v) => onChange("looking_for", v)}
-        maxLength={300}
-        rows={3}
-        placeholder="e.g., Indie rock acts with strong original songwriting and an existing local following."
-        hint={`Optional A&R brief: ${values.looking_for.length}/300`}
-      />
+
+      {full ? (
+        <NumberField
+          id="artists_signed"
+          label="Artists Currently Signed"
+          value={values.artists_signed}
+          onChange={(v) => onChange("artists_signed", v)}
+          min={0}
+          hint="Optional"
+        />
+      ) : null}
+
+      {full ? (
+        <TextField
+          id="submission_email"
+          label="Demo Submission Email"
+          type="email"
+          value={values.submission_email}
+          onChange={(v) => onChange("submission_email", v)}
+          autoComplete="email"
+          placeholder="demos@yourlabel.com"
+          hint="Optional, but it's how artists send you music."
+        />
+      ) : null}
+
+      {full ? (
+        <MultiSelectChips
+          id="deal_types"
+          label="Deal Types Offered"
+          value={values.deal_types}
+          onChange={(v) => onChange("deal_types", v)}
+          options={DEAL_TYPE_OPTIONS}
+          hint="Optional: pick all that apply"
+        />
+      ) : null}
+
+      {full ? (
+        <TextareaField
+          id="looking_for"
+          label="What You're Looking For"
+          value={values.looking_for}
+          onChange={(v) => onChange("looking_for", v)}
+          maxLength={300}
+          rows={3}
+          placeholder="e.g., Indie rock acts with strong original songwriting and an existing local following."
+          hint={`Optional A&R brief: ${values.looking_for.length}/300`}
+        />
+      ) : null}
     </div>
   );
 }

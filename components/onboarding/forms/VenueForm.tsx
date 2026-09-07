@@ -4,6 +4,7 @@ import { TextField } from "@/components/onboarding/fields/TextField";
 import { NumberField } from "@/components/onboarding/fields/NumberField";
 import { SelectField } from "@/components/onboarding/fields/SelectField";
 import { GenreMultiSelect } from "@/components/onboarding/fields/GenreMultiSelect";
+import type { FormMode } from "./mode";
 
 export type VenueFormValues = {
   venue_name: string;
@@ -26,9 +27,12 @@ type Props = {
     key: K,
     value: VenueFormValues[K],
   ) => void;
+  mode?: FormMode;
 };
 
-export function VenueForm({ values, onChange }: Props) {
+export function VenueForm({ values, onChange, mode = "full" }: Props) {
+  const full = mode === "full";
+
   return (
     <div className="space-y-4">
       <TextField
@@ -53,6 +57,8 @@ export function VenueForm({ values, onChange }: Props) {
           { value: "other", label: "Other" },
         ]}
       />
+      {/* Capacity stays: it is the single number bands filter and judge a room
+          by, and it is one keystroke-light field. */}
       <NumberField
         id="capacity"
         label="Capacity"
@@ -61,20 +67,6 @@ export function VenueForm({ values, onChange }: Props) {
         required
         min={1}
       />
-      <SelectField
-        id="age_restriction"
-        label="Age Restriction"
-        value={values.age_restriction}
-        onChange={(v) =>
-          onChange("age_restriction", v as VenueFormValues["age_restriction"])
-        }
-        required
-        options={[
-          { value: "all_ages", label: "All Ages" },
-          { value: "18_plus", label: "18+" },
-          { value: "21_plus", label: "21+" },
-        ]}
-      />
       <GenreMultiSelect
         id="genres_hosted"
         label="Genres Hosted"
@@ -82,79 +74,110 @@ export function VenueForm({ values, onChange }: Props) {
         onChange={(v) => onChange("genres_hosted", v)}
         required
       />
-      <NumberField
-        id="shows_per_week"
-        label="Shows Per Week"
-        value={values.shows_per_week}
-        onChange={(v) => onChange("shows_per_week", v)}
-        required
-        min={0}
-        max={21}
-      />
-      <TextField
-        id="booking_contact_name"
-        label="Booking Contact Name"
-        value={values.booking_contact_name}
-        onChange={(v) => onChange("booking_contact_name", v)}
-        required
-      />
-      <TextField
-        id="booking_contact_email"
-        label="Booking Contact Email"
-        type="email"
-        value={values.booking_contact_email}
-        onChange={(v) => onChange("booking_contact_email", v)}
-        required
-        autoComplete="email"
-        placeholder="bookings@yourvenue.com"
-      />
 
-      <div className="pt-2">
-        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
-          What you pay bands
-        </h3>
-        <div className="space-y-4">
-          <SelectField
-            id="pay_structure"
-            label="Deal Type"
-            value={values.pay_structure}
-            onChange={(v) =>
-              onChange("pay_structure", v as VenueFormValues["pay_structure"])
-            }
-            options={[
-              { value: "guarantee", label: "Flat Guarantee" },
-              { value: "door_split", label: "Door Split (% of ticket sales)" },
-              { value: "combo", label: "Guarantee + Door Split" },
-              { value: "varies", label: "Varies per show" },
-            ]}
-            hint="Optional: helps bands decide if you're a fit"
-          />
-          <div className="grid grid-cols-2 gap-3">
-            <NumberField
-              id="pay_min"
-              label="Min Pay ($)"
-              value={values.pay_min}
-              onChange={(v) => onChange("pay_min", v)}
-              min={0}
-              placeholder="200"
-              hint="Optional"
+      {full ? (
+        <SelectField
+          id="age_restriction"
+          label="Age Restriction"
+          value={values.age_restriction}
+          onChange={(v) =>
+            onChange("age_restriction", v as VenueFormValues["age_restriction"])
+          }
+          options={[
+            { value: "all_ages", label: "All Ages" },
+            { value: "18_plus", label: "18+" },
+            { value: "21_plus", label: "21+" },
+          ]}
+          hint="Optional"
+        />
+      ) : null}
+
+      {full ? (
+        <NumberField
+          id="shows_per_week"
+          label="Shows Per Week"
+          value={values.shows_per_week}
+          onChange={(v) => onChange("shows_per_week", v)}
+          min={0}
+          max={21}
+          hint="Optional"
+        />
+      ) : null}
+
+      {/* Deferred rather than dropped: bands can already reach a venue through
+          in-app messaging, so a booking address is an upgrade to the profile,
+          not a precondition for having one. */}
+      {full ? (
+        <TextField
+          id="booking_contact_name"
+          label="Booking Contact Name"
+          value={values.booking_contact_name}
+          onChange={(v) => onChange("booking_contact_name", v)}
+          hint="Optional"
+        />
+      ) : null}
+
+      {full ? (
+        <TextField
+          id="booking_contact_email"
+          label="Booking Contact Email"
+          type="email"
+          value={values.booking_contact_email}
+          onChange={(v) => onChange("booking_contact_email", v)}
+          autoComplete="email"
+          placeholder="bookings@yourvenue.com"
+          hint="Optional"
+        />
+      ) : null}
+
+      {full ? (
+        <div className="pt-2">
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
+            What you pay bands
+          </h3>
+          <div className="space-y-4">
+            <SelectField
+              id="pay_structure"
+              label="Deal Type"
+              value={values.pay_structure}
+              onChange={(v) =>
+                onChange("pay_structure", v as VenueFormValues["pay_structure"])
+              }
+              options={[
+                { value: "guarantee", label: "Flat Guarantee" },
+                { value: "door_split", label: "Door Split (% of ticket sales)" },
+                { value: "combo", label: "Guarantee + Door Split" },
+                { value: "varies", label: "Varies per show" },
+              ]}
+              hint="Optional: helps bands decide if you're a fit"
             />
-            <NumberField
-              id="pay_max"
-              label="Max Pay ($)"
-              value={values.pay_max}
-              onChange={(v) => onChange("pay_max", v)}
-              min={0}
-              placeholder="1500"
-              hint="Optional"
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <NumberField
+                id="pay_min"
+                label="Min Pay ($)"
+                value={values.pay_min}
+                onChange={(v) => onChange("pay_min", v)}
+                min={0}
+                placeholder="200"
+                hint="Optional"
+              />
+              <NumberField
+                id="pay_max"
+                label="Max Pay ($)"
+                value={values.pay_max}
+                onChange={(v) => onChange("pay_max", v)}
+                min={0}
+                placeholder="1500"
+                hint="Optional"
+              />
+            </div>
+            <p className="text-xs text-brand-gray-400">
+              Typical range only. You&apos;ll set actual pay per gig when posting
+              specific opportunities.
+            </p>
           </div>
-          <p className="text-xs text-brand-gray-400">
-            Typical range only. You'll set actual pay per gig when posting
-            specific opportunities.
-          </p>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

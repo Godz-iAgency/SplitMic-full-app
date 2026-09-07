@@ -15,6 +15,7 @@ import {
   type RecordLabelFormValues,
 } from "./forms/RecordLabelForm";
 import { FestivalForm, type FestivalFormValues } from "./forms/FestivalForm";
+import { EMPTY_SOCIAL_VALUES } from "@/lib/profile/socialLinks";
 
 export type ProfilePayload =
   | { kind: "band"; common: CommonFieldValues; specific: BandFormValues }
@@ -56,13 +57,12 @@ const TITLES: Record<PlayerType, string> = {
 };
 
 const EMPTY_COMMON: CommonFieldValues = {
+  ...EMPTY_SOCIAL_VALUES,
   full_name: "",
   bio: "",
   phone_number: "",
   website_url: "",
-  instagram_handle: "",
   instagram_followers: "",
-  twitter_handle: "",
 };
 
 // Smart defaults: member_count 4 and set_length 45 match the typical Austin
@@ -81,10 +81,6 @@ const EMPTY_BAND: BandFormValues = {
   booking_email: "",
   booking_fee_min: "",
   booking_fee_max: "",
-  spotify_artist_url: "",
-  youtube_channel_url: "",
-  tiktok_handle: "",
-  facebook_url: "",
 };
 
 const EMPTY_VENUE: VenueFormValues = {
@@ -250,24 +246,20 @@ export function ProfileStep({
       <header className="mb-6">
         <h1 className="text-2xl font-bold sm:text-3xl">{TITLES[playerType]}</h1>
         <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
-          This is how the Austin community will find and recognize you.
+          Just the essentials. You can add photos, a bio, and the rest right
+          after this.
         </p>
       </header>
 
+      {/* Every form below runs in `onboarding` mode: the same components the
+          editor uses, rendering only the fields a profile needs to be
+          recognisable and findable. Everything else is one level deeper, on
+          /profile/edit, which is where this step hands off to. */}
       <form onSubmit={handleSubmit} className="space-y-8">
         <section>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
-            About you
-          </h2>
-          <CommonFields values={common} onChange={updateCommon} />
-        </section>
-
-        <section>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
-            Details
-          </h2>
           {playerType === "band" ? (
             <BandForm
+              mode="onboarding"
               values={specific as BandFormValues}
               onChange={(key, value) => {
                 const next = { ...(specific as BandFormValues), [key]: value };
@@ -277,6 +269,7 @@ export function ProfileStep({
           ) : null}
           {playerType === "venue" ? (
             <VenueForm
+              mode="onboarding"
               values={specific as VenueFormValues}
               onChange={(key, value) => {
                 const next = { ...(specific as VenueFormValues), [key]: value };
@@ -286,6 +279,7 @@ export function ProfileStep({
           ) : null}
           {playerType === "talent_buyer" ? (
             <TalentBuyerForm
+              mode="onboarding"
               values={specific as TalentBuyerFormValues}
               onChange={(key, value) => {
                 const next = {
@@ -298,6 +292,7 @@ export function ProfileStep({
           ) : null}
           {playerType === "record_label" ? (
             <RecordLabelForm
+              mode="onboarding"
               values={specific as RecordLabelFormValues}
               onChange={(key, value) => {
                 const next = {
@@ -310,6 +305,7 @@ export function ProfileStep({
           ) : null}
           {playerType === "festival" ? (
             <FestivalForm
+              mode="onboarding"
               values={specific as FestivalFormValues}
               onChange={(key, value) => {
                 const next = {
@@ -320,6 +316,17 @@ export function ProfileStep({
               }}
             />
           ) : null}
+        </section>
+
+        {/* Name and socials come after the type-specific fields: the person
+            already answered "who are you" by picking a player type, so leading
+            with their band/venue name is the more natural continuation. */}
+        <section>
+          <CommonFields
+            mode="onboarding"
+            values={common}
+            onChange={updateCommon}
+          />
         </section>
 
         {error ? (
