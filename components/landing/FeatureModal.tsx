@@ -10,6 +10,10 @@ export type FeatureDetail = {
   description: string;
   headline: string;
   copy: string;
+  /** Decorative card background, in `public/features/`. Required rather than
+   *  optional so a new feature can't be added without one and quietly render
+   *  as the only flat card in the grid. */
+  image: string;
 };
 
 type Props = {

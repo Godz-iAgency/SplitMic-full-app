@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   Search,
   Newspaper,
@@ -15,6 +16,7 @@ import { Reveal } from "@/components/motion/Reveal";
 const FEATURES: FeatureDetail[] = [
   {
     id: "find-anyone",
+    image: "/features/find-anyone.png",
     Icon: Search,
     title: "Find Anyone",
     description:
@@ -25,6 +27,7 @@ const FEATURES: FeatureDetail[] = [
   },
   {
     id: "opportunities",
+    image: "/features/opportunities.png",
     Icon: Newspaper,
     title: "Community Feed",
     description:
@@ -35,6 +38,7 @@ const FEATURES: FeatureDetail[] = [
   },
   {
     id: "connections",
+    image: "/features/connections.png",
     Icon: Users,
     title: "Industry Connections",
     description:
@@ -45,6 +49,7 @@ const FEATURES: FeatureDetail[] = [
   },
   {
     id: "messaging",
+    image: "/features/messaging.png",
     Icon: MessageCircle,
     title: "Direct Messaging",
     description:
@@ -55,6 +60,7 @@ const FEATURES: FeatureDetail[] = [
   },
   {
     id: "profiles",
+    image: "/features/profiles.png",
     Icon: UserCircle,
     title: "Tailored Profiles",
     description:
@@ -65,6 +71,7 @@ const FEATURES: FeatureDetail[] = [
   },
   {
     id: "notifications",
+    image: "/features/notifications.png",
     Icon: Bell,
     title: "Real-Time Notifications",
     description:
@@ -114,6 +121,45 @@ export function FeaturesSection() {
                 onClick={() => setSelected(feature)}
                 className="group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-brand-gray-900 via-black to-black p-6 text-left transition hover:-translate-y-1 hover:border-brand-orange/50 hover:shadow-xl hover:shadow-brand-orange/20 focus:outline-none focus:ring-2 focus:ring-brand-orange/50"
               >
+                {/* Decorative background art. Purely atmospheric, so it's
+                    alt="" + aria-hidden: a screen reader gets the title and
+                    description, which is the actual content.
+
+                    Lazy by default (next/image) and below the fold, so this
+                    costs nothing at first paint, and next/image resizes and
+                    re-encodes the 1448px source down to the ~368px the card
+                    actually renders at — visitors never download the full
+                    file. `sizes` is what makes it pick the right width:
+                    3 columns inside max-w-6xl works out to ~368px. */}
+                <Image
+                  src={feature.image}
+                  alt=""
+                  aria-hidden="true"
+                  fill
+                  sizes="(min-width: 1024px) 368px, (min-width: 640px) 50vw, 100vw"
+                  className="pointer-events-none select-none object-cover opacity-90 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
+                />
+
+                {/* Scrim weighted to the bottom, where the title and copy sit,
+                    and light at the top so the artwork reads.
+
+                    Deliberately gentle: sampling the actual files shows they
+                    average rgb(16,7,3) — already ~94% black, with the bright
+                    orange linework concentrated centre and upper. The text was
+                    never really at risk from them, so a heavy overlay would
+                    have buried the art for no legibility gain.
+
+                    The middle stop is /70 rather than /55 for a measured
+                    reason: compositing each real file against the #cccccc
+                    body copy put `connections` at 4.28:1 and `notifications`
+                    at 4.40:1 over their brightest pixels, just under the
+                    4.5:1 minimum. /70 lifts the worst case to ~6:1 while the
+                    /20 top keeps the art reading where it is busiest. */}
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/70 to-black/20"
+                />
+
                 {/* Corner glow that warms on hover, so the card has depth at
                     rest instead of being a flat black rectangle. */}
                 <span
@@ -121,21 +167,28 @@ export function FeaturesSection() {
                   className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-brand-orange/10 blur-2xl transition duration-500 group-hover:bg-brand-orange/25"
                 />
 
-                {/* Same icon as the modal header — orange rounded square */}
-                <div className="mb-4 inline-flex h-12 w-12 shrink-0 items-center justify-center self-start rounded-2xl border border-brand-orange/40 bg-brand-orange/10 text-brand-orange shadow-md shadow-brand-orange/20 transition group-hover:scale-110">
-                  <feature.Icon
-                    className="h-6 w-6"
-                    strokeWidth={2}
-                    aria-hidden="true"
-                  />
-                </div>
-                <h3 className="text-lg font-bold text-white">{feature.title}</h3>
-                <p className="mt-2 flex-1 text-sm text-brand-gray-300">
-                  {feature.description}
-                </p>
-                <p className="mt-4 text-xs font-bold uppercase tracking-[0.2em] text-brand-orange opacity-0 transition group-hover:opacity-100">
-                  Tap to learn more →
-                </p>
+                {/* Positioned so it stacks above the absolutely-positioned
+                    art and scrim above, which would otherwise paint over
+                    static content. Carries the flex duties the button had, so
+                    the description still pushes the hover prompt to the
+                    bottom. */}
+                <span className="relative flex flex-1 flex-col">
+                  {/* Same icon as the modal header — orange rounded square */}
+                  <span className="mb-4 inline-flex h-12 w-12 shrink-0 items-center justify-center self-start rounded-2xl border border-brand-orange/40 bg-brand-orange/10 text-brand-orange shadow-md shadow-brand-orange/20 transition group-hover:scale-110">
+                    <feature.Icon
+                      className="h-6 w-6"
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    />
+                  </span>
+                  <h3 className="text-lg font-bold text-white">{feature.title}</h3>
+                  <p className="mt-2 flex-1 text-sm text-brand-gray-300">
+                    {feature.description}
+                  </p>
+                  <p className="mt-4 text-xs font-bold uppercase tracking-[0.2em] text-brand-orange opacity-0 transition group-hover:opacity-100">
+                    Tap to learn more →
+                  </p>
+                </span>
               </button>
             </Reveal>
           ))}
