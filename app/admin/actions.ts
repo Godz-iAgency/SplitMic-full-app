@@ -80,6 +80,16 @@ export async function adminSuspendUser(
 
   if (error) return { error: error.message };
 
+  // Soft-close their active listings, same pattern as unpublishing the
+  // profile itself — reversible in spirit (nothing is deleted), but not
+  // auto-restored on unsuspend since a closed post has no other "reopen"
+  // path in this app either.
+  await supabase
+    .from("marketplace_posts")
+    .update({ is_active: false })
+    .eq("poster_profile_id", profileId)
+    .eq("is_active", true);
+
   await logAdminAction({
     actionType: "suspend_user",
     targetType: "user",

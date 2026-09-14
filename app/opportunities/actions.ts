@@ -71,11 +71,15 @@ export async function createMarketplacePost(
   // Look up the user's published profile
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, player_type, is_published")
+    .select("id, player_type, is_published, is_suspended, suspended_reason")
     .eq("user_id", user.id)
     .maybeSingle();
 
   if (!profile) return { error: "Complete your profile first." };
+  if (profile.is_suspended)
+    return {
+      error: `Your account is suspended and can't post: ${profile.suspended_reason || "no reason given"}.`,
+    };
   if (!profile.is_published)
     return { error: "Publish your profile before posting." };
 

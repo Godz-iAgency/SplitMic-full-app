@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Sparkles } from "lucide-react";
+import { Sparkles, ShieldAlert } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingStatus, tableForPlayerType } from "@/lib/supabase/profile";
 import { computeBandReadiness } from "@/lib/scoring/bandReadiness";
@@ -63,13 +63,15 @@ export default async function ProfileEditPage({
       // UserProfile type, which every authenticated page depends on.
       supabase
         .from("profiles")
-        .select("intro_video_url")
+        .select("intro_video_url, is_suspended, suspended_reason")
         .eq("id", profileId)
         .maybeSingle(),
     ]);
 
   const media: MediaRow[] = (mediaResult.data ?? []) as MediaRow[];
   const introVideoUrl: string | null = videoResult.data?.intro_video_url ?? null;
+  const isSuspended = videoResult.data?.is_suspended ?? false;
+  const suspendedReason = videoResult.data?.suspended_reason ?? null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const details: any = detailResult.data ?? {};
   const links = linksResult.data ?? [];
@@ -132,6 +134,26 @@ export default async function ProfileEditPage({
       </header>
 
       <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-14 space-y-16">
+
+        {/* ── Suspension banner ──────────────────────────────────────── */}
+        {isSuspended ? (
+          <div className="-mb-8 rounded-2xl border border-red-500/40 bg-red-500/10 p-5 sm:p-6">
+            <div className="flex items-start gap-3">
+              <ShieldAlert className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-300" />
+              <div>
+                <p className="text-base font-semibold text-white sm:text-lg">
+                  Your account is suspended
+                </p>
+                <p className="mt-1 text-sm text-brand-gray-200">
+                  Reason: {suspendedReason || "no reason given"}. Your profile
+                  and posts are hidden, and you can&apos;t publish, post, or
+                  message while suspended. Contact support if you think this
+                  is a mistake.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {/* ── Welcome banner (post-onboarding only) ─────────────────── */}
         {isPostOnboarding ? (

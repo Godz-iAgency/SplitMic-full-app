@@ -35,6 +35,18 @@ export async function respondToConnectionRequest(
   if (request.status !== "pending")
     return { error: "This request was already responded to." };
 
+  if (decision === "accepted") {
+    const { data: myProfile } = await supabase
+      .from("profiles")
+      .select("is_suspended, suspended_reason")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (myProfile?.is_suspended)
+      return {
+        error: `Your account is suspended and can't accept connections: ${myProfile.suspended_reason || "no reason given"}.`,
+      };
+  }
+
   // Only one response can win, even when two tabs submit simultaneously.
   const { data: updated, error } = await supabase
     .from("connection_requests")
@@ -94,10 +106,14 @@ export async function sendMessage(
   // Get sender profile id
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id")
+    .select("id, is_suspended, suspended_reason")
     .eq("user_id", user.id)
     .maybeSingle();
   if (!profile) return { error: "Profile not found." };
+  if (profile.is_suspended)
+    return {
+      error: `Your account is suspended and can't send messages: ${profile.suspended_reason || "no reason given"}.`,
+    };
 
   // Verify thread membership (RLS will also block)
   const { data: thread } = await supabase
@@ -192,11 +208,15 @@ export async function initiateConnection(
 
   const { data: myProfile } = await supabase
     .from("profiles")
-    .select("id, player_type, is_published")
+    .select("id, player_type, is_published, is_suspended, suspended_reason")
     .eq("user_id", user.id)
     .maybeSingle();
 
   if (!myProfile) return { error: "Complete your profile first." };
+  if (myProfile.is_suspended)
+    return {
+      error: `Your account is suspended and can't connect: ${myProfile.suspended_reason || "no reason given"}.`,
+    };
   if (!myProfile.is_published)
     return { error: "Publish your profile before connecting." };
   if (myProfile.id === otherProfileId)
