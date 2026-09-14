@@ -28,6 +28,21 @@ export const MAX_TAGGED_BANDS_PER_EVENT = 10;
 
 export type PostType = "event" | "opportunity" | "open_mic";
 
+/** Shared by create and edit: open mics expire from their event date too. */
+export function postExpiryDate(
+  postType: PostType,
+  dates: { event_date?: string; event_end_date?: string; open_until?: string },
+): string | null {
+  const anchor = postType === "event"
+    ? dates.event_end_date || dates.event_date
+    : postType === "open_mic" ? dates.event_date : dates.open_until;
+  if (typeof anchor !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(anchor)) return null;
+  const date = new Date(`${anchor}T12:00:00Z`);
+  if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== anchor) return null;
+  date.setUTCDate(date.getUTCDate() + 7);
+  return date.toISOString().slice(0, 10);
+}
+
 export type MarketplacePost = {
   id: string;
   poster_profile_id: string;

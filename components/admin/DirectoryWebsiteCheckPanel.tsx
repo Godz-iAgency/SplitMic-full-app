@@ -163,7 +163,7 @@ export function DirectoryWebsiteCheckPanel({
           <p className="mt-1 text-sm text-brand-gray-300">
             {tally.live} live · {tally.dead} dead · {tally.uncertain} uncertain
             {noWebsite > 0 ? ` · ${noWebsite} no website` : ""} · {pending}{" "}
-            waiting. Confirms each business's site still responds, no API
+            waiting. Confirms each business&apos;s site still responds, no API
             key, no cost. Safe to stop and continue later.
           </p>
         </div>

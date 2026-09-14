@@ -107,6 +107,14 @@ function payload(
 }
 
 describe("validateProfilePayload", () => {
+  it.each([undefined, null, {}, { kind: "unknown", common: {}, specific: {} }])("rejects malformed payload %j", (value) => {
+    expect(validateProfilePayload(value as ProfilePayload)).toBe("Invalid profile details.");
+  });
+
+  it.each([undefined, null, "Rock", [""], ["   "], [42]])("rejects malformed genres %j", (genres) => {
+    const value = payload("band", genres as string[]);
+    expect(validateProfilePayload(value)).toBe("Pick at least one genre.");
+  });
   it("rejects a band with no genres", () => {
     // The regression this guards: onboarding completed end-to-end with zero
     // genres selected, because GenreMultiSelect's `required` prop only draws

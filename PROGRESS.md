@@ -2,7 +2,17 @@
 
 _Austin-focused music-industry connection platform for bands, venues, talent buyers, record labels, and festivals. Content (shows, venues, directory) is Austin-only; membership is open to anywhere in Texas — see §2 #16._
 
-Last updated: **2026-08-14**
+Last updated: **2026-09-14**
+
+### Local audit changes awaiting review (not deployed)
+
+See `AUDIT.md` for prioritized findings, every changed file, validation, and
+unresolved decisions. This pass fixes open-mic editing, destructive media
+replacement, session-cookie chunk loss, connection-response races, missing
+profile validation at the server boundary, and keyboard/label accessibility.
+No migrations were added or applied. Checked-in RLS gaps still need comparison
+with the actual database before a safe SQL correction can be prepared; the
+application changes do not close direct PostgREST access paths.
 
 For setup and a codebase tour, see [`README.md`](README.md). For the
 engineering standards that apply to changes here, see [`CLAUDE.md`](CLAUDE.md).
@@ -44,7 +54,7 @@ _(nothing outstanding from the original round)_
 
 ### 🧪 Tests
 
-Vitest, 568 tests across `lib/**/*.test.ts`, run with `npm test`. Covers the
+Vitest, 593 tests across `lib/**/*.test.ts`, run with `npm test`. Covers the
 pure decision logic: Band Readiness scoring, AI criteria extraction and
 validation (Gemini mocked), band ranking, input formatting, marketplace-post
 cleanup, the live-events pipeline (Do512 mapping/timezone conversion, profile
@@ -81,6 +91,8 @@ Supabase project or a DOM. Still verified manually.
 
 | # | Decision | Choice |
 |---|----------|--------|
+| 22 | Local audit: preserve existing behavior while fixing failures | **Uncommitted, not shipped.** Open mics use the same event-date handling in create and edit. Photo replacement keeps the prior object until the new upload and record save succeed; concurrent replacements are scoped to the previous storage path. Session refresh preserves every cookie chunk. Connection replies scope the write to the recipient and pending status. The existing genre validator also runs in the profile server action. No database policy was changed without live-schema evidence. Account-deletion semantics were left open pending a product decision (see #23). Details and verification limits are in `AUDIT.md`. |
+| 23 | Admin "Delete user" removes the login too | **`adminDeleteUser` now also calls `auth.admin.deleteUser` and clears `profile-media/${userId}/` storage, after the app-row deletes succeed.** Found while auditing: deleting only `profiles`/`users` left the Supabase Auth identity intact, so a "deleted" member could sign back in immediately and land on `/onboarding` as if nothing happened — the DB trigger that creates a `users` row only fires on a *new* `auth.users` insert, which a surviving login never triggers. Confirmed this is intended: "Delete user" should remove the person, not reset their data. Auth deletion runs last so a failure there doesn't leave the DB rows and Auth account out of sync in a way that's hard to retry. |
 | 1 | AI provider for show-matching | **Gemini API** (`gemini-2.5-flash`, plain `fetch` against the REST API, no SDK dependency) |
 | 2 | AI matching depth | **Structured extraction → existing search filters.** No embeddings / vector DB. |
 | 3 | Open mic signup model | **Simple ordered list.** First-come-first-served; venue can reorder + check in. No time-slot picker. |

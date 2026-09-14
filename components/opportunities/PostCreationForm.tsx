@@ -193,7 +193,7 @@ function PostFields({
       day: "numeric",
       year: "numeric",
     });
-  }, [postType, eventDate, eventEndDate, openUntil, isMultiDayEvent]);
+  }, [isDateBased, eventDate, eventEndDate, openUntil, isMultiDayEvent]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -272,10 +272,11 @@ function PostFields({
 
       {/* Title */}
       <div>
-        <label className="mb-2 block text-sm font-semibold text-white">
+        <label htmlFor="create-post-title" className="mb-2 block text-sm font-semibold text-white">
           Title <span className="text-brand-orange">*</span>
         </label>
         <input
+          id="create-post-title"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -297,10 +298,11 @@ function PostFields({
 
       {/* Description */}
       <div>
-        <label className="mb-2 block text-sm font-semibold text-white">
+        <label htmlFor="create-post-description" className="mb-2 block text-sm font-semibold text-white">
           Description
         </label>
         <textarea
+          id="create-post-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           maxLength={2000}
@@ -319,10 +321,11 @@ function PostFields({
           {isMultiDayEvent ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-semibold text-white">
+                <label htmlFor="create-post-start" className="mb-2 block text-sm font-semibold text-white">
                   Start date <span className="text-brand-orange">*</span>
                 </label>
                 <input
+                  id="create-post-start"
                   type="date"
                   value={eventDate}
                   min={today}
@@ -338,10 +341,11 @@ function PostFields({
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-white">
+                <label htmlFor="create-post-end" className="mb-2 block text-sm font-semibold text-white">
                   End date
                 </label>
                 <input
+                  id="create-post-end"
                   type="date"
                   value={eventEndDate}
                   min={eventDate || today}
@@ -358,11 +362,12 @@ function PostFields({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {!isMultiDayEvent ? (
               <div>
-                <label className="mb-2 block text-sm font-semibold text-white">
+                <label htmlFor="create-post-date" className="mb-2 block text-sm font-semibold text-white">
                   {isOpenMic ? "Open mic date" : "Event date"}{" "}
                   <span className="text-brand-orange">*</span>
                 </label>
                 <input
+                  id="create-post-date"
                   type="date"
                   value={eventDate}
                   min={today}
@@ -373,10 +378,11 @@ function PostFields({
               </div>
             ) : null}
             <div className={isMultiDayEvent ? "sm:col-span-2" : ""}>
-              <label className="mb-2 block text-sm font-semibold text-white">
+              <label htmlFor="create-post-location" className="mb-2 block text-sm font-semibold text-white">
                 Location
               </label>
               <input
+                id="create-post-location"
                 type="text"
                 value={eventLocation}
                 onChange={(e) => setEventLocation(e.target.value)}
@@ -392,10 +398,11 @@ function PostFields({
         </>
       ) : (
         <div>
-          <label className="mb-2 block text-sm font-semibold text-white">
+          <label htmlFor="create-post-deadline" className="mb-2 block text-sm font-semibold text-white">
             Open until <span className="text-brand-orange">*</span>
           </label>
           <input
+            id="create-post-deadline"
             type="date"
             value={openUntil}
             min={today}
@@ -413,10 +420,11 @@ function PostFields({
       <GenreMultiSelect selected={genres} onChange={setGenres} />
 
       <div>
-        <label className="mb-2 block text-sm font-semibold text-white">
+        <label htmlFor="create-post-pay" className="mb-2 block text-sm font-semibold text-white">
           Pay / deal
         </label>
         <input
+          id="create-post-pay"
           type="text"
           value={payInfo}
           onChange={(e) => setPayInfo(e.target.value)}

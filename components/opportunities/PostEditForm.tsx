@@ -69,7 +69,7 @@ export function PostEditForm({
       day: "numeric",
       year: "numeric",
     });
-  }, [postType, eventDate, eventEndDate, openUntil, isMultiDayEvent]);
+  }, [isDateBased, eventDate, eventEndDate, openUntil, isMultiDayEvent]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -149,10 +149,11 @@ export function PostEditForm({
 
         {/* Title */}
         <div>
-          <label className="mb-2 block text-sm font-semibold text-white">
+          <label htmlFor="edit-post-title" className="mb-2 block text-sm font-semibold text-white">
             Title <span className="text-brand-orange">*</span>
           </label>
           <input
+            id="edit-post-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -167,10 +168,11 @@ export function PostEditForm({
 
         {/* Description */}
         <div>
-          <label className="mb-2 block text-sm font-semibold text-white">
+          <label htmlFor="edit-post-description" className="mb-2 block text-sm font-semibold text-white">
             Description
           </label>
           <textarea
+            id="edit-post-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             maxLength={2000}
@@ -188,10 +190,11 @@ export function PostEditForm({
             {isMultiDayEvent ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-white">
+                  <label htmlFor="edit-post-start" className="mb-2 block text-sm font-semibold text-white">
                     Start date <span className="text-brand-orange">*</span>
                   </label>
                   <input
+                    id="edit-post-start"
                     type="date"
                     value={eventDate}
                     onChange={(e) => {
@@ -205,10 +208,11 @@ export function PostEditForm({
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-white">
+                  <label htmlFor="edit-post-end" className="mb-2 block text-sm font-semibold text-white">
                     End date
                   </label>
                   <input
+                    id="edit-post-end"
                     type="date"
                     value={eventEndDate}
                     min={eventDate}
@@ -225,11 +229,12 @@ export function PostEditForm({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {!isMultiDayEvent ? (
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-white">
+                  <label htmlFor="edit-post-date" className="mb-2 block text-sm font-semibold text-white">
                     {isOpenMic ? "Open mic date" : "Event date"}{" "}
                     <span className="text-brand-orange">*</span>
                   </label>
                   <input
+                    id="edit-post-date"
                     type="date"
                     value={eventDate}
                     onChange={(e) => setEventDate(e.target.value)}
@@ -239,10 +244,11 @@ export function PostEditForm({
                 </div>
               ) : null}
               <div className={isMultiDayEvent ? "sm:col-span-2" : ""}>
-                <label className="mb-2 block text-sm font-semibold text-white">
+                <label htmlFor="edit-post-location" className="mb-2 block text-sm font-semibold text-white">
                   Location
                 </label>
                 <input
+                  id="edit-post-location"
                   type="text"
                   value={eventLocation}
                   onChange={(e) => setEventLocation(e.target.value)}
@@ -254,10 +260,11 @@ export function PostEditForm({
           </>
         ) : (
           <div>
-            <label className="mb-2 block text-sm font-semibold text-white">
+            <label htmlFor="edit-post-deadline" className="mb-2 block text-sm font-semibold text-white">
               Open until <span className="text-brand-orange">*</span>
             </label>
             <input
+              id="edit-post-deadline"
               type="date"
               value={openUntil}
               onChange={(e) => setOpenUntil(e.target.value)}
@@ -274,10 +281,11 @@ export function PostEditForm({
         <GenreMultiSelect selected={genres} onChange={setGenres} />
 
         <div>
-          <label className="mb-2 block text-sm font-semibold text-white">
+          <label htmlFor="edit-post-pay" className="mb-2 block text-sm font-semibold text-white">
             Pay / deal
           </label>
           <input
+            id="edit-post-pay"
             type="text"
             value={payInfo}
             onChange={(e) => setPayInfo(e.target.value)}

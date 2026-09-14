@@ -73,10 +73,11 @@ export function EmailSignUpForm() {
   return (
     <form onSubmit={submit} className="space-y-3 text-left">
       <div>
-        <label className="mb-1 block text-xs font-semibold text-brand-gray-300">
+        <label htmlFor="signup-name" className="mb-1 block text-xs font-semibold text-brand-gray-300">
           Full name
         </label>
         <input
+          id="signup-name"
           type="text"
           required
           value={fullName}
@@ -86,10 +87,11 @@ export function EmailSignUpForm() {
         />
       </div>
       <div>
-        <label className="mb-1 block text-xs font-semibold text-brand-gray-300">
+        <label htmlFor="signup-email" className="mb-1 block text-xs font-semibold text-brand-gray-300">
           Email
         </label>
         <input
+          id="signup-email"
           type="email"
           required
           value={email}
@@ -99,10 +101,11 @@ export function EmailSignUpForm() {
         />
       </div>
       <div>
-        <label className="mb-1 block text-xs font-semibold text-brand-gray-300">
+        <label htmlFor="signup-password" className="mb-1 block text-xs font-semibold text-brand-gray-300">
           Password
         </label>
         <PasswordInput
+          id="signup-password"
           required
           autoComplete="new-password"
           value={password}
@@ -111,10 +114,11 @@ export function EmailSignUpForm() {
         />
       </div>
       <div>
-        <label className="mb-1 block text-xs font-semibold text-brand-gray-300">
+        <label htmlFor="signup-confirm" className="mb-1 block text-xs font-semibold text-brand-gray-300">
           Confirm password
         </label>
         <PasswordInput
+          id="signup-confirm"
           required
           autoComplete="new-password"
           value={confirm}

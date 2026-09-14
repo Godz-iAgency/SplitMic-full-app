@@ -41,6 +41,7 @@ export function Dropdown({
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState<number>(-1);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const generatedId = useId();
   const listboxId = `${id ?? generatedId}-listbox`;
@@ -66,6 +67,7 @@ export function Dropdown({
       if (e.key === "Escape") {
         e.preventDefault();
         setOpen(false);
+        triggerRef.current?.focus();
       }
     }
     document.addEventListener("keydown", handleKey);
@@ -83,7 +85,10 @@ export function Dropdown({
 
   // Reset highlight when opening
   useEffect(() => {
-    if (open) setHighlighted(selectedIndex >= 0 ? selectedIndex : 0);
+    if (open) {
+      setHighlighted(selectedIndex >= 0 ? selectedIndex : 0);
+      listRef.current?.focus();
+    }
   }, [open, selectedIndex]);
 
   function selectIndex(idx: number) {
@@ -91,6 +96,7 @@ export function Dropdown({
     if (!opt || opt.disabled) return;
     onChange(opt.value);
     setOpen(false);
+    triggerRef.current?.focus();
   }
 
   function moveHighlight(delta: number) {
@@ -145,6 +151,7 @@ export function Dropdown({
       className={`relative ${fullWidth ? "w-full" : "inline-block"}`}
     >
       <button
+        ref={triggerRef}
         type="button"
         id={id}
         onClick={() => setOpen((o) => !o)}
@@ -174,12 +181,12 @@ export function Dropdown({
           ref={listRef}
           id={listboxId}
           role="listbox"
+          aria-label={ariaLabel ?? displayLabel}
           tabIndex={-1}
           onKeyDown={handleListKey}
           aria-activedescendant={
             highlighted >= 0 ? `${listboxId}-opt-${highlighted}` : undefined
           }
-          autoFocus
           // origin-top anchors the pop-in growth to the trigger directly
           // above it, so the list reads as coming out of the control that
           // opened it rather than appearing on its own.

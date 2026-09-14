@@ -45,10 +45,11 @@ export function EmailSignInForm() {
   return (
     <form onSubmit={submit} className="space-y-3 text-left">
       <div>
-        <label className="mb-1 block text-xs font-semibold text-brand-gray-300">
+        <label htmlFor="signin-email" className="mb-1 block text-xs font-semibold text-brand-gray-300">
           Email
         </label>
         <input
+          id="signin-email"
           type="email"
           required
           value={email}
@@ -59,7 +60,7 @@ export function EmailSignInForm() {
       </div>
       <div>
         <div className="mb-1 flex items-center justify-between">
-          <label className="text-xs font-semibold text-brand-gray-300">
+          <label htmlFor="signin-password" className="text-xs font-semibold text-brand-gray-300">
             Password
           </label>
           <Link
@@ -70,6 +71,7 @@ export function EmailSignInForm() {
           </Link>
         </div>
         <PasswordInput
+          id="signin-password"
           required
           autoComplete="current-password"
           value={password}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 type Props = {
+  id?: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export function PasswordInput({
+  id,
   value,
   onChange,
   placeholder,
@@ -22,6 +24,7 @@ export function PasswordInput({
   return (
     <div className="relative">
       <input
+        id={id}
         type={visible ? "text" : "password"}
         required={required}
         autoComplete={autoComplete}
@@ -35,7 +38,6 @@ export function PasswordInput({
         onClick={() => setVisible((v) => !v)}
         aria-label={visible ? "Hide password" : "Show password"}
         aria-pressed={visible}
-        tabIndex={-1}
         className="absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-md text-brand-gray-400 tappable hover:bg-white/5 hover:text-white focus:outline-none focus:ring-1 focus:ring-brand-orange/50"
       >
         {visible ? (

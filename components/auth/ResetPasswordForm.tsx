@@ -62,10 +62,11 @@ export function ResetPasswordForm() {
   return (
     <form onSubmit={submit} className="space-y-3 text-left">
       <div>
-        <label className="mb-1 block text-xs font-semibold text-brand-gray-300">
+        <label htmlFor="reset-password" className="mb-1 block text-xs font-semibold text-brand-gray-300">
           New password
         </label>
         <PasswordInput
+          id="reset-password"
           required
           autoComplete="new-password"
           value={password}
@@ -74,10 +75,11 @@ export function ResetPasswordForm() {
         />
       </div>
       <div>
-        <label className="mb-1 block text-xs font-semibold text-brand-gray-300">
+        <label htmlFor="reset-confirm" className="mb-1 block text-xs font-semibold text-brand-gray-300">
           Confirm new password
         </label>
         <PasswordInput
+          id="reset-confirm"
           required
           autoComplete="new-password"
           value={confirm}

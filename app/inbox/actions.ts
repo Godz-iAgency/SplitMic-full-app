@@ -12,6 +12,8 @@ export async function respondToConnectionRequest(
   requestId: string,
   decision: "accepted" | "declined",
 ): Promise<{ error?: string; threadId?: string }> {
+  if (decision !== "accepted" && decision !== "declined")
+    return { error: "Choose accept or decline." };
   const supabase = createServerSupabaseClient();
   const {
     data: { user },
@@ -33,12 +35,18 @@ export async function respondToConnectionRequest(
   if (request.status !== "pending")
     return { error: "This request was already responded to." };
 
-  const { error } = await supabase
+  // Only one response can win, even when two tabs submit simultaneously.
+  const { data: updated, error } = await supabase
     .from("connection_requests")
     .update({ status: decision })
-    .eq("id", requestId);
+    .eq("id", requestId)
+    .eq("recipient_user_id", user.id)
+    .eq("status", "pending")
+    .select("id")
+    .maybeSingle();
 
   if (error) return { error: error.message };
+  if (!updated) return { error: "This request was already responded to." };
 
   // If accepted, look up the thread (created by DB trigger)
   let threadId: string | undefined;

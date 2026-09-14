@@ -62,18 +62,23 @@ export async function askAssistant(
     message: trimmed,
   });
 
-  // Telemetry must never take down a good answer, so this is fire-and-forget
-  // against its own client and swallows its own failures (see usage.ts).
-  void recordUsage(createServiceRoleClient(), {
-    userId: user.id,
-    provider: result.telemetry.provider,
-    model: result.telemetry.model,
-    fellBack: result.telemetry.fellBack,
-    toolCalls: result.telemetry.toolCalls,
-    resultCount: result.telemetry.resultCount,
-    latencyMs: Date.now() - startedAt,
-    error: result.telemetry.error,
-  });
+  // Include client creation in the failure boundary too: a missing service
+  // credential must not discard an answer. Await the write so the runtime
+  // cannot freeze this invocation before usage has been recorded.
+  try {
+    await recordUsage(createServiceRoleClient(), {
+      userId: user.id,
+      provider: result.telemetry.provider,
+      model: result.telemetry.model,
+      fellBack: result.telemetry.fellBack,
+      toolCalls: result.telemetry.toolCalls,
+      resultCount: result.telemetry.resultCount,
+      latencyMs: Date.now() - startedAt,
+      error: result.telemetry.error,
+    });
+  } catch {
+    console.error("[ai-usage] could not initialize usage recording");
+  }
 
   return {
     text: result.text,

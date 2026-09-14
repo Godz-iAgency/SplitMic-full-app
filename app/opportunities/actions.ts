@@ -12,6 +12,7 @@ import {
   MAX_ACTIVE_OPPORTUNITY_POSTS,
   MAX_TAGGED_BANDS_PER_EVENT,
   countActivePosts,
+  postExpiryDate,
   browseMarketplace,
   type BrowseFilters,
   type BrowseResult,
@@ -160,11 +161,8 @@ export async function createMarketplacePost(
   // schemas where the trigger isn't yet installed.
   // For multi-day events (festivals), expiry is based on the END date so the
   // post stays live until 7 days AFTER the festival ends.
-  const eventExpiryAnchor =
-    payload.event_end_date ?? payload.event_date;
-  const expiresAt = DATE_BASED_TYPES.includes(payload.post_type)
-    ? addDays(eventExpiryAnchor!, 7)
-    : addDays(payload.open_until!, 7);
+  const expiresAt = postExpiryDate(payload.post_type, payload);
+  if (!expiresAt) return { error: "Enter a valid date." };
 
   const { data: inserted, error: insertError } = await supabase
     .from("marketplace_posts")
@@ -276,7 +274,7 @@ export async function updateMarketplacePost(
   if (!title) return { error: "Title is required." };
   if (title.length > 120) return { error: "Title is too long (max 120)." };
 
-  if (postType === "event") {
+  if (DATE_BASED_TYPES.includes(postType)) {
     if (!payload.event_date)
       return { error: "Event date is required for event posts." };
     if (payload.event_end_date) {
@@ -294,23 +292,19 @@ export async function updateMarketplacePost(
   }
 
   // Recompute expires_at since dates may have changed.
-  const eventExpiryAnchor =
-    payload.event_end_date ?? payload.event_date;
-  const expiresAt =
-    postType === "event"
-      ? addDays(eventExpiryAnchor!, 7)
-      : addDays(payload.open_until!, 7);
+  const expiresAt = postExpiryDate(postType, payload);
+  if (!expiresAt) return { error: "Enter a valid date." };
 
   const { error: updateError } = await supabase
     .from("marketplace_posts")
     .update({
       title,
       description: payload.description.trim() || null,
-      event_date: postType === "event" ? payload.event_date : null,
+      event_date: DATE_BASED_TYPES.includes(postType) ? payload.event_date : null,
       event_end_date:
         postType === "event" ? payload.event_end_date ?? null : null,
       event_location:
-        postType === "event"
+        DATE_BASED_TYPES.includes(postType)
           ? payload.event_location?.trim() || null
           : null,
       open_until: postType === "opportunity" ? payload.open_until : null,
@@ -360,11 +354,17 @@ export async function respondToBandTag(
   tagId: string,
   decision: "accepted" | "declined",
 ): Promise<{ error?: string }> {
+  if (decision !== "accepted" && decision !== "declined")
+    return { error: "Choose accept or decline." };
   const supabase = createServerSupabaseClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated." };
+
+  const { data: band } = await supabase.from("profiles").select("id")
+    .eq("user_id", user.id).eq("player_type", "band").maybeSingle();
+  if (!band) return { error: "Band profile not found." };
 
   const { error } = await supabase
     .from("event_band_tags")
@@ -372,7 +372,8 @@ export async function respondToBandTag(
       status: decision,
       responded_at: new Date().toISOString(),
     })
-    .eq("id", tagId);
+    .eq("id", tagId)
+    .eq("band_profile_id", band.id);
 
   if (error) return { error: error.message };
 
@@ -390,6 +391,10 @@ export async function toggleShareTaggedEvent(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated." };
 
+  const { data: band } = await supabase.from("profiles").select("id")
+    .eq("user_id", user.id).eq("player_type", "band").maybeSingle();
+  if (!band) return { error: "Band profile not found." };
+
   // Can only share if accepted.
   const { data: tag } = await supabase
     .from("event_band_tags")
@@ -404,7 +409,9 @@ export async function toggleShareTaggedEvent(
   const { error } = await supabase
     .from("event_band_tags")
     .update({ shared_to_feed: share })
-    .eq("id", tagId);
+    .eq("id", tagId)
+    .eq("band_profile_id", band.id)
+    .eq("status", "accepted");
 
   if (error) return { error: error.message };
 
@@ -488,12 +495,6 @@ export async function respondToPost(
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-function addDays(yyyyMmDd: string, days: number): string {
-  const d = new Date(yyyyMmDd + "T12:00:00");
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-}
 
 // Server-side band search (used by the tag picker via debounced action).
 export async function searchBandsForTaggingAction(

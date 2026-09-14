@@ -1,4 +1,5 @@
 import type { ProfilePayload } from "@/components/onboarding/ProfileStep";
+import { PLAYER_TYPE_OPTIONS } from "@/lib/types";
 
 /**
  * The validation gap this closes: `GenreMultiSelect`'s `required` prop only
@@ -21,7 +22,13 @@ import type { ProfilePayload } from "@/components/onboarding/ProfileStep";
  * across five different chip pickers.
  */
 export function validateProfilePayload(payload: ProfilePayload): string | null {
-  if (genresFor(payload).length === 0) {
+  if (!payload || !payload.common || !payload.specific ||
+      !PLAYER_TYPE_OPTIONS.some(({ value }) => value === payload.kind)) {
+    return "Invalid profile details.";
+  }
+  const genres = genresFor(payload);
+  if (!Array.isArray(genres) || genres.length === 0 ||
+      genres.some((genre) => typeof genre !== "string" || !genre.trim())) {
     return "Pick at least one genre.";
   }
   return null;

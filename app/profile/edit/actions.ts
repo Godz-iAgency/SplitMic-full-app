@@ -6,6 +6,7 @@ import { tableForPlayerType } from "@/lib/supabase/profile";
 import { normalizeWebsiteUrl } from "@/lib/url";
 import { resolveVideoEmbed } from "@/lib/media/videoEmbed";
 import { buildSocialLinks } from "@/lib/profile/socialLinks";
+import { validateProfilePayload } from "@/lib/profile/validation";
 import type { ProfilePayload } from "@/components/onboarding/ProfileStep";
 
 export async function saveProfileInfo(
@@ -19,15 +20,20 @@ export async function saveProfileInfo(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated." };
 
+  const validationError = validateProfilePayload(payload);
+  if (validationError) return { error: validationError };
+
   // Verify ownership
   const { data: ownedProfile } = await supabase
     .from("profiles")
-    .select("id")
+    .select("id, player_type")
     .eq("id", profileId)
     .eq("user_id", user.id)
     .maybeSingle();
 
   if (!ownedProfile) return { error: "Profile not found." };
+  if (ownedProfile.player_type !== payload.kind)
+    return { error: "Profile type does not match this account." };
 
   // 1. Update profiles row
   const { error: profileError } = await supabase
@@ -60,7 +66,9 @@ export async function saveProfileInfo(
 
   // 3. Replace profile_links
   const links = buildSocialLinks(profileId, payload.common);
-  await supabase.from("profile_links").delete().eq("profile_id", profileId);
+  const { error: deleteLinksError } = await supabase
+    .from("profile_links").delete().eq("profile_id", profileId);
+  if (deleteLinksError) return { error: deleteLinksError.message };
   if (links.length > 0) {
     const { error: linksError } = await supabase
       .from("profile_links")
@@ -217,4 +225,3 @@ function buildDetailRow(
       };
   }
 }
-

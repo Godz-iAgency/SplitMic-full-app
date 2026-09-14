@@ -75,7 +75,9 @@ export async function sendSupportMessage(
     s
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
 
   try {
     const { error } = await resend.emails.send({

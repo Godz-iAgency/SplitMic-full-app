@@ -62,7 +62,7 @@ export function DirectoryOgImagePanel({ done, pending, failed }: Props) {
           </h2>
           <p className="mt-1 text-sm text-brand-gray-300">
             {done} found · {pending} waiting
-            {failed > 0 ? ` · ${failed} failed` : ""}. Pulls each business's own
+            {failed > 0 ? ` · ${failed} failed` : ""}. Pulls each business&apos;s own
             website preview photo, no API key, no cost. Safe to stop and
             continue later.
           </p>

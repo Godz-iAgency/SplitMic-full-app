@@ -14,12 +14,18 @@ export async function updateSession(request: NextRequest) {
         },
         set(name: string, value: string, options: CookieOptions) {
           request.cookies.set({ name, value, ...options });
+          const previousCookies = response.cookies.getAll();
           response = NextResponse.next({ request });
+          // Auth sessions can span several cookies. Recreating the response
+          // must not discard chunks already written by this refresh.
+          previousCookies.forEach((cookie) => response.cookies.set(cookie));
           response.cookies.set({ name, value, ...options });
         },
         remove(name: string, options: CookieOptions) {
           request.cookies.set({ name, value: "", ...options });
+          const previousCookies = response.cookies.getAll();
           response = NextResponse.next({ request });
+          previousCookies.forEach((cookie) => response.cookies.set(cookie));
           response.cookies.set({ name, value: "", ...options });
         },
       },

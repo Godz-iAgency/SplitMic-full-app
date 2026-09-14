@@ -48,9 +48,9 @@ function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
  * End-to-end upload flow:
  *   1. Validate (type, size, duration)
  *   2. Compress images client-side
- *   3. For single-slot kinds (avatar / banner / video), remove the existing one first
+ *   3. For single-slot kinds (avatar / banner / video), load the existing record
  *   4. Upload to Supabase Storage
- *   5. Insert a profile_media row
+ *   5. Save the profile_media row, then remove the replaced storage object
  *   6. If row insert fails, roll back the storage upload
  */
 export async function uploadProfileMedia(
@@ -98,26 +98,24 @@ export async function uploadProfileMedia(
     }
   }
 
-  // 3. Single-slot kinds replace any existing entry
+  // Keep the old media intact until both the upload and record save succeed.
+  let existing: { id: string; storage_path: string; poster_path: string | null } | null = null;
   if (kind === "avatar" || kind === "banner" || kind === "video") {
-    const { data: existing } = await supabase
+    const { data, error } = await supabase
       .from("profile_media")
       .select("id, storage_path, poster_path")
       .eq("profile_id", profileId)
+      .eq("user_id", userId)
       .eq("kind", kind)
       .maybeSingle();
 
-    if (existing) {
-      const pathsToRemove = [existing.storage_path];
-      if (existing.poster_path) pathsToRemove.push(existing.poster_path);
-      await supabase.storage.from(BUCKET).remove(pathsToRemove);
-      await supabase.from("profile_media").delete().eq("id", existing.id);
-    }
+    if (error) return { ok: false, error: error.message };
+    existing = data;
   }
 
   // 4. Upload
   const ext = fileExtensionFor(fileToUpload, kind);
-  const storagePath = `${userId}/${kind}-${Date.now()}.${ext}`;
+  const storagePath = `${userId}/${kind}-${crypto.randomUUID()}.${ext}`;
 
   let storageError: { message: string } | null = null;
   try {
@@ -144,10 +142,8 @@ export async function uploadProfileMedia(
     return { ok: false, error: `Upload failed: ${storageError.message}` };
   }
 
-  // 5. Insert DB row
-  const { data: row, error: insertError } = await supabase
-    .from("profile_media")
-    .insert({
+  // 5. Replace the existing row without a destructive delete/insert gap.
+  const values = {
       profile_id: profileId,
       user_id: userId,
       kind,
@@ -157,7 +153,15 @@ export async function uploadProfileMedia(
       width,
       height,
       duration_seconds: durationSeconds,
-    })
+      poster_path: null,
+  };
+  const save = existing
+    ? supabase.from("profile_media").update(values)
+        .eq("id", existing.id).eq("user_id", userId)
+        // A concurrent replacement must not be silently overwritten.
+        .eq("storage_path", existing.storage_path)
+    : supabase.from("profile_media").insert(values);
+  const { data: row, error: insertError } = await save
     .select("id")
     .single();
 
@@ -168,6 +172,13 @@ export async function uploadProfileMedia(
       ok: false,
       error: insertError?.message ?? "Could not save media record.",
     };
+  }
+
+  if (existing) {
+    const paths = [existing.storage_path];
+    if (existing.poster_path) paths.push(existing.poster_path);
+    // Cleanup failure leaves an unused object, never a broken profile image.
+    await supabase.storage.from(BUCKET).remove(paths);
   }
 
   // Build public URL

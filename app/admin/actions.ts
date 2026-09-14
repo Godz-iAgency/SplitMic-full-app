@@ -170,6 +170,27 @@ export async function adminDeleteUser(
   const { error: uErr } = await supabase.from("users").delete().eq("id", userId);
   if (uErr) return { error: `User delete failed: ${uErr.message}` };
 
+  // Storage paths are namespaced `${userId}/...` (see lib/media/upload.ts),
+  // so this clears their photos/videos/gallery regardless of what the DB
+  // cascade already removed from profile_media.
+  const { data: objects } = await supabase.storage
+    .from("profile-media")
+    .list(userId);
+  if (objects && objects.length > 0) {
+    await supabase.storage
+      .from("profile-media")
+      .remove(objects.map((o) => `${userId}/${o.name}`));
+  }
+
+  // Delete the Auth identity last: app rows and storage are already gone, so
+  // if this fails the admin can retry without re-deleting anything. Without
+  // this, the login itself survives and the same person can sign back in and
+  // land on /onboarding as if nothing happened (auth callback only creates a
+  // fresh `users` row on a *new* auth.users insert, which a surviving login
+  // never triggers).
+  const { error: authErr } = await supabase.auth.admin.deleteUser(userId);
+  if (authErr) return { error: `Login removal failed: ${authErr.message}` };
+
   await logAdminAction({
     actionType: "delete_user",
     targetType: "user",
