@@ -27,8 +27,11 @@ const DEFAULT_MODEL = "openai/gpt-oss-120b";
 
 const TIMEOUT_MS = 20_000;
 
+/** Same rule as the Gemini provider; see its isRetryableStatus for why. */
 function isRetryableStatus(status: number): boolean {
-  return status === 429 || status >= 500;
+  return (
+    status === 401 || status === 403 || status === 404 || status === 429 || status >= 500
+  );
 }
 
 /**

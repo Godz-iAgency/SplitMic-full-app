@@ -25,7 +25,7 @@ export type AssistantAction = {
   external: boolean;
 };
 
-export type AssistantCardKind = "member" | "business" | "event";
+export type AssistantCardKind = "member" | "business" | "event" | "opportunity";
 
 export type AssistantCard = {
   /** Stable within a response; used as the React key and for dedupe. */

@@ -18,7 +18,7 @@ This file covers setup and a tour of the codebase.
 - Supabase (Postgres, Auth, Storage, Row Level Security)
 - Tailwind CSS
 - Google Maps Geocoding API (`/api/validate-address` — built but **not currently wired into onboarding**, which validates client-side instead)
-- Google Gemini API (AI show-matching for talent buyers)
+- Google Gemini API, `gemini-3.5-flash-lite` (AI show-matching for talent buyers, and the primary model behind SplitMic AI)
 - Resend (transactional email)
 - Firecrawl (scrapes Austin live-music listings for `/live`)
 
@@ -47,7 +47,7 @@ RESEND_API_KEY=
 NOTIFY_FROM_EMAIL=               # user notification emails; falls back to a Resend shared address
 SUPPORT_FROM_EMAIL=              # support form emails; same fallback
 GEMINI_API_KEY=                  # AI show-matching + SplitMic AI (primary); needs the Generative Language API enabled
-GEMINI_MODEL=                    # optional override; defaults to gemini-2.5-flash
+GEMINI_MODEL=                    # optional override for both Gemini callers; defaults to gemini-3.5-flash-lite (lib/ai/geminiModel.ts)
 GROQ_API_KEY=                    # SplitMic AI fallback provider — optional but strongly recommended
 GROQ_MODEL=                      # optional override; catalog is account-scoped, see "SplitMic AI" below
 FREE_AI_MESSAGES_PER_DAY=        # assistant questions per account per day; defaults to 50
@@ -248,10 +248,11 @@ treated as a listing until it's explicitly added to `TICKETING_SOURCES`.
 
 ## SplitMic AI (`/assistant`)
 
-An authenticated conversational layer over the data the directory, search, and
-`/live` already expose. It adds no new data — it's a different way in.
+An authenticated conversational layer over the data the directory, search,
+`/live`, and the Opportunities feed already expose. It adds no new data — it's
+a different way in.
 
-**Flow:** the user's message and the prior turns go to a model with three
+**Flow:** the user's message and the prior turns go to a model with four
 read-only tools; the model picks one, the backend runs the real query, and the
 model writes prose around the results while the UI renders the rows as cards.
 
@@ -260,14 +261,31 @@ model writes prose around the results while the UI renders the rows as cards.
 | `search_splitmic_members` | `searchProfiles` — the 5 real player types |
 | `search_austin_directory` | `directory_businesses` — the 8 scraped categories |
 | `search_live_events` | `getUpcomingEvents` + the `/live` selectors |
+| `search_opportunities` | `browseMarketplace` (the `/opportunities` feed), minus re-shares and posts whose date has passed |
 
-**Providers** (`lib/ai/providers/`): Gemini primary, Groq fallback. Only
-*retryable* failures (429, 5xx, timeout) fall through — a bad key or malformed
-request fails identically on both, so retrying would just burn the second
-quota. The conversation is provider-independent, so a mid-conversation switch
-carries full context. Groq's model catalog is **account-scoped**: check
+Private data (messages, connection requests, scraped contact emails) has no
+tool at all. Only the plain text of earlier turns carries between questions,
+never earlier tool results, so the prompt tells the model to search again when
+a follow-up asks about details it already showed.
+
+**Providers** (`lib/ai/providers/`): Gemini primary, Groq fallback. The model
+is chosen in one place, `lib/ai/geminiModel.ts`, shared with the show matcher.
+Failures fall through to Groq when they're about Gemini specifically: 429, 5xx,
+timeouts, and 401/403/404 (Gemini's own key or model unavailable — Groq has
+its own). Only a 400, a malformed request, is surfaced instead. The
+conversation is provider-independent, so a mid-conversation switch carries
+full context. Groq's model catalog is **account-scoped**: check
 `https://api.groq.com/openai/v1/models` before setting `GROQ_MODEL` — the
 common Llama ids 404 on some accounts.
+
+**Gemini 3+ thought signatures:** Gemini attaches an opaque signature to each
+tool call and rejects the next turn (400) if it isn't sent back. It travels on
+`ToolCall.providerSignature`. Tool calls Groq made after a fallback carry
+Google's documented placeholder, `skip_thought_signature_validator`, instead —
+otherwise switching back to Gemini mid-conversation would fail. The thinking
+off-switch also differs by generation (`thinkingBudget: 0` on 2.x,
+`thinkingLevel: "minimal"` on 3+; the wrong one is a 400), which
+`minimalThinkingConfig` handles.
 
 **Three things are load-bearing and shouldn't be "simplified":**
 

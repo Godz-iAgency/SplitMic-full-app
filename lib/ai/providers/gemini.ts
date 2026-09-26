@@ -1,3 +1,4 @@
+import { geminiModel } from "@/lib/ai/geminiModel";
 import type {
   ChatRequest,
   LLMProvider,
@@ -19,7 +20,13 @@ import type {
 
 const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 
-const DEFAULT_MODEL = "gemini-2.5-flash";
+/**
+ * Google's documented placeholder for a tool call Gemini didn't make itself,
+ * here, one Groq made after a mid-conversation fallback. Without it, handing
+ * that history back to Gemini 3+ is a non-retryable 400 and the whole answer
+ * fails. Verified live: rejected without, accepted with.
+ */
+const FOREIGN_CALL_SIGNATURE = "skip_thought_signature_validator";
 
 /**
  * Longer than lib/ai/gemini.ts's 12s because this call can carry a full
@@ -31,20 +38,25 @@ const DEFAULT_MODEL = "gemini-2.5-flash";
 const TIMEOUT_MS = 20_000;
 
 /**
- * Status codes worth trying the other provider for. 429 is quota/rate limit
- * and 5xx is provider-side failure — both mean "ask someone else". A 400 or
- * 403 means our request or key is wrong, which Groq would reject identically,
- * so those are non-retryable and surface as-is.
+ * Status codes worth trying the other provider for: 429 (quota), 5xx
+ * (Gemini-side failure), and 401/403/404, which mean *this provider's* key or
+ * model is unavailable. Groq has its own key and model, so none of those carry
+ * over. This used to treat 403/404 as "fails identically everywhere", which is
+ * how a retired Gemini model (404 for new keys) would take SplitMic AI down
+ * outright while a healthy Groq sat unused. Only 400, a malformed request, is
+ * still surfaced as-is: that's a bug in our code worth seeing, not an outage.
  */
 function isRetryableStatus(status: number): boolean {
-  return status === 429 || status >= 500;
+  return (
+    status === 401 || status === 403 || status === 404 || status === 429 || status >= 500
+  );
 }
 
 export class GeminiProvider implements LLMProvider {
   readonly name = "gemini";
   readonly model: string;
 
-  constructor(model: string = process.env.GEMINI_MODEL || DEFAULT_MODEL) {
+  constructor(model: string = geminiModel()) {
     this.model = model;
   }
 
@@ -117,7 +129,10 @@ export class GeminiProvider implements LLMProvider {
 
 type GeminiPart =
   | { text: string }
-  | { functionCall: { name: string; args?: Record<string, unknown> } }
+  | {
+      functionCall: { name: string; args?: Record<string, unknown> };
+      thoughtSignature?: string;
+    }
   | { functionResponse: { name: string; response: unknown } };
 
 /**
@@ -135,13 +150,25 @@ function toGeminiContents(
         return { role: "user" as const, parts: [{ text: turn.content }] };
       case "assistant":
         return { role: "model" as const, parts: [{ text: turn.content }] };
-      case "assistant_tool_calls":
+      case "assistant_tool_calls": {
+        // Gemini signs only the first call of a parallel batch, so its own
+        // turns go back exactly as received. A turn with no signature at all
+        // came from Groq, and only its first call gets the placeholder,
+        // mirroring that shape (verified live for both cases).
+        const madeByGemini = turn.calls.some((c) => c.providerSignature);
         return {
           role: "model" as const,
-          parts: turn.calls.map((c) => ({
-            functionCall: { name: c.name, args: c.args },
-          })),
+          parts: turn.calls.map((c, i) => {
+            const signature =
+              c.providerSignature ??
+              (!madeByGemini && i === 0 ? FOREIGN_CALL_SIGNATURE : undefined);
+            return {
+              functionCall: { name: c.name, args: c.args },
+              ...(signature ? { thoughtSignature: signature } : {}),
+            };
+          }),
         };
+      }
       case "tool_result":
         return {
           role: "user" as const,
@@ -171,9 +198,13 @@ function parseGeminiReply(body: unknown): LLMResult {
 
   for (const part of parts) {
     if (isFunctionCallPart(part)) {
+      const signature = (part as { thoughtSignature?: unknown }).thoughtSignature;
       calls.push({
         name: part.functionCall.name,
         args: part.functionCall.args ?? {},
+        ...(typeof signature === "string" && signature
+          ? { providerSignature: signature }
+          : {}),
       });
     } else if (isTextPart(part) && part.text.trim()) {
       texts.push(part.text);

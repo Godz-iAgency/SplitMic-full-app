@@ -19,11 +19,13 @@ type Bubble = {
   degraded?: boolean;
 };
 
+// One per data source the assistant can search: events, members, directory,
+// and the Opportunities feed.
 const STARTERS = [
   "What shows are happening tonight?",
   "Find reggae bands in Austin",
   "Where can I rent a drum kit?",
-  "Show me free shows this week",
+  "Any open mics coming up?",
 ];
 
 export function AssistantChat() {
@@ -87,7 +89,7 @@ export function AssistantChat() {
           </div>
           <p className="mt-3 text-sm text-brand-gray-300">
             Ask for what you need in plain English. I search real SplitMic
-            members, the Austin directory, and tonight&apos;s live music.
+            members, gigs and open mics, the Austin directory, and live music.
           </p>
           <ul className="mt-4 flex flex-wrap justify-center gap-2">
             {STARTERS.map((s) => (

@@ -35,6 +35,13 @@ export type ToolDefinition = {
 export type ToolCall = {
   name: string;
   args: Record<string, unknown>;
+  /**
+   * Opaque provider state that must travel back with this call on the next
+   * request. Gemini 3+ attaches a "thought signature" to a tool call and
+   * rejects the follow-up turn with a 400 if it's missing. Providers that
+   * don't use one (Groq) leave it unset and ignore it.
+   */
+  providerSignature?: string;
 };
 
 /**
@@ -65,11 +72,11 @@ export type LLMReply =
  * lib/directory/websiteCheck.ts).
  *
  * `retryable` is the whole point of the failure branch: it distinguishes
- * "this provider is temporarily unavailable, try the other one" (rate limit,
- * timeout, 5xx) from "this request is wrong and will fail identically
- * everywhere" (malformed request, bad API key). Falling back on a
- * non-retryable failure just burns the second provider's quota to produce the
- * same error, so ./index.ts only falls back when this is true.
+ * "this provider can't answer, try the other one" (rate limit, timeout, 5xx,
+ * and this provider's own key or model being unavailable) from "this request
+ * is malformed" (400). Keys and models are per provider, so a Gemini key or
+ * model problem says nothing about Groq; ./index.ts falls back only when this
+ * is true.
  */
 export type LLMResult =
   | { ok: true; reply: LLMReply }

@@ -38,9 +38,10 @@ export type ProviderOutcome = {
  * without GROQ_API_KEY should behave exactly like a Gemini-only deploy, not
  * report a fallback error on every request.
  *
- * Only `retryable` failures advance to the next provider. A malformed request
- * or a bad key fails identically everywhere, so retrying it would just burn
- * the fallback's quota to produce the same error twice.
+ * Only `retryable` failures advance to the next provider. What counts as
+ * retryable is each provider's call (see types.ts): a malformed request is
+ * surfaced rather than retried, while a provider's own key or model being
+ * unavailable falls through, since the next provider has its own.
  */
 export async function chatWithFallback(
   request: ChatRequest,

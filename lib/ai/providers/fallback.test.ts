@@ -24,7 +24,7 @@ function provider(
 
 const OK: LLMResult = { ok: true, reply: { kind: "text", text: "hi" } };
 const RETRYABLE: LLMResult = { ok: false, reason: "429", retryable: true };
-const FATAL: LLMResult = { ok: false, reason: "bad key", retryable: false };
+const FATAL: LLMResult = { ok: false, reason: "malformed request", retryable: false };
 
 describe("chatWithFallback", () => {
   it("uses the primary and never touches the fallback when the primary works", () => {
@@ -53,9 +53,8 @@ describe("chatWithFallback", () => {
   });
 
   it("does NOT fall back on a non-retryable failure", async () => {
-    // The regression this guards: a bad request or bad key fails identically
-    // everywhere, so retrying just burns the fallback's quota to produce the
-    // same error twice.
+    // Whether a failure is retryable is the provider's call; this guards that
+    // the orchestrator respects it rather than retrying everything.
     const primary = provider("gemini", FATAL);
     const fallback = provider("groq", OK);
 

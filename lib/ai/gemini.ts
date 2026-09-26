@@ -9,10 +9,9 @@
  * would add install weight and a version to track for no gain.
  */
 
-const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
+import { geminiModel, minimalThinkingConfig } from "./geminiModel";
 
-/** Cheap + fast, and this is a structured-extraction job, not a reasoning one. */
-const MODEL = "gemini-2.5-flash";
+const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 
 /** A slow match is worse than no match: the caller falls back to plain search. */
 const TIMEOUT_MS = 12_000;
@@ -46,12 +45,13 @@ export async function generateJson<T>(
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return { ok: false, reason: "GEMINI_API_KEY is not set" };
 
+  const model = geminiModel();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
     const response = await fetch(
-      `${ENDPOINT}/${MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`,
+      `${ENDPOINT}/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -64,9 +64,9 @@ export async function generateJson<T>(
             // Extraction, not creative writing — we want the same description
             // to produce the same filters every time.
             temperature: 0,
-            // Thinking adds seconds of latency for no accuracy gain on a task
-            // this mechanical.
-            thinkingConfig: { thinkingBudget: 0 },
+            // Thinking adds latency for no accuracy gain on a task this
+            // mechanical.
+            thinkingConfig: minimalThinkingConfig(model),
           },
         }),
       },

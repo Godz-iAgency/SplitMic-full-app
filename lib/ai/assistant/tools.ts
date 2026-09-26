@@ -11,7 +11,12 @@ import {
 } from "@/lib/directory/categories";
 import { getUpcomingEvents, type LiveEventCard } from "@/lib/events/queries";
 import { selectTonightEvents, selectThisWeekEvents } from "@/lib/events/filters";
-import { isToday } from "@/lib/events/time";
+import { isToday, cycleDateKey } from "@/lib/events/time";
+import {
+  browseMarketplace,
+  type MarketplaceCard,
+  type PostType,
+} from "@/lib/supabase/marketplace";
 import { buildTicketLink, buildDirectionsUrl } from "@/lib/events/getThereLinks";
 import { formatEventTime, formatEventDayLabel } from "@/lib/events/time";
 
@@ -35,8 +40,10 @@ import { formatEventTime, formatEventDayLabel } from "@/lib/events/time";
  * entity (search_bands, search_venues, …). They're collapsed into one
  * parameterized search per *data source* instead, because that's the shape the
  * data actually has — `player_type` and `category` are real columns — and
- * because three well-described tools get selected far more reliably than
- * twenty near-identical ones.
+ * because a few well-described tools get selected far more reliably than
+ * twenty near-identical ones. One tool per data source: members, directory,
+ * live events, and the Opportunities feed. Private data (messages, connection
+ * requests, contact emails) deliberately has no tool at all.
  */
 
 /** Per-tool result cap. Enough to choose from, few enough to read on a phone. */
@@ -65,6 +72,14 @@ const MEMBER_TYPES: PlayerType[] = [
   "record_label",
   "festival",
 ];
+
+const POST_TYPES: PostType[] = ["event", "open_mic", "opportunity"];
+
+const POST_TYPE_LABEL: Record<PostType, string> = {
+  event: "Show",
+  open_mic: "Open mic",
+  opportunity: "Opportunity",
+};
 
 export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
@@ -151,6 +166,31 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       required: ["when"],
     },
   },
+  {
+    name: "search_opportunities",
+    description:
+      "Search the SplitMic Opportunities feed: current posts from venues, festivals, talent buyers, and record labels. Covers shows looking for bands (event), open mics a band can sign up for (open_mic), and calls for artists, gigs, and submissions (opportunity). Use for questions like 'any open mics this week', 'who is looking for a punk band', or 'gigs I could apply for'. Only posts whose date has not passed are returned.",
+    parameters: {
+      type: "object",
+      properties: {
+        post_type: {
+          type: "string",
+          description: "Kind of post. Omit to search every kind.",
+          enum: [...POST_TYPES],
+        },
+        genre: {
+          type: "string",
+          description:
+            "Genre the post is for. Only use a value from the list. Omit if the user did not name a genre.",
+          enum: [...GENRES],
+        },
+        query: {
+          type: "string",
+          description: "Optional free-text search on the post title.",
+        },
+      },
+    },
+  },
 ];
 
 // ── Dispatch ────────────────────────────────────────────────────────────────
@@ -172,6 +212,8 @@ export async function runTool(
       return searchDirectory(call.args, ctx);
     case "search_live_events":
       return searchEvents(call.args, ctx);
+    case "search_opportunities":
+      return searchOpportunities(call.args, ctx);
     default:
       return {
         summary: { error: `Unknown tool: ${call.name}` },
@@ -469,6 +511,112 @@ function onCalendarDate(event: LiveEventCard, isoDate: string): boolean {
   const target = new Date(`${isoDate}T12:00:00-05:00`);
   if (Number.isNaN(target.getTime())) return false;
   return isToday(event.eventDatetime, target);
+}
+
+// ── search_opportunities ────────────────────────────────────────────────────
+
+async function searchOpportunities(
+  args: Record<string, unknown>,
+  ctx: ToolContext,
+): Promise<ToolOutcome> {
+  const postType = asEnum(args.post_type, POST_TYPES);
+  const genre = asString(args.genre);
+
+  // The same query the Opportunities page runs, on the user's own client, so
+  // the AI sees exactly the feed that user would: RLS already limits it to
+  // active posts, and suspended posters' posts are closed at suspend time.
+  const { cards: feed } = await browseMarketplace(ctx.supabase, {
+    postType: postType ?? "all",
+    genre:
+      genre && GENRES.includes(genre as (typeof GENRES)[number]) ? genre : undefined,
+    query: asString(args.query) ?? undefined,
+  });
+
+  const upcoming = selectUpcomingOpportunities(feed, ctx.now);
+  const top = upcoming.slice(0, MAX_RESULTS);
+
+  return {
+    summary: {
+      found: upcoming.length,
+      showing: top.length,
+      // Pay is free text the poster typed. Said outright so the model repeats
+      // it rather than estimating a number that isn't there.
+      note: "pay is exactly what the poster wrote, or null if they wrote nothing.",
+      results: top.map((p) => ({
+        title: p.title,
+        type: POST_TYPE_LABEL[p.post_type],
+        posted_by: p.poster_name,
+        poster_type: p.poster_player_type,
+        date: formatPostDates(p),
+        location: p.event_location ?? null,
+        genres: p.genres,
+        looking_for: p.player_types_wanted,
+        pay: p.pay_info?.trim() || null,
+        description: p.description ? truncate(p.description, 240) : null,
+        ...(p.post_type === "open_mic" ? { bands_signed_up: p.signup_count ?? 0 } : {}),
+      })),
+    },
+    cards: top.map((p) => ({
+      id: `opportunity:${p.id}`,
+      kind: "opportunity" as const,
+      title: p.title,
+      subtitle: `${POST_TYPE_LABEL[p.post_type]} by ${p.poster_name}`,
+      meta: [formatPostDates(p), ...p.genres.slice(0, 2)].filter(Boolean),
+      imageUrl: p.poster_avatar_url,
+      source: "SplitMic Opportunities",
+      actions: [
+        { label: "View post", href: `/opportunities/${p.id}`, external: false },
+        { label: "View poster", href: `/profile/${p.poster_profile_id}`, external: false },
+      ],
+    })),
+  };
+}
+
+/**
+ * The feed is built for browsing, not for answering "what's coming up": it
+ * keeps a post for a week after its date (soft expiry) and repeats an event
+ * once per band that re-shared it. Keep each post once, as its original, and
+ * only while its date is today or later in Austin. A post with no date at all
+ * stays in, since there's nothing to say it has passed.
+ */
+export function selectUpcomingOpportunities(
+  feed: MarketplaceCard[],
+  now: Date,
+): MarketplaceCard[] {
+  const today = cycleDateKey(now);
+  return feed.filter((p) => {
+    if (p.shared_by_profile_id) return false;
+    const lastDay =
+      p.post_type === "opportunity" ? p.open_until : p.event_end_date || p.event_date;
+    return !lastDay || lastDay >= today;
+  });
+}
+
+function formatPostDates(p: MarketplaceCard): string {
+  if (p.post_type === "opportunity") {
+    return p.open_until ? `Open until ${formatYmd(p.open_until)}` : "";
+  }
+  if (!p.event_date) return "";
+  return p.event_end_date && p.event_end_date !== p.event_date
+    ? `${formatYmd(p.event_date)} to ${formatYmd(p.event_end_date)}`
+    : formatYmd(p.event_date);
+}
+
+/** Post dates are plain calendar dates, so they're formatted without a zone shift. */
+function formatYmd(ymd: string): string {
+  const date = new Date(`${ymd}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return ymd;
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+function truncate(text: string, max: number): string {
+  const clean = text.trim();
+  return clean.length > max ? `${clean.slice(0, max - 1).trimEnd()}…` : clean;
 }
 
 // ── Argument coercion ───────────────────────────────────────────────────────
