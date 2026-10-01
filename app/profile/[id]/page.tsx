@@ -40,11 +40,8 @@ import { LogoutButton } from "@/components/LogoutButton";
 import { PublishButton } from "@/components/profile/PublishButton";
 import { PublishToggle } from "@/components/profile/PublishToggle";
 import { ProfileLiveStatus } from "@/components/profile/ProfileLiveStatus";
-import { BandReadinessPanel } from "@/components/profile/BandReadinessPanel";
-import { ReadinessBadge } from "@/components/profile/ReadinessBadge";
 import { ConnectButton } from "@/components/inbox/ConnectButton";
 import { ProfileIncompleteCard } from "@/components/ProfileIncompleteBanner";
-import { computeBandReadiness } from "@/lib/scoring/bandReadiness";
 import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -97,7 +94,7 @@ export default async function ProfilePage({
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "id, user_id, player_type, street_address, address_line_2, city, state, zip_code, bio, phone_number, website_url, instagram_handle, instagram_followers, is_published, intro_video_url",
+      "id, user_id, player_type, street_address, address_line_2, city, state, zip_code, bio, phone_number, website_url, instagram_handle, is_published, intro_video_url",
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -197,25 +194,6 @@ export default async function ProfilePage({
   const videoEmbed = profile.intro_video_url
     ? resolveVideoEmbed(profile.intro_video_url)
     : null;
-
-  // Band Readiness Score — pure hardcoded math (lib/scoring/bandReadiness.ts).
-  // Public number; the breakdown is owner-only (BandReadinessPanel).
-  const bandReadiness =
-    playerType === "band" && details
-      ? computeBandReadiness({
-          bio: profile.bio,
-          instagram_followers: profile.instagram_followers,
-          hasAvatar: !!avatar,
-          genres: details.genres ?? null,
-          sound_description: details.sound_description ?? null,
-          set_length_minutes: details.set_length_minutes ?? null,
-          email_list_size: details.email_list_size ?? null,
-          typical_draw: details.typical_draw ?? null,
-          largest_venue_capacity: details.largest_venue_capacity ?? null,
-          tiktok_followers: details.tiktok_followers ?? null,
-          youtube_followers: details.youtube_followers ?? null,
-        })
-      : null;
 
   const displayName =
     pickDetailName(playerType, details) ||
@@ -388,18 +366,6 @@ export default async function ProfilePage({
             <span className="font-bold text-white">{connectionCount}</span>
             {connectionCount === 1 ? "connection" : "connections"}
           </Link>
-        ) : null}
-
-        {/* Band Readiness Score — public number for visitors */}
-        {!isOwner && bandReadiness ? (
-          <div className="mt-3">
-            <ReadinessBadge score={bandReadiness.score} size="md" />
-          </div>
-        ) : null}
-
-        {/* Band Readiness Score — private, clickable breakdown for the owner */}
-        {isOwner && bandReadiness ? (
-          <BandReadinessPanel readiness={bandReadiness} />
         ) : null}
 
         {/* Connect / Message button (only when viewing someone else's published

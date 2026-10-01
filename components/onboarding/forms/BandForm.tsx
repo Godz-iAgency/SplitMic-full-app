@@ -5,7 +5,7 @@ import { NumberField } from "@/components/onboarding/fields/NumberField";
 import { SelectField } from "@/components/onboarding/fields/SelectField";
 import { GenreMultiSelect } from "@/components/onboarding/fields/GenreMultiSelect";
 import { Lock } from "lucide-react";
-import { DRAW_OPTIONS, VENUE_OPTIONS } from "@/lib/scoring/bandReadiness";
+import { DRAW_OPTIONS, VENUE_OPTIONS } from "@/lib/profile/bandOptions";
 import type { FormMode } from "./mode";
 
 /**
@@ -18,7 +18,8 @@ export type BandFormValues = {
   member_count: number | "";
   sound_description: string;
   set_length_minutes: number | "";
-  // Draw & reach (powers the Band Readiness Score)
+  // Draw & reach. Not shown on the public profile; typical_draw feeds the
+  // talent-buyer show matcher.
   typical_draw: string;
   email_list_size: number | "";
   largest_venue_capacity: string;
@@ -105,9 +106,8 @@ export function BandForm({ values, onChange, mode = "full" }: Props) {
               aria-hidden="true"
             />
             <span>
-              These power your <strong className="text-brand-gray-200">Band
-              Readiness Score</strong>. Your overall score is public, but this
-              breakdown is private. Only you can see it.
+              These aren&apos;t shown on your profile. Your typical draw helps
+              match you with talent buyers looking for bands.
             </span>
           </p>
           <div className="space-y-4">

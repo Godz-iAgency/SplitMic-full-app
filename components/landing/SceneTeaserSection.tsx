@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Zap, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/motion/Reveal";
 import { PlayerTypeIcon } from "./PlayerTypeIcon";
 import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
@@ -96,21 +96,9 @@ export function SceneTeaserSection({ counts, cards }: Props) {
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-bold text-white">
-                        {card.display_name}
-                      </p>
-                      {card.readiness_score !== null ? (
-                        <span className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full bg-brand-orange/15 px-1.5 py-0.5 text-[10px] font-bold text-brand-orange">
-                          <Zap
-                            className="h-2.5 w-2.5"
-                            strokeWidth={2.5}
-                            aria-hidden="true"
-                          />
-                          {card.readiness_score}/10
-                        </span>
-                      ) : null}
-                    </div>
+                    <p className="truncate text-sm font-bold text-white">
+                      {card.display_name}
+                    </p>
                     <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-brand-gray-400">
                       {typeLabel}
                     </p>

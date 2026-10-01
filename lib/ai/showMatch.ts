@@ -1,5 +1,5 @@
 import { GENRES } from "@/lib/genres";
-import { DRAW_OPTIONS } from "@/lib/scoring/bandReadiness";
+import { DRAW_OPTIONS } from "@/lib/profile/bandOptions";
 import { generateJson, type GeminiSchema } from "@/lib/ai/gemini";
 
 /**

@@ -40,7 +40,7 @@ describe("buildSocialLinks", () => {
 
   it("never emits an instagram row, since it lives on its own column", () => {
     // The regression this guards: instagram_handle is a real column on
-    // `profiles`, read by search and the readiness score. Writing it as a
+    // `profiles`, read by the profile page and admin views. Writing it as a
     // profile_links row too would create a second, silently diverging copy.
     const links = buildSocialLinks(PROFILE_ID, values({ instagram_handle: "splitmicatx" }));
     expect(links).toEqual([]);

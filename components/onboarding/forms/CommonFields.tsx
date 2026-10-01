@@ -91,9 +91,8 @@ export function CommonFields({ values, onChange, mode = "full" }: Props) {
         onChange={(key, value) => onChange(key, value)}
       />
 
-      {/* A reach metric, not a link — it feeds the Band Readiness Score, so it
-          belongs with the other draw/reach numbers in the editor rather than
-          in the signup path. */}
+      {/* A reach number, not a link, so it lives in the editor rather than in
+          the signup path. */}
       {full ? (
         <NumberField
           id="instagram_followers"

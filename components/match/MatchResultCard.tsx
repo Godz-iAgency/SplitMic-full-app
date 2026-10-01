@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Check, MessageCircle, Sparkles } from "lucide-react";
-import { ReadinessBadge } from "@/components/profile/ReadinessBadge";
 import { initiateConnection } from "@/app/inbox/actions";
 import type { MatchCard } from "@/lib/supabase/matchBands";
 
@@ -81,9 +80,6 @@ export function MatchResultCard({ card, rank }: Props) {
             >
               {card.display_name}
             </Link>
-            <div className="mt-1.5">
-              <ReadinessBadge score={card.readiness_score} />
-            </div>
           </div>
         </div>
 

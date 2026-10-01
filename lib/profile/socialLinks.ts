@@ -8,8 +8,8 @@
  * would silently drop a user's links on whichever path was behind.
  *
  * Instagram is deliberately the odd one out: it is stored on
- * `profiles.instagram_handle` (a real column, read by search and the readiness
- * score) rather than as a `profile_links` row. It still appears in the picker
+ * `profiles.instagram_handle` (a real column, read by the profile page and the
+ * admin views) rather than as a `profile_links` row. It still appears in the picker
  * alongside the others because that distinction is a storage detail nobody
  * filling in a form should have to think about.
  */

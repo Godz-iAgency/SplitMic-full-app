@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { computeBandReadiness } from "@/lib/scoring/bandReadiness";
 import { DRAW_ORDER, type ShowCriteria } from "@/lib/ai/showMatch";
 
 const BUCKET = "profile-media";
@@ -20,7 +19,6 @@ export type MatchCard = {
   one_liner: string;
   genres: string[];
   avatar_url: string | null;
-  readiness_score: number;
   /** Plain-English reasons this band surfaced, in the order they scored. */
   reasons: string[];
 };
@@ -32,11 +30,6 @@ type BandRow = {
   sound_description: string | null;
   member_count: number | null;
   typical_draw: string | null;
-  set_length_minutes: number | null;
-  email_list_size: number | null;
-  largest_venue_capacity: string | null;
-  tiktok_followers: number | null;
-  youtube_followers: number | null;
 };
 
 // Weights are relative, not absolute: they only decide ordering within one
@@ -53,8 +46,10 @@ const WEIGHT_KEYWORD = 1.5;
  * Soft ranking, not hard filtering: a band that misses one criterion still
  * places below the ones that hit it instead of vanishing. Bands that match
  * nothing at all are dropped, so the shortlist never pads itself with
- * irrelevant profiles. With no criteria at all (the model gave us nothing
- * usable), this degrades to "most complete profiles first".
+ * irrelevant profiles. Equal matches go to the most recently updated profile,
+ * and with no criteria at all (the model gave us nothing usable) that recency
+ * is the whole ordering: the same signal Discover sorts by, rather than a
+ * judgment about which band is "better".
  */
 export async function matchBands(
   supabase: SupabaseClient,
@@ -62,7 +57,7 @@ export async function matchBands(
 ): Promise<MatchCard[]> {
   const { data: profiles } = await supabase
     .from("profiles")
-    .select("id, bio, instagram_followers")
+    .select("id, updated_at")
     .eq("is_published", true)
     .eq("player_type", "band")
     .limit(SCAN_LIMIT);
@@ -75,7 +70,7 @@ export async function matchBands(
     supabase
       .from("band_details")
       .select(
-        "profile_id, band_name, genres, sound_description, member_count, typical_draw, set_length_minutes, email_list_size, largest_venue_capacity, tiktok_followers, youtube_followers",
+        "profile_id, band_name, genres, sound_description, member_count, typical_draw",
       )
       .in("profile_id", profileIds),
     supabase
@@ -101,7 +96,7 @@ export async function matchBands(
     criteria.maxMemberCount !== null ||
     criteria.keywords.length > 0;
 
-  const scored: { card: MatchCard; score: number }[] = [];
+  const scored: { card: MatchCard; score: number; updatedAt: number }[] = [];
 
   for (const p of profiles) {
     const detail = detailMap.get(p.id as string);
@@ -119,27 +114,12 @@ export async function matchBands(
     // Nothing in common with what the buyer asked for.
     if (hasCriteria && score === 0) continue;
 
-    const readiness = computeBandReadiness({
-      bio: (p.bio as string | null) ?? null,
-      instagram_followers: (p.instagram_followers as number | null) ?? null,
-      hasAvatar: avatarMap.has(p.id as string),
-      genres,
-      sound_description: detail.sound_description,
-      set_length_minutes: detail.set_length_minutes,
-      email_list_size: detail.email_list_size,
-      typical_draw: detail.typical_draw,
-      largest_venue_capacity: detail.largest_venue_capacity,
-      tiktok_followers: detail.tiktok_followers,
-      youtube_followers: detail.youtube_followers,
-    }).score;
-
     const storagePath = avatarMap.get(p.id as string) ?? null;
+    const updatedAt = Date.parse((p.updated_at as string | null) ?? "");
 
     scored.push({
-      // Readiness breaks ties between equally-matched bands, so a complete
-      // profile wins over a half-filled one. Scaled well below the criteria
-      // weights so it can never outrank an actual match.
-      score: score + readiness / 20,
+      score,
+      updatedAt: Number.isNaN(updatedAt) ? 0 : updatedAt,
       card: {
         profile_id: p.id as string,
         display_name: detail.band_name ?? "Unnamed band",
@@ -149,13 +129,12 @@ export async function matchBands(
           ? supabase.storage.from(BUCKET).getPublicUrl(storagePath).data
               .publicUrl
           : null,
-        readiness_score: readiness,
         reasons,
       },
     });
   }
 
-  scored.sort((a, b) => b.score - a.score);
+  scored.sort((a, b) => b.score - a.score || b.updatedAt - a.updatedAt);
   return scored.slice(0, MATCH_LIMIT).map((s) => s.card);
 }
 

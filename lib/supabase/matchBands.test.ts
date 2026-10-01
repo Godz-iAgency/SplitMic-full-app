@@ -8,7 +8,7 @@ import { EMPTY_CRITERIA, type ShowCriteria } from "@/lib/ai/showMatch";
 // storage URL lookup. Rather than mock a database, this returns canned rows per
 // table so the tests are purely about the ranking decisions.
 
-type ProfileRow = { id: string; bio: string | null; instagram_followers: number | null };
+type ProfileRow = { id: string; updated_at: string | null };
 type DetailRow = Record<string, unknown> & { profile_id: string };
 type MediaRow = { profile_id: string; storage_path: string };
 
@@ -50,6 +50,9 @@ function fakeSupabase(tables: {
 
 // ── Test fixtures ───────────────────────────────────────────────────────────
 
+const OLD = "2026-01-01T00:00:00+00:00";
+const RECENT = "2026-09-01T00:00:00+00:00";
+
 function band(
   id: string,
   detail: Partial<DetailRow> = {},
@@ -58,8 +61,7 @@ function band(
   return {
     profile: {
       id,
-      bio: null,
-      instagram_followers: null,
+      updated_at: OLD,
       ...profile,
     } as ProfileRow,
     detail: {
@@ -69,11 +71,6 @@ function band(
       sound_description: null,
       member_count: null,
       typical_draw: null,
-      set_length_minutes: null,
-      email_list_size: null,
-      largest_venue_capacity: null,
-      tiktok_followers: null,
-      youtube_followers: null,
       ...detail,
     } as DetailRow,
   };
@@ -101,7 +98,7 @@ describe("matchBands", () => {
 
   it("skips a profile whose band never filled in its details", async () => {
     const client = fakeSupabase({
-      profiles: [{ id: "ghost", bio: null, instagram_followers: null }],
+      profiles: [{ id: "ghost", updated_at: OLD }],
       band_details: [],
     });
 
@@ -149,24 +146,11 @@ describe("matchBands", () => {
   });
 
   describe("ranking", () => {
-    it("puts more genre matches first, even over a more complete profile", async () => {
+    it("puts more genre matches first, even over a more recently updated profile", async () => {
+      // Recency only breaks ties; it must never outrank an actual match.
       const client = clientFor([
-        // Perfectly complete, but only one genre in common.
-        band(
-          "one-genre",
-          {
-            genres: ["Reggae"],
-            sound_description: "Roots reggae.",
-            set_length_minutes: 45,
-            typical_draw: "200+",
-            largest_venue_capacity: "300-1000",
-            email_list_size: 1000,
-            tiktok_followers: 25000,
-          },
-          { bio: "A bio.", instagram_followers: 10000 },
-        ),
-        // Bare profile, but two genres in common.
-        band("two-genres", { genres: ["Reggae", "Ska"] }),
+        band("one-genre", { genres: ["Reggae"] }, { updated_at: RECENT }),
+        band("two-genres", { genres: ["Reggae", "Ska"] }, { updated_at: OLD }),
       ]);
 
       const result = await matchBands(
@@ -177,45 +161,39 @@ describe("matchBands", () => {
       expect(result.map((c) => c.profile_id)).toEqual(["two-genres", "one-genre"]);
     });
 
-    it("breaks ties between equal matches using profile completeness", async () => {
+    it("breaks ties between equal matches by most recently updated profile", async () => {
+      // Listed oldest first, so passing proves the sort reordered them.
       const client = clientFor([
-        band("sparse", { genres: ["Reggae"] }),
-        band(
-          "complete",
-          {
-            genres: ["Reggae"],
-            sound_description: "Roots reggae.",
-            set_length_minutes: 45,
-            typical_draw: "200+",
-          },
-          { bio: "A bio.", instagram_followers: 10000 },
-        ),
+        band("stale", { genres: ["Reggae"] }, { updated_at: OLD }),
+        band("fresh", { genres: ["Reggae"] }, { updated_at: RECENT }),
       ]);
 
       const result = await matchBands(client, criteria({ genres: ["Reggae"] }));
 
-      expect(result.map((c) => c.profile_id)).toEqual(["complete", "sparse"]);
+      expect(result.map((c) => c.profile_id)).toEqual(["fresh", "stale"]);
     });
 
-    it("ranks by profile completeness alone when there are no criteria", async () => {
+    it("lists the most recently updated bands first when there are no criteria", async () => {
       const client = clientFor([
-        band("sparse", { genres: ["Reggae"] }),
-        band(
-          "complete",
-          {
-            genres: ["Reggae"],
-            sound_description: "Roots reggae.",
-            set_length_minutes: 45,
-            typical_draw: "200+",
-          },
-          { bio: "A bio.", instagram_followers: 10000 },
-        ),
+        band("stale", { genres: ["Reggae"] }, { updated_at: OLD }),
+        band("fresh", { genres: ["Rock"] }, { updated_at: RECENT }),
       ]);
 
       // This is the Gemini-is-down path: no criteria, everyone still shows.
       const result = await matchBands(client, EMPTY_CRITERIA);
 
-      expect(result.map((c) => c.profile_id)).toEqual(["complete", "sparse"]);
+      expect(result.map((c) => c.profile_id)).toEqual(["fresh", "stale"]);
+    });
+
+    it("sorts a band with no usable update date last instead of failing", async () => {
+      const client = clientFor([
+        band("undated", { genres: ["Reggae"] }, { updated_at: null }),
+        band("dated", { genres: ["Reggae"] }, { updated_at: OLD }),
+      ]);
+
+      const result = await matchBands(client, criteria({ genres: ["Reggae"] }));
+
+      expect(result.map((c) => c.profile_id)).toEqual(["dated", "undated"]);
     });
 
     it("caps the shortlist", async () => {

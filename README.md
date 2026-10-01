@@ -90,7 +90,6 @@ lib/
   ai/                     Gemini client + show-matching extraction
   directory/              CSV parsing/import + directory queries, JSON-LD, FAQ copy
   events/                 Do512 + Ticketmaster providers, sync, dedupe, filters, profile matching, JSON-LD (see "Live events" below)
-  scoring/                Band Readiness Score
   supabase/               Server-side query/action helpers (search, messaging, marketplace, profile)
   notifications/          Transactional email
   http/                   Shared HTTP helpers (cron bearer-token auth)
@@ -388,9 +387,8 @@ npm run lint
 ```
 
 Tests use [Vitest](https://vitest.dev) and live next to the code they cover
-(`lib/**/*.test.ts`). Scope is the pure decision logic — Band Readiness
-scoring, AI criteria extraction and validation, band ranking, and input
-formatting. They run without a database, a browser, or a network call (the
+(`lib/**/*.test.ts`). Scope is the pure decision logic — AI criteria
+extraction and validation, band ranking, and input formatting. They run without a database, a browser, or a network call (the
 Gemini client is mocked), so the whole suite finishes in a few seconds.
 
 Server actions and React components are **not** covered; they need a live

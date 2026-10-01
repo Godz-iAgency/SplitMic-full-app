@@ -50,8 +50,8 @@ export async function findMatchingBands(
 
   const { criteria, aiUsed, reason } = await extractShowCriteria(trimmed);
 
-  // Gemini being down is not a dead end: matchBands falls back to ranking by
-  // profile completeness, and the UI says so rather than pretending.
+  // Gemini being down is not a dead end: matchBands falls back to the most
+  // recently updated bands, and the UI says so rather than pretending.
   if (!aiUsed && reason) {
     console.error("[show-match] Gemini unavailable:", reason);
   }

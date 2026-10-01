@@ -24,7 +24,7 @@ export type MatchResponse = {
     maxMemberCount: number | null;
     keywords: string[];
   };
-  /** False when Gemini was unreachable and we ranked on completeness instead. */
+  /** False when Gemini was unreachable and we listed the most recently updated bands instead. */
   aiUsed: boolean;
   error?: string;
 };

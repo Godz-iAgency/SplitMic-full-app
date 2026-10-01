@@ -155,8 +155,8 @@ export function ShowMatchForm() {
                 aria-hidden="true"
               />
               Smart matching is unavailable right now, so these are Austin&apos;s
-              most complete band profiles instead of matches for your show. Try
-              again in a minute.
+              most recently updated band profiles instead of matches for your
+              show. Try again in a minute.
             </p>
           ) : null}
 
