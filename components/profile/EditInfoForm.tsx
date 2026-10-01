@@ -9,6 +9,9 @@ import { VenueForm, type VenueFormValues } from "@/components/onboarding/forms/V
 import { TalentBuyerForm, type TalentBuyerFormValues } from "@/components/onboarding/forms/TalentBuyerForm";
 import { RecordLabelForm, type RecordLabelFormValues } from "@/components/onboarding/forms/RecordLabelForm";
 import { FestivalForm, type FestivalFormValues } from "@/components/onboarding/forms/FestivalForm";
+import { BacklineForm, type BacklineFormValues } from "@/components/onboarding/forms/BacklineForm";
+import { InstrumentRentalForm, type InstrumentRentalFormValues } from "@/components/onboarding/forms/InstrumentRentalForm";
+import { RehearsalStudioForm, type RehearsalStudioFormValues } from "@/components/onboarding/forms/RehearsalStudioForm";
 import type { ProfilePayload } from "@/components/onboarding/ProfileStep";
 import { saveProfileInfo } from "@/app/profile/edit/actions";
 import { publishProfile } from "@/app/profile/[id]/actions";
@@ -19,7 +22,10 @@ export type SpecificValues =
   | VenueFormValues
   | TalentBuyerFormValues
   | RecordLabelFormValues
-  | FestivalFormValues;
+  | FestivalFormValues
+  | BacklineFormValues
+  | InstrumentRentalFormValues
+  | RehearsalStudioFormValues;
 
 /** Imperative handle so a sibling button can trigger this form's save.
  *  Resolves true on success (navigating away — caller should leave its own
@@ -181,6 +187,42 @@ function EditInfoFormInner(
             onChange={(key, value) =>
               setSpecific((prev) => ({
                 ...(prev as FestivalFormValues),
+                [key]: value,
+              }))
+            }
+          />
+        ) : null}
+
+        {playerType === "backline" ? (
+          <BacklineForm
+            values={specific as BacklineFormValues}
+            onChange={(key, value) =>
+              setSpecific((prev) => ({
+                ...(prev as BacklineFormValues),
+                [key]: value,
+              }))
+            }
+          />
+        ) : null}
+
+        {playerType === "instrument_rental" ? (
+          <InstrumentRentalForm
+            values={specific as InstrumentRentalFormValues}
+            onChange={(key, value) =>
+              setSpecific((prev) => ({
+                ...(prev as InstrumentRentalFormValues),
+                [key]: value,
+              }))
+            }
+          />
+        ) : null}
+
+        {playerType === "rehearsal_studio" ? (
+          <RehearsalStudioForm
+            values={specific as RehearsalStudioFormValues}
+            onChange={(key, value) =>
+              setSpecific((prev) => ({
+                ...(prev as RehearsalStudioFormValues),
                 [key]: value,
               }))
             }

@@ -6,13 +6,21 @@ import { getOnboardingStatus, tableForPlayerType } from "@/lib/supabase/profile"
 import { Logo } from "@/components/Logo";
 import type { MediaRow } from "@/components/profile/MediaManager";
 import { ProfileEditor } from "@/components/profile/ProfileEditor";
-import type { PlayerType } from "@/lib/types";
+import type { CorePlayerType, PlayerType } from "@/lib/types";
 import type { CommonFieldValues } from "@/components/onboarding/forms/CommonFields";
 import type { BandFormValues } from "@/components/onboarding/forms/BandForm";
 import type { VenueFormValues } from "@/components/onboarding/forms/VenueForm";
 import type { TalentBuyerFormValues } from "@/components/onboarding/forms/TalentBuyerForm";
 import type { RecordLabelFormValues } from "@/components/onboarding/forms/RecordLabelForm";
 import type { FestivalFormValues } from "@/components/onboarding/forms/FestivalForm";
+import type { BacklineFormValues } from "@/components/onboarding/forms/BacklineForm";
+import type { InstrumentRentalFormValues } from "@/components/onboarding/forms/InstrumentRentalForm";
+import type { RehearsalStudioFormValues } from "@/components/onboarding/forms/RehearsalStudioForm";
+import {
+  BACKLINE_EQUIPMENT,
+  RENTAL_INSTRUMENTS,
+  labelsFor,
+} from "@/lib/profile/vendorOptions";
 import { socialValuesFromLinks } from "@/lib/profile/socialLinks";
 
 export const dynamic = "force-dynamic";
@@ -174,7 +182,34 @@ export default async function ProfileEditPage({
 // Returns "" (no default) if there are no genres to draw from yet.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildDefaultBio(playerType: PlayerType, d: any, city: string | null): string {
-  const genreField: Record<PlayerType, string> = {
+  // Members can be anywhere in Texas (see lib/address/texas.ts) — the bio
+  // should say where *they* are, not assume Austin. Falls back to "Austin"
+  // only for pre-existing rows saved before city became a required field.
+  const place = city || "Austin";
+
+  // Gear and rehearsal businesses have no genres, so their starter line comes
+  // from what they said they offer instead.
+  switch (playerType) {
+    case "backline": {
+      const gear = labelsFor(BACKLINE_EQUIPMENT, d.equipment);
+      return gear.length > 0
+        ? `${place} backline company: ${gear.join(", ")}.`
+        : "";
+    }
+    case "instrument_rental": {
+      const gear = labelsFor(RENTAL_INSTRUMENTS, d.instruments);
+      return gear.length > 0
+        ? `${place} instrument rental: ${gear.join(", ")}.`
+        : "";
+    }
+    case "rehearsal_studio": {
+      const rooms = typeof d.room_count === "number" ? d.room_count : 0;
+      if (rooms < 1) return "";
+      return `${place} rehearsal studio with ${rooms} ${rooms === 1 ? "room" : "rooms"}.`;
+    }
+  }
+
+  const genreField: Record<CorePlayerType, string> = {
     band: "genres",
     venue: "genres_hosted",
     talent_buyer: "genres_focus",
@@ -184,10 +219,6 @@ function buildDefaultBio(playerType: PlayerType, d: any, city: string | null): s
   const genres: string[] = d[genreField[playerType]] ?? [];
   if (genres.length === 0) return "";
   const list = genres.slice(0, 2).join("/");
-  // Members can be anywhere in Texas (see lib/address/texas.ts) — the bio
-  // should say where *they* are, not assume Austin. Falls back to "Austin"
-  // only for pre-existing rows saved before city became a required field.
-  const place = city || "Austin";
 
   switch (playerType) {
     case "band":
@@ -213,6 +244,8 @@ function buildInitialSpecific(
   d: any,
 ) {
   const n = (v: number | null | undefined): number | "" => v ?? "";
+  const yesNo = (v: boolean | null | undefined): "" | "yes" | "no" =>
+    v === true ? "yes" : v === false ? "no" : "";
 
   switch (playerType) {
     case "band": {
@@ -281,10 +314,37 @@ function buildInitialSpecific(
         expected_attendance: n(d.expected_attendance),
         total_band_slots: n(d.total_band_slots),
         application_email: d.application_email ?? "",
-        pays_bands:
-          d.pays_bands === true ? "yes" : d.pays_bands === false ? "no" : "",
+        pays_bands: yesNo(d.pays_bands),
         pay_min: n(d.pay_min),
         pay_max: n(d.pay_max),
       } satisfies FestivalFormValues;
+
+    case "backline":
+      return {
+        business_name: d.business_name ?? "",
+        equipment: d.equipment ?? [],
+        delivers: yesNo(d.delivers),
+        service_area: d.service_area ?? "",
+        price_note: d.price_note ?? "",
+      } satisfies BacklineFormValues;
+
+    case "instrument_rental":
+      return {
+        business_name: d.business_name ?? "",
+        instruments: d.instruments ?? [],
+        rental_periods: d.rental_periods ?? [],
+        delivers: yesNo(d.delivers),
+        price_note: d.price_note ?? "",
+      } satisfies InstrumentRentalFormValues;
+
+    case "rehearsal_studio":
+      return {
+        business_name: d.business_name ?? "",
+        room_count: n(d.room_count),
+        gear_included: d.gear_included ?? [],
+        rate_note: d.rate_note ?? "",
+        max_people_per_room: n(d.max_people_per_room),
+        hours_note: d.hours_note ?? "",
+      } satisfies RehearsalStudioFormValues;
   }
 }

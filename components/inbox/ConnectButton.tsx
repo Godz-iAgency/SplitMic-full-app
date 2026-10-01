@@ -9,7 +9,8 @@ import { initiateConnection } from "@/app/inbox/actions";
 type Props = {
   otherProfileId: string;
   /** "industry" = my account is venue/label/talent_buyer/festival (can DM direct).
-   *  "band" = my account is a band (must send request). */
+   *  "band" = everyone else, who must send a request: bands, and the gear and
+   *  rehearsal businesses (see isIndustryPlayerType). */
   myMode: "industry" | "band";
   /** Existing state between me and the other profile. */
   initialState: "none" | "pending_outbound" | "pending_inbound" | "connected";

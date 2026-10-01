@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import type { PlayerType } from "@/lib/types";
+import { DETAIL_SOURCE } from "@/lib/supabase/detailSource";
 
 /**
  * Transactional email notifications, sent directly via Resend.
@@ -27,15 +28,6 @@ const APP_URL = (
 ).replace(/\/$/, "");
 
 export type NotifyKind = "connection_request" | "post_response" | "message";
-
-// Which detail table + column holds the display name for each player type.
-const NAME_SOURCE: Record<PlayerType, { table: string; column: string }> = {
-  band: { table: "band_details", column: "band_name" },
-  venue: { table: "venue_details", column: "venue_name" },
-  talent_buyer: { table: "talent_buyer_details", column: "company_name" },
-  record_label: { table: "record_label_details", column: "label_name" },
-  festival: { table: "festival_details", column: "festival_name" },
-};
 
 export async function notifyByEmail(params: {
   recipientUserId: string;
@@ -110,9 +102,9 @@ async function resolveProfileName(
     .eq("id", profileId)
     .maybeSingle();
   const pt = prof?.player_type as PlayerType | undefined;
-  if (!pt || !NAME_SOURCE[pt]) return "An Austin player";
+  if (!pt || !DETAIL_SOURCE[pt]) return "An Austin player";
 
-  const { table, column } = NAME_SOURCE[pt];
+  const { table, nameColumn: column } = DETAIL_SOURCE[pt];
   const { data } = await admin
     .from(table)
     .select(column)

@@ -1,16 +1,24 @@
 import Link from "next/link";
 import { X } from "lucide-react";
 import type { PlayerType } from "@/lib/types";
+import { CATEGORY_META } from "@/lib/directory/categories";
 import { PlayerTypeIcon } from "@/components/landing/PlayerTypeIcon";
 
 type FilterValue = PlayerType | "all";
 
+// Same eight categories, in the same order, as the directory's own tiles, and
+// the same photos (CATEGORY_META), so Discover and the directory read as one
+// product. Labels are shortened where the directory's plural would truncate
+// in a half-width phone tile.
 const TILES: { value: PlayerType; label: string }[] = [
   { value: "band", label: "Bands" },
   { value: "venue", label: "Venues" },
   { value: "talent_buyer", label: "Talent Buyers" },
   { value: "record_label", label: "Labels" },
   { value: "festival", label: "Festivals" },
+  { value: "backline", label: "Backline" },
+  { value: "instrument_rental", label: "Instrument Rental" },
+  { value: "rehearsal_studio", label: "Rehearsal Studios" },
 ];
 
 type Props = {
@@ -79,35 +87,44 @@ export function CategoryTiles({ active, counts, query }: Props) {
         Browse by category
       </h2>
 
-      {/* flex-wrap + justify-center keeps every tile the same size and centers
-          the lone 5th tile instead of leaving an empty grid hole. gap-3 = 0.75rem:
-          2-up → basis calc(50% - 0.375rem); 5-up → basis calc(20% - 0.6rem).
-          Tiles are compact (icon beside label) on mobile so all five fit on
-          screen at once; they expand to taller stacked cards at lg. */}
+      {/* Eight tiles: two to a row as compact photo-beside-label rows on phones
+          and tablets (four short rows, so results still start near the top),
+          then four to a row as photo cards at lg. gap-3 = 0.75rem: 2-up →
+          basis calc(50% - 0.375rem); 4-up → basis calc(25% - 0.5625rem).
+          Below sm, every tile gets the two-line height: "Instrument Rental"
+          and friends wrap at phone width, and without it the rows alternate
+          between two heights. From sm up every label fits on one line. */}
       <nav
         aria-label="Browse by player type"
         className="flex flex-wrap justify-center gap-3"
       >
         {TILES.map((t) => {
           const count = counts[t.value] ?? 0;
+          const image = CATEGORY_META[t.value].image;
 
           return (
             <Link
               key={t.value}
               href={`/search?type=${t.value}`}
               scroll={false}
-              className="group flex shrink-0 grow-0 basis-[calc(50%-0.375rem)] flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 transition-all duration-200 hover:border-brand-orange/40 hover:bg-white/10 lg:basis-[calc(20%-0.6rem)] lg:flex-col lg:items-start lg:gap-3 lg:p-4 lg:hover:-translate-y-0.5"
+              className="tappable-lg group flex min-h-[80px] shrink-0 grow-0 basis-[calc(50%-0.375rem)] flex-row items-center gap-3 overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-2 hover:border-brand-orange/40 hover:bg-white/10 sm:min-h-[56px] lg:basis-[calc(25%-0.5625rem)] lg:flex-col lg:items-stretch lg:gap-0 lg:p-0 lg:hover:-translate-y-0.5"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-orange/10 text-brand-orange transition group-hover:bg-brand-orange/20 lg:h-11 lg:w-11">
-                <PlayerTypeIcon
-                  type={t.value}
-                  className="h-[18px] w-[18px] lg:h-5 lg:w-5"
-                  strokeWidth={2}
+              {image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={image}
+                  alt=""
+                  loading="lazy"
+                  className="h-10 w-10 shrink-0 rounded-xl object-cover lg:h-24 lg:w-full lg:rounded-none"
                 />
-              </span>
+              ) : (
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-orange/10 text-brand-orange lg:h-24 lg:w-full lg:rounded-none">
+                  <PlayerTypeIcon type={t.value} className="h-5 w-5" strokeWidth={2} />
+                </span>
+              )}
 
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-white">
+              <div className="min-w-0 lg:px-4 lg:py-3">
+                <p className="text-sm font-bold leading-tight text-white">
                   {t.label}
                 </p>
                 <p className="mt-0.5 text-xs text-brand-gray-400">

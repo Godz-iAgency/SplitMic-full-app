@@ -1,4 +1,13 @@
-import { Guitar, Building2, MicVocal, Tent, Disc3 } from "lucide-react";
+import {
+  Guitar,
+  Building2,
+  MicVocal,
+  Tent,
+  Disc3,
+  Truck,
+  Piano,
+  DoorOpen,
+} from "lucide-react";
 import type { PlayerType } from "@/lib/types";
 
 type Props = {
@@ -8,7 +17,9 @@ type Props = {
 };
 
 // Renders the right Lucide icon for each player type.
-// Used in both the player type cards and the modal header.
+// Used in both the player type cards and the modal header. The vendor icons
+// match components/directory/DirectoryCategoryIcon so a listing and the
+// member profile it becomes look like the same kind of business.
 export function PlayerTypeIcon({ type, className, strokeWidth = 1.5 }: Props) {
   const props = { className, strokeWidth };
 
@@ -23,6 +34,12 @@ export function PlayerTypeIcon({ type, className, strokeWidth = 1.5 }: Props) {
       return <Tent {...props} />;
     case "record_label":
       return <Disc3 {...props} />;
+    case "backline":
+      return <Truck {...props} />;
+    case "instrument_rental":
+      return <Piano {...props} />;
+    case "rehearsal_studio":
+      return <DoorOpen {...props} />;
     default:
       return null;
   }

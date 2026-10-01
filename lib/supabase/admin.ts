@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PlayerType } from "@/lib/types";
+import { fetchDisplayNames } from "@/lib/supabase/detailSource";
 
 // ─── Admin identity ─────────────────────────────────────────────────────────
 // Single hardcoded admin email. Add more here if you onboard co-admins later.
@@ -139,6 +140,9 @@ export async function getAdminStats(
     talent_buyer: 0,
     record_label: 0,
     festival: 0,
+    backline: 0,
+    instrument_rental: 0,
+    rehearsal_studio: 0,
     none: 0,
   };
   let published = 0;
@@ -199,7 +203,7 @@ export async function getAdminUsers(
   for (const p of profiles ?? []) profileByUser.set(p.user_id, p);
 
   const profileIds = (profiles ?? []).map((p) => p.id);
-  const nameMap = await fetchProfileDisplayNames(supabase, profileIds);
+  const nameMap = await fetchDisplayNames(supabase, profileIds);
 
   let rows: AdminUserRow[] = users.map((u) => {
     const prof = profileByUser.get(u.id);
@@ -261,7 +265,7 @@ export async function getAdminUserDetail(
     .maybeSingle();
 
   const nameMap = profile
-    ? await fetchProfileDisplayNames(supabase, [profile.id])
+    ? await fetchDisplayNames(supabase, [profile.id])
     : new Map<string, string>();
 
   let activePostCount = 0;
@@ -346,7 +350,7 @@ export async function getAdminPosts(
 
   const posterIds = Array.from(new Set(posts.map((p) => p.poster_profile_id)));
   const [nameMap, typeMap] = await Promise.all([
-    fetchProfileDisplayNames(supabase, posterIds),
+    fetchDisplayNames(supabase, posterIds),
     fetchProfilePlayerTypes(supabase, posterIds),
   ]);
 
@@ -400,7 +404,7 @@ export async function getAdminRequests(
     ),
   );
   const [nameMap, typeMap] = await Promise.all([
-    fetchProfileDisplayNames(supabase, ids),
+    fetchDisplayNames(supabase, ids),
     fetchProfilePlayerTypes(supabase, ids),
   ]);
 
@@ -435,48 +439,6 @@ export async function getAdminLog(
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-async function fetchProfileDisplayNames(
-  supabase: SupabaseClient,
-  profileIds: string[],
-): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
-  if (profileIds.length === 0) return map;
-
-  const queries = await Promise.all([
-    supabase
-      .from("band_details")
-      .select("profile_id, band_name")
-      .in("profile_id", profileIds),
-    supabase
-      .from("venue_details")
-      .select("profile_id, venue_name")
-      .in("profile_id", profileIds),
-    supabase
-      .from("talent_buyer_details")
-      .select("profile_id, company_name")
-      .in("profile_id", profileIds),
-    supabase
-      .from("record_label_details")
-      .select("profile_id, label_name")
-      .in("profile_id", profileIds),
-    supabase
-      .from("festival_details")
-      .select("profile_id, festival_name")
-      .in("profile_id", profileIds),
-  ]);
-  for (const row of queries[0].data ?? [])
-    map.set(row.profile_id, row.band_name ?? "Band");
-  for (const row of queries[1].data ?? [])
-    map.set(row.profile_id, row.venue_name ?? "Venue");
-  for (const row of queries[2].data ?? [])
-    map.set(row.profile_id, row.company_name ?? "Talent buyer");
-  for (const row of queries[3].data ?? [])
-    map.set(row.profile_id, row.label_name ?? "Record label");
-  for (const row of queries[4].data ?? [])
-    map.set(row.profile_id, row.festival_name ?? "Festival");
-  return map;
-}
 
 async function fetchProfilePlayerTypes(
   supabase: SupabaseClient,

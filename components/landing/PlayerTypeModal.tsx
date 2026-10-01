@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Check } from "lucide-react";
 import { writePendingProfile } from "@/lib/pendingProfile";
-import type { PlayerType } from "@/lib/types";
+import type { CorePlayerType } from "@/lib/types";
 import { MiniProfileBuilder } from "./MiniProfileBuilder";
 import { PlayerTypeIcon } from "./PlayerTypeIcon";
 
 export type PlayerTypeDetail = {
-  type: PlayerType;
+  // The five roles only: the mini builder inside this modal asks about genre
+  // and scale, which the gear and rehearsal businesses don't have.
+  type: CorePlayerType;
   name: string;
   headline: string;
   benefits: string[];

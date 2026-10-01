@@ -1,6 +1,11 @@
 import { GENRES } from "@/lib/genres";
 import { DRAW_OPTIONS } from "@/lib/profile/bandOptions";
-import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
+import {
+  PLAYER_TYPE_OPTIONS,
+  isVendorPlayerType,
+  type CorePlayerType,
+  type PlayerType,
+} from "@/lib/types";
 
 /**
  * Answers collected by the landing page's mini profile builder, before the
@@ -48,8 +53,12 @@ export type MiniQuestions = {
  * they resolve to. These values must stay in sync with the matching field in
  * components/onboarding/forms/*Form.tsx, since they are written straight into
  * that form's state (see specificFromPending in ProfileStep).
+ *
+ * The gear and rehearsal businesses have neither a genre nor a scale, so they
+ * have no entry: a pending vendor carries only its type (see
+ * writePendingType).
  */
-export const MINI_QUESTIONS: Record<PlayerType, MiniQuestions> = {
+export const MINI_QUESTIONS: Record<CorePlayerType, MiniQuestions> = {
   band: {
     genreLabel: "What do you play?",
     scaleLabel: "How many people do you usually draw?",
@@ -142,6 +151,9 @@ export function readPendingProfile(): PendingProfile | null {
 
   const candidate = parsed as Record<string, unknown>;
   if (!isPlayerType(candidate.type)) return null;
+  if (isVendorPlayerType(candidate.type)) {
+    return { type: candidate.type, genres: [], scale: "" };
+  }
 
   const genres = Array.isArray(candidate.genres)
     ? candidate.genres
@@ -167,6 +179,16 @@ export function writePendingProfile(pending: PendingProfile): void {
     // Storage unavailable. The ?type= URL param still carries the player type,
     // so signup works; only the mini-builder answers are lost.
   }
+}
+
+/**
+ * Carries just a player type through signup, for an entry point with no mini
+ * builder in front of it (a directory "claim your listing" link). The signup
+ * page itself ignores ?type=, so this is what survives the email-confirmation
+ * round trip.
+ */
+export function writePendingType(type: PlayerType): void {
+  writePendingProfile({ type, genres: [], scale: "" });
 }
 
 /** Called once the profile step saves, so a finished profile isn't re-seeded. */

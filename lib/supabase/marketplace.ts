@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PlayerType } from "@/lib/types";
+import { fetchDisplayNames } from "@/lib/supabase/detailSource";
 
 const BUCKET = "profile-media";
 
@@ -196,7 +197,7 @@ async function hydrateDirectCards(
     signupCountMap,
   ] = await Promise.all([
     supabase.from("profiles").select("id, player_type").in("id", posterIds),
-    fetchPosterNames(supabase, posterIds),
+    fetchDisplayNames(supabase, posterIds),
     fetchPosterAvatars(supabase, posterIds),
     fetchSignupCounts(supabase, openMicPostIds),
   ]);
@@ -291,9 +292,9 @@ async function fetchSharedEventCards(
     bandAvatarMap,
   ] = await Promise.all([
     supabase.from("profiles").select("id, player_type").in("id", posterIds),
-    fetchPosterNames(supabase, posterIds),
+    fetchDisplayNames(supabase, posterIds),
     fetchPosterAvatars(supabase, posterIds),
-    fetchPosterNames(supabase, bandIds),
+    fetchDisplayNames(supabase, bandIds),
     fetchPosterAvatars(supabase, bandIds),
   ]);
 
@@ -319,51 +320,6 @@ async function fetchSharedEventCards(
     });
   }
   return cards;
-}
-
-/** Fetch the display name for each poster profile (per-type detail row). */
-async function fetchPosterNames(
-  supabase: SupabaseClient,
-  profileIds: string[],
-): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
-  if (profileIds.length === 0) return map;
-
-  const queries = await Promise.all([
-    supabase
-      .from("venue_details")
-      .select("profile_id, venue_name")
-      .in("profile_id", profileIds),
-    supabase
-      .from("talent_buyer_details")
-      .select("profile_id, company_name")
-      .in("profile_id", profileIds),
-    supabase
-      .from("record_label_details")
-      .select("profile_id, label_name")
-      .in("profile_id", profileIds),
-    supabase
-      .from("festival_details")
-      .select("profile_id, festival_name")
-      .in("profile_id", profileIds),
-    supabase
-      .from("band_details")
-      .select("profile_id, band_name")
-      .in("profile_id", profileIds),
-  ]);
-
-  for (const row of queries[0].data ?? [])
-    map.set(row.profile_id, row.venue_name ?? "Venue");
-  for (const row of queries[1].data ?? [])
-    map.set(row.profile_id, row.company_name ?? "Talent buyer");
-  for (const row of queries[2].data ?? [])
-    map.set(row.profile_id, row.label_name ?? "Record label");
-  for (const row of queries[3].data ?? [])
-    map.set(row.profile_id, row.festival_name ?? "Festival");
-  for (const row of queries[4].data ?? [])
-    map.set(row.profile_id, row.band_name ?? "Band");
-
-  return map;
 }
 
 async function fetchPosterAvatars(
@@ -406,7 +362,7 @@ export async function getPostDetail(
   if (!post) return { post: null, taggedBands: [] };
 
   const [nameMap, avatarMap, profileTypeRow] = await Promise.all([
-    fetchPosterNames(supabase, [post.poster_profile_id]),
+    fetchDisplayNames(supabase, [post.poster_profile_id]),
     fetchPosterAvatars(supabase, [post.poster_profile_id]),
     supabase
       .from("profiles")
@@ -570,7 +526,7 @@ export async function getEventTagsForBand(
 
   const posterIds = Array.from(new Set(posts.map((p) => p.poster_profile_id)));
   const [nameMap, avatarMap, { data: typeRows }] = await Promise.all([
-    fetchPosterNames(supabase, posterIds),
+    fetchDisplayNames(supabase, posterIds),
     fetchPosterAvatars(supabase, posterIds),
     supabase.from("profiles").select("id, player_type").in("id", posterIds),
   ]);
@@ -725,7 +681,7 @@ export async function getOpenMicRoster(
 
   const bandIds = signups.map((s) => s.band_profile_id);
   const [nameMap, avatarMap] = await Promise.all([
-    fetchPosterNames(supabase, bandIds),
+    fetchDisplayNames(supabase, bandIds),
     fetchPosterAvatars(supabase, bandIds),
   ]);
 

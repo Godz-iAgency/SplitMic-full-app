@@ -1,7 +1,8 @@
 # SplitMic
 
 Austin-focused music-industry network connecting bands, venues, talent buyers,
-record labels, and festivals on one platform. Everything the app surfaces —
+record labels, and festivals on one platform, along with the backline,
+instrument-rental, and rehearsal businesses that serve their shows. Everything the app surfaces —
 live shows, venues, the directory — is Austin-only; membership is open to
 anywhere in Texas, since plenty of players commute in for Austin gigs.
 
@@ -90,7 +91,8 @@ lib/
   ai/                     Gemini client + show-matching extraction
   directory/              CSV parsing/import + directory queries, JSON-LD, FAQ copy
   events/                 Do512 + Ticketmaster providers, sync, dedupe, filters, profile matching, JSON-LD (see "Live events" below)
-  supabase/               Server-side query/action helpers (search, messaging, marketplace, profile)
+  profile/                Profile form logic: validation, detail-row building, social links, option lists
+  supabase/               Server-side query/action helpers (search, messaging, marketplace, profile, detail-table map)
   notifications/          Transactional email
   http/                   Shared HTTP helpers (cron bearer-token auth)
 
@@ -99,20 +101,35 @@ migrations/                Hand-run SQL migrations (run in the Supabase SQL edit
 
 ## Player types
 
-`band`, `venue`, `talent_buyer`, `record_label`, `festival` — see `lib/types.ts`
-for the full field shape of each. Every profile shares common fields (name,
-bio, contact info) plus a type-specific detail table.
+`band`, `venue`, `talent_buyer`, `record_label`, `festival`, plus three
+"gear & services" types: `backline`, `instrument_rental`, `rehearsal_studio`
+(`VendorPlayerType` in `lib/types.ts`; their values match the directory's
+category slugs one for one). Every profile shares common fields (name, bio,
+contact info) plus a type-specific detail table, listed with each type's
+display-name column in `DETAIL_SOURCE` (`lib/supabase/detailSource.ts`), which
+every name lookup reads, so a new type is wired into inbox, feed, admin, and
+email by adding one entry there.
+
+What each type may do is an **allowlist**, never "everyone except bands":
+posting is `POSTING_PLAYER_TYPES` (`lib/supabase/marketplace.ts`), messaging
+without a Connect request is `INDUSTRY_TYPES` (`lib/supabase/messaging.ts`),
+and the database policies list the same four types
+(`migrations/step23_vendor_player_types.sql`). The gear and rehearsal
+businesses are on neither list: they don't post, and they reach people by
+Connect request like a band.
 
 ## Core flows, in brief
 
 - **Onboarding** — 3 steps: player type → Texas address (street, city, ZIP; the ZIP rule lives in `lib/address/texas.ts`) → a short profile form. Immediately after, the user lands on `/profile/edit` to add photos/video, which auto-publishes the profile on save.
 
-  Step 3 asks only what a profile needs to be recognisable and findable (for a band: name, genres, member count, one-line sound description, plus their own name). Everything else — bio, phone, website, draw/reach numbers, fee ranges, booking contacts — is deferred to `/profile/edit`. That is not two forms: `/profile/edit` imports the *same* components, and a `mode` prop (`onboarding` | `full`, see `components/onboarding/forms/mode.ts`) decides which subset renders. Deleting fields to shorten signup would make them unreachable, since the editor is the only other place they appear.
+  Step 1 lists the five roles, plus one **Gear & Services** choice that opens the three business types (with the directory's photos). A directory "claim your listing" link pre-picks its category here (`components/directory/ClaimListingLink.tsx`).
+
+  Step 3 asks only what a profile needs to be recognisable and findable (for a band: name, genres, member count, one-line sound description, plus their own name; for a backline company: name, what it provides, whether it delivers). Everything else — bio, phone, website, draw/reach numbers, fee ranges, booking contacts — is deferred to `/profile/edit`. That is not two forms: `/profile/edit` imports the *same* components, and a `mode` prop (`onboarding` | `full`, see `components/onboarding/forms/mode.ts`) decides which subset renders. Deleting fields to shorten signup would make them unreachable, since the editor is the only other place they appear. Both save paths build the detail row with the same `buildDetailRow` (`lib/profile/detailRow.ts`), and `lib/profile/validation.ts` checks what a chip picker's `required` can't (genres for the five roles; what a backline or rental business offers).
 
   Social links use a picker rather than a wall of inputs: tap the platforms you actually have and only those reveal a field. All six live on `CommonFieldValues` for every player type, and `lib/profile/socialLinks.ts` is the single definition of which platforms exist and how each value maps to and from a stored URL. Saving does a **delete-then-insert** on `profile_links`, so anything the editor fails to load back is something the next save would delete — hence the round-trip test in `socialLinks.test.ts`.
-- **Discover** — browse/search published profiles by type, genre, and text query.
+- **Discover** — browse/search published profiles by type, genre, and text query. Eight photo tiles, one per type, matching the directory; vendor cards summarize what they offer ("Drums, Amps, PA · Delivers", from `lib/profile/vendorOptions.ts`).
 - **Marketplace (Opportunities)** — industry players post events/opportunities/open mics; bands can be tagged, apply, or sign up (open mic).
-- **Connections & Messaging** — industry accounts can DM directly; bands send a Connect request that the other side accepts/declines, opening a thread.
+- **Connections & Messaging** — industry accounts can DM directly; bands and the gear/rehearsal businesses send a Connect request that the other side accepts/declines, opening a thread.
 - **AI show-matching** (`/match`, talent buyers only) — describe a show in plain English, Gemini extracts genre/draw/size/vibe criteria, we rank published bands against it using our own data (Gemini never ranks or sees band data directly).
 - **Admin console** (`/admin`) — gated to a hardcoded email allowlist in `lib/supabase/admin.ts`.
 - **Theme song** — the play/pause toggle in the landing nav (`components/landing/ThemeSongButton.tsx`) plays the SplitMic Anthem from YouTube with no visible player. The IFrame API script is fetched on the **first click, never on page load**, so `/` pays nothing for it until someone actually presses play. The hidden player is `opacity-0` at 1px rather than `display: none`, which browsers can treat as unplayable. Audio stops when you navigate away, since the nav unmounts with the page.

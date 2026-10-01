@@ -192,7 +192,10 @@ export async function markThreadRead(threadId: string): Promise<void> {
 // Rules:
 //   - Industry players (venue/talent_buyer/record_label/festival) initiating
 //     to ANY profile → creates a thread immediately (direct DM)
-//   - Bands initiating to ANY profile → creates a pending connection_request
+//   - Bands and gear/rehearsal businesses (backline, instrument rental,
+//     rehearsal studio) initiating to ANY profile → a pending
+//     connection_request. Industry is an allowlist, so any type not on it
+//     lands here by default.
 //   - Band-to-band → also goes via connection_request (mutual)
 //   - Industry-to-industry → direct DM
 
@@ -292,7 +295,7 @@ export async function initiateConnection(
     return { threadId: thread.id, mode: "thread" };
   }
 
-  // BAND → ANYONE = connection request
+  // BAND or GEAR/REHEARSAL BUSINESS → ANYONE = connection request
   const { error: insertError } = await supabase
     .from("connection_requests")
     .insert({

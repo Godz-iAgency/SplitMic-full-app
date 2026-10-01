@@ -15,6 +15,15 @@ import {
   type RecordLabelFormValues,
 } from "./forms/RecordLabelForm";
 import { FestivalForm, type FestivalFormValues } from "./forms/FestivalForm";
+import { BacklineForm, type BacklineFormValues } from "./forms/BacklineForm";
+import {
+  InstrumentRentalForm,
+  type InstrumentRentalFormValues,
+} from "./forms/InstrumentRentalForm";
+import {
+  RehearsalStudioForm,
+  type RehearsalStudioFormValues,
+} from "./forms/RehearsalStudioForm";
 import { EMPTY_SOCIAL_VALUES } from "@/lib/profile/socialLinks";
 import { validateProfilePayload } from "@/lib/profile/validation";
 
@@ -35,6 +44,17 @@ export type ProfilePayload =
       kind: "festival";
       common: CommonFieldValues;
       specific: FestivalFormValues;
+    }
+  | { kind: "backline"; common: CommonFieldValues; specific: BacklineFormValues }
+  | {
+      kind: "instrument_rental";
+      common: CommonFieldValues;
+      specific: InstrumentRentalFormValues;
+    }
+  | {
+      kind: "rehearsal_studio";
+      common: CommonFieldValues;
+      specific: RehearsalStudioFormValues;
     };
 
 type Props = {
@@ -55,6 +75,9 @@ const TITLES: Record<PlayerType, string> = {
   talent_buyer: "Tell us about your booking work",
   record_label: "Tell us about your label",
   festival: "Tell us about your festival",
+  backline: "Tell us about your backline company",
+  instrument_rental: "Tell us about your rental shop",
+  rehearsal_studio: "Tell us about your studio",
 };
 
 const EMPTY_COMMON: CommonFieldValues = {
@@ -133,6 +156,31 @@ const EMPTY_FESTIVAL: FestivalFormValues = {
   pay_max: "",
 };
 
+const EMPTY_BACKLINE: BacklineFormValues = {
+  business_name: "",
+  equipment: [],
+  delivers: "",
+  service_area: "",
+  price_note: "",
+};
+
+const EMPTY_INSTRUMENT_RENTAL: InstrumentRentalFormValues = {
+  business_name: "",
+  instruments: [],
+  rental_periods: [],
+  delivers: "",
+  price_note: "",
+};
+
+const EMPTY_REHEARSAL_STUDIO: RehearsalStudioFormValues = {
+  business_name: "",
+  room_count: "",
+  gear_included: [],
+  rate_note: "",
+  max_people_per_room: "",
+  hours_note: "",
+};
+
 function emptySpecific(playerType: PlayerType): ProfilePayload["specific"] {
   switch (playerType) {
     case "band":
@@ -145,6 +193,12 @@ function emptySpecific(playerType: PlayerType): ProfilePayload["specific"] {
       return { ...EMPTY_RECORD_LABEL };
     case "festival":
       return { ...EMPTY_FESTIVAL };
+    case "backline":
+      return { ...EMPTY_BACKLINE };
+    case "instrument_rental":
+      return { ...EMPTY_INSTRUMENT_RENTAL };
+    case "rehearsal_studio":
+      return { ...EMPTY_REHEARSAL_STUDIO };
   }
 }
 
@@ -189,6 +243,12 @@ export function specificFromPending(
         genres_featured: pending.genres,
         festival_type: pending.scale as FestivalFormValues["festival_type"],
       };
+    // The landing mini builder asks about genres and scale, neither of which
+    // a gear or rehearsal business has, so only the type itself carries over.
+    case "backline":
+    case "instrument_rental":
+    case "rehearsal_studio":
+      return emptySpecific(pending.type);
   }
 }
 
@@ -328,6 +388,42 @@ export function ProfileStep({
               }}
             />
           ) : null}
+          {playerType === "backline" ? (
+            <BacklineForm
+              mode="onboarding"
+              values={specific as BacklineFormValues}
+              onChange={(key, value) => {
+                const next = { ...(specific as BacklineFormValues), [key]: value };
+                updateSpecific(next);
+              }}
+            />
+          ) : null}
+          {playerType === "instrument_rental" ? (
+            <InstrumentRentalForm
+              mode="onboarding"
+              values={specific as InstrumentRentalFormValues}
+              onChange={(key, value) => {
+                const next = {
+                  ...(specific as InstrumentRentalFormValues),
+                  [key]: value,
+                };
+                updateSpecific(next);
+              }}
+            />
+          ) : null}
+          {playerType === "rehearsal_studio" ? (
+            <RehearsalStudioForm
+              mode="onboarding"
+              values={specific as RehearsalStudioFormValues}
+              onChange={(key, value) => {
+                const next = {
+                  ...(specific as RehearsalStudioFormValues),
+                  [key]: value,
+                };
+                updateSpecific(next);
+              }}
+            />
+          ) : null}
         </section>
 
         {/* Name and socials come after the type-specific fields: the person
@@ -379,4 +475,7 @@ export const EMPTY_FORM_VALUES = {
   talent_buyer: EMPTY_TALENT_BUYER,
   record_label: EMPTY_RECORD_LABEL,
   festival: EMPTY_FESTIVAL,
+  backline: EMPTY_BACKLINE,
+  instrument_rental: EMPTY_INSTRUMENT_RENTAL,
+  rehearsal_studio: EMPTY_REHEARSAL_STUDIO,
 };

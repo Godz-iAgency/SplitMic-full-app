@@ -43,6 +43,14 @@ import { ProfileLiveStatus } from "@/components/profile/ProfileLiveStatus";
 import { ConnectButton } from "@/components/inbox/ConnectButton";
 import { ProfileIncompleteCard } from "@/components/ProfileIncompleteBanner";
 import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
+import { DETAIL_SOURCE } from "@/lib/supabase/detailSource";
+import {
+  BACKLINE_EQUIPMENT,
+  RENTAL_INSTRUMENTS,
+  RENTAL_PERIODS,
+  STUDIO_GEAR,
+  labelsFor,
+} from "@/lib/profile/vendorOptions";
 
 export const dynamic = "force-dynamic";
 
@@ -674,20 +682,8 @@ function pickDetailName(
   details: Record<string, unknown> | null,
 ): string | null {
   if (!details) return null;
-  switch (playerType) {
-    case "band":
-      return (details.band_name as string) ?? null;
-    case "venue":
-      return (details.venue_name as string) ?? null;
-    case "talent_buyer":
-      return (details.company_name as string) ?? null;
-    case "record_label":
-      return (details.label_name as string) ?? null;
-    case "festival":
-      return (details.festival_name as string) ?? null;
-    default:
-      return null;
-  }
+  const name = details[DETAIL_SOURCE[playerType]?.nameColumn];
+  return typeof name === "string" && name ? name : null;
 }
 
 function DetailsBlock({
@@ -838,8 +834,39 @@ function pickDetailItems(
             : null,
       );
       break;
+    // Chip values are shown through their option labels only, so a value
+    // that isn't in the list (never written, but possible in old data) is
+    // skipped rather than printed raw.
+    case "backline":
+      push("Provides", labelsFor(BACKLINE_EQUIPMENT, d.equipment));
+      push("Delivery", deliveryLabel(d.delivers, "Delivers and sets up"));
+      push("Service area", d.service_area);
+      push("Pricing", d.price_note);
+      break;
+    case "instrument_rental":
+      push("Rents", labelsFor(RENTAL_INSTRUMENTS, d.instruments));
+      push("Rental periods", labelsFor(RENTAL_PERIODS, d.rental_periods));
+      push("Delivery", deliveryLabel(d.delivers, "Delivers"));
+      push("Pricing", d.price_note);
+      break;
+    case "rehearsal_studio":
+      push("Rooms", d.room_count);
+      push("Gear in the room", labelsFor(STUDIO_GEAR, d.gear_included));
+      push(
+        "Max per room",
+        d.max_people_per_room ? `${d.max_people_per_room} people` : null,
+      );
+      push("Rates", d.rate_note);
+      push("Hours", d.hours_note);
+      break;
   }
   return list;
+}
+
+function deliveryLabel(value: unknown, yes: string): string | null {
+  if (value === true) return yes;
+  if (value === false) return "Pickup only";
+  return null;
 }
 
 // Convert snake_case enum values to readable labels: "all_ages" → "All ages"

@@ -21,6 +21,7 @@ import { DirectoryEmptyState } from "@/components/directory/DirectoryEmptyState"
 import { DirectoryFaqSection } from "@/components/directory/DirectoryFaqSection";
 import { DirectoryCategoryJsonLd } from "@/components/directory/DirectoryJsonLd";
 import { BackToHomeLink } from "@/components/directory/BackToHomeLink";
+import { ClaimListingLink } from "@/components/directory/ClaimListingLink";
 
 // Server-rendered and cached for an hour. Deliberately NOT using
 // generateStaticParams: this page reads searchParams for its search box, which
@@ -156,9 +157,12 @@ export default async function DirectoryCategoryPage({
 
           <p className="text-center text-sm text-brand-gray-400">
             Run one of these businesses?{" "}
-            <Link href="/signup" className="text-brand-orange hover:underline">
+            <ClaimListingLink
+              category={category}
+              className="text-brand-orange hover:underline"
+            >
               Claim your listing on SplitMic
-            </Link>
+            </ClaimListingLink>
             .
           </p>
         </div>

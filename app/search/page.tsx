@@ -15,17 +15,17 @@ import { SearchBox } from "@/components/search/SearchBox";
 import { GenreFilter } from "@/components/search/GenreFilter";
 import { SortDropdown } from "@/components/search/SortDropdown";
 import { SearchResults } from "@/components/search/SearchResults";
-import type { PlayerType } from "@/lib/types";
+import {
+  PLAYER_TYPE_OPTIONS,
+  isVendorPlayerType,
+  type PlayerType,
+} from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 const VALID_TYPES = new Set<string>([
   "all",
-  "band",
-  "venue",
-  "talent_buyer",
-  "record_label",
-  "festival",
+  ...PLAYER_TYPE_OPTIONS.map((o) => o.value),
 ]);
 
 const VALID_SORTS = new Set<SortOption>(["newest", "recent"]);
@@ -98,8 +98,8 @@ export default async function SearchPage({
             Discover Austin&apos;s music ecosystem
           </h1>
           <p className="mt-2 text-sm text-brand-gray-300 sm:text-base">
-            Browse bands, venues, talent buyers, labels, and festivals, all
-            verified Austin.
+            Browse bands, venues, talent buyers, labels, festivals, and the
+            gear and rehearsal businesses behind the shows, all verified Austin.
           </p>
         </div>
 
@@ -108,9 +108,11 @@ export default async function SearchPage({
           <SearchBox />
         </div>
 
-        {/* Filter row 2: genre + sort */}
+        {/* Filter row 2: genre + sort. No genre filter on the gear and
+            rehearsal categories: none of them has a genre, so every choice
+            would return nothing. */}
         <div className="mb-6 flex flex-wrap gap-3">
-          <GenreFilter />
+          {isVendorPlayerType(activeType) ? null : <GenreFilter />}
           <SortDropdown />
         </div>
 
@@ -147,13 +149,16 @@ function EmptyState({
   activeType: PlayerType | "all";
   hasFilters: boolean;
 }) {
-  const labelMap: Record<string, string> = {
+  const labelMap: Record<PlayerType | "all", string> = {
     all: "profiles",
     band: "bands",
     venue: "venues",
     talent_buyer: "talent buyers",
     record_label: "labels",
     festival: "festivals",
+    backline: "backline companies",
+    instrument_rental: "instrument rental shops",
+    rehearsal_studio: "rehearsal studios",
   };
   const label = labelMap[activeType] ?? "profiles";
 

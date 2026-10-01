@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ClaimListingLink } from "@/components/directory/ClaimListingLink";
 import {
   ExternalLink,
   Phone,
@@ -365,11 +366,11 @@ function ClaimState({ card }: { card: DirectoryCard }) {
   }
 
   return (
-    <Link
-      href="/signup"
+    <ClaimListingLink
+      category={card.category}
       className="text-xs text-brand-gray-400 transition hover:text-white hover:underline"
     >
       Is this your business?
-    </Link>
+    </ClaimListingLink>
   );
 }

@@ -1,7 +1,16 @@
 "use client";
 
-import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
+import {
+  PLAYER_TYPE_OPTIONS,
+  isVendorPlayerType,
+  type PlayerType,
+} from "@/lib/types";
 import { PlayerTypeIcon } from "@/components/landing/PlayerTypeIcon";
+
+// Gear and rehearsal businesses aren't offered as a "who it's for" target.
+// They serve a show rather than fill a slot in it, so a poster reaches them
+// by name from Discover instead (PROGRESS.md §2 #27).
+const TARGET_OPTIONS = PLAYER_TYPE_OPTIONS.filter((o) => !isVendorPlayerType(o.value));
 
 type Props = {
   selected: PlayerType[];
@@ -23,7 +32,7 @@ export function PlayerTypeMultiSelect({ selected, onChange }: Props) {
         </span>
       </label>
       <div className="flex flex-wrap gap-2">
-        {PLAYER_TYPE_OPTIONS.map((opt) => {
+        {TARGET_OPTIONS.map((opt) => {
           const active = selected.includes(opt.value);
           return (
             <button

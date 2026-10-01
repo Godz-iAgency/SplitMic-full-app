@@ -3,6 +3,7 @@ import { validateProfilePayload } from "./validation";
 import type { CommonFieldValues } from "@/components/onboarding/forms/CommonFields";
 import { EMPTY_SOCIAL_VALUES } from "./socialLinks";
 import type { ProfilePayload } from "@/components/onboarding/ProfileStep";
+import type { CorePlayerType } from "@/lib/types";
 
 const COMMON: CommonFieldValues = {
   ...EMPTY_SOCIAL_VALUES,
@@ -13,10 +14,7 @@ const COMMON: CommonFieldValues = {
   instagram_followers: "",
 };
 
-function payload(
-  kind: ProfilePayload["kind"],
-  genres: string[],
-): ProfilePayload {
+function payload(kind: CorePlayerType, genres: string[]): ProfilePayload {
   switch (kind) {
     case "band":
       return {
@@ -139,5 +137,78 @@ describe("validateProfilePayload", () => {
       "Pick at least one genre.",
     );
     expect(validateProfilePayload(payload(kind, ["Rock"]))).toBeNull();
+  });
+});
+
+describe("validateProfilePayload for gear and rehearsal businesses", () => {
+  const backline = (equipment: unknown): ProfilePayload => ({
+    kind: "backline",
+    common: COMMON,
+    specific: {
+      business_name: "Test Backline",
+      equipment: equipment as string[],
+      delivers: "yes",
+      service_area: "",
+      price_note: "",
+    },
+  });
+  const rental = (instruments: unknown): ProfilePayload => ({
+    kind: "instrument_rental",
+    common: COMMON,
+    specific: {
+      business_name: "Test Rentals",
+      instruments: instruments as string[],
+      rental_periods: [],
+      delivers: "",
+      price_note: "",
+    },
+  });
+  const studio: ProfilePayload = {
+    kind: "rehearsal_studio",
+    common: COMMON,
+    specific: {
+      business_name: "Test Rooms",
+      room_count: 3,
+      gear_included: [],
+      rate_note: "",
+      max_people_per_room: "",
+      hours_note: "",
+    },
+  };
+
+  it("never asks a vendor for a genre", () => {
+    // A rehearsal studio has no genre. Without the exemption every vendor
+    // signup would fail on "Pick at least one genre." with no genre field on
+    // the form to fix it.
+    expect(validateProfilePayload(backline(["drums"]))).toBeNull();
+    expect(validateProfilePayload(rental(["guitars"]))).toBeNull();
+    expect(validateProfilePayload(studio)).toBeNull();
+  });
+
+  it("requires a backline company to say what it provides", () => {
+    expect(validateProfilePayload(backline([]))).toBe(
+      "Pick at least one thing you provide.",
+    );
+  });
+
+  it("requires a rental shop to say what it rents", () => {
+    expect(validateProfilePayload(rental([]))).toBe(
+      "Pick at least one thing you rent.",
+    );
+  });
+
+  it.each([[["forged"]], [[""]], ["drums"], [null], [[42]]])(
+    "does not count values outside the option list (%j)",
+    (equipment) => {
+      // The chip list arrives from the browser: a made-up value must not
+      // satisfy the requirement on its own.
+      expect(validateProfilePayload(backline(equipment))).toBe(
+        "Pick at least one thing you provide.",
+      );
+    },
+  );
+
+  it("lets a rehearsal studio list no gear (bring-your-own rooms)", () => {
+    expect(validateProfilePayload(studio)).toBeNull();
   });
 });

@@ -1,12 +1,38 @@
-export type PlayerType =
+/**
+ * Businesses that serve a show rather than play or book it. They sign up and
+ * get a profile like everyone else, but they never post to the feed and reach
+ * people through a Connect request, the same way a band does (PROGRESS.md §2
+ * #27). The values are byte-identical to their DirectoryCategory slugs in
+ * lib/directory/categories.ts, so a claimed listing maps straight onto one.
+ */
+export type VendorPlayerType = "backline" | "instrument_rental" | "rehearsal_studio";
+
+/** The five original player types: everyone who plays, books, or signs music. */
+export type CorePlayerType =
   | "band"
   | "venue"
   | "talent_buyer"
   | "record_label"
   | "festival";
 
+export type PlayerType = CorePlayerType | VendorPlayerType;
+
+export const VENDOR_PLAYER_TYPES: readonly VendorPlayerType[] = [
+  "backline",
+  "instrument_rental",
+  "rehearsal_studio",
+];
+
+export function isVendorPlayerType(t: unknown): t is VendorPlayerType {
+  return VENDOR_PLAYER_TYPES.includes(t as VendorPlayerType);
+}
+
 // Player-type icons are Lucide components — see components/landing/PlayerTypeIcon.tsx
 // (the single source for which icon maps to which player type).
+//
+// Every type is listed so any label lookup resolves. Pickers that should only
+// offer the original five (signup's main list, a post's "who it's for") filter
+// with isVendorPlayerType rather than keeping a second list.
 export const PLAYER_TYPE_OPTIONS: {
   value: PlayerType;
   label: string;
@@ -36,6 +62,21 @@ export const PLAYER_TYPE_OPTIONS: {
     value: "festival",
     label: "Festival",
     description: "Multi-day or single-day festivals booking talent.",
+  },
+  {
+    value: "backline",
+    label: "Backline Company",
+    description: "Drums, amps, PA, and stage gear supplied for shows.",
+  },
+  {
+    value: "instrument_rental",
+    label: "Instrument Rental",
+    description: "Guitars, keys, drums, and gear to rent by the day or week.",
+  },
+  {
+    value: "rehearsal_studio",
+    label: "Rehearsal Studio",
+    description: "Practice rooms bands book by the hour or month.",
   },
 ];
 

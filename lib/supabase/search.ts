@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { PlayerType } from "@/lib/types";
+import {
+  PLAYER_TYPE_OPTIONS,
+  isVendorPlayerType,
+  type PlayerType,
+} from "@/lib/types";
+import { DETAIL_SOURCE } from "@/lib/supabase/detailSource";
+import { vendorOneLiner } from "@/lib/profile/vendorOptions";
 
 const BUCKET = "profile-media";
 
@@ -36,13 +42,7 @@ export type SearchResult = {
   hasMore: boolean;
 };
 
-const ALL_PLAYER_TYPES: PlayerType[] = [
-  "band",
-  "venue",
-  "talent_buyer",
-  "record_label",
-  "festival",
-];
+const ALL_PLAYER_TYPES: PlayerType[] = PLAYER_TYPE_OPTIONS.map((o) => o.value);
 
 /**
  * Searches all published profiles, returning lightweight cards for the search grid.
@@ -185,14 +185,8 @@ export async function getProfileCountsByType(
 
   const results = await Promise.all(fetches);
 
-  const counts = {
-    all: 0,
-    band: 0,
-    venue: 0,
-    talent_buyer: 0,
-    record_label: 0,
-    festival: 0,
-  } as Record<PlayerType | "all", number>;
+  const counts = { all: 0 } as Record<PlayerType | "all", number>;
+  for (const t of ALL_PLAYER_TYPES) counts[t] = 0;
 
   let total = 0;
   for (const [t, c] of results) {
@@ -203,48 +197,20 @@ export async function getProfileCountsByType(
   return counts;
 }
 
-// ── Per-type detail config (which tables/columns hold name + genre) ──────────
+// ── Which column holds each type's genres (tables + names: DETAIL_SOURCE) ──
 
-type DetailConfig = {
-  table: string;
-  nameColumn: string;
-  genreColumn: string;
+// null for the gear and rehearsal businesses: they have no genre, so a genre
+// filter can never match them.
+const GENRE_COLUMN: Record<PlayerType, string | null> = {
+  band: "genres",
+  venue: "genres_hosted",
+  talent_buyer: "genres_focus",
+  record_label: "genres_focus",
+  festival: "genres_featured",
+  backline: null,
+  instrument_rental: null,
+  rehearsal_studio: null,
 };
-
-function getDetailTableConfig(type: PlayerType): DetailConfig {
-  switch (type) {
-    case "band":
-      return {
-        table: "band_details",
-        nameColumn: "band_name",
-        genreColumn: "genres",
-      };
-    case "venue":
-      return {
-        table: "venue_details",
-        nameColumn: "venue_name",
-        genreColumn: "genres_hosted",
-      };
-    case "talent_buyer":
-      return {
-        table: "talent_buyer_details",
-        nameColumn: "company_name",
-        genreColumn: "genres_focus",
-      };
-    case "record_label":
-      return {
-        table: "record_label_details",
-        nameColumn: "label_name",
-        genreColumn: "genres_focus",
-      };
-    case "festival":
-      return {
-        table: "festival_details",
-        nameColumn: "festival_name",
-        genreColumn: "genres_featured",
-      };
-  }
-}
 
 // ── Pre-filter: fetch profile IDs from detail tables matching query/genre ──
 
@@ -268,16 +234,21 @@ async function fetchMatchingIdsForType(
   query: string,
   genre: string,
 ): Promise<string[]> {
-  const config = getDetailTableConfig(type);
-  let q = supabase.from(config.table).select("profile_id");
+  const { table, nameColumn } = DETAIL_SOURCE[type];
+  const genreColumn = GENRE_COLUMN[type];
+  // A genre filter excludes every type without genres rather than ignoring
+  // the filter for them, which would list a rehearsal studio under "Reggae".
+  if (genre && !genreColumn) return [];
+
+  let q = supabase.from(table).select("profile_id");
 
   if (query) {
-    q = q.ilike(config.nameColumn, `%${query}%`);
+    q = q.ilike(nameColumn, `%${query}%`);
   }
 
-  if (genre) {
+  if (genre && genreColumn) {
     // overlaps: matches if column array shares any element with the array we pass
-    q = q.overlaps(config.genreColumn, [genre]);
+    q = q.overlaps(genreColumn, [genre]);
   }
 
   const { data } = await q;
@@ -293,6 +264,25 @@ async function fetchDetailsForType(
 ): Promise<Map<string, DetailValue>> {
   const map = new Map<string, DetailValue>();
   if (ids.length === 0) return map;
+
+  // One query shape for all three: their cards are built from the same
+  // one-liner helper, and none of them has genres.
+  if (isVendorPlayerType(type)) {
+    const { data } = await supabase
+      .from(DETAIL_SOURCE[type].table)
+      .select("*")
+      .in("profile_id", ids);
+    for (const d of (data ?? []) as Record<string, unknown>[]) {
+      const name = d.business_name;
+      map.set(d.profile_id as string, {
+        name:
+          typeof name === "string" && name ? name : DETAIL_SOURCE[type].fallbackName,
+        oneLiner: vendorOneLiner(type, d),
+        genres: [],
+      });
+    }
+    return map;
+  }
 
   switch (type) {
     case "band": {

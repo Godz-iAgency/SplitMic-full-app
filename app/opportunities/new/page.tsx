@@ -11,7 +11,7 @@ import {
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
 import { PostCreationForm } from "@/components/opportunities/PostCreationForm";
-import type { PlayerType } from "@/lib/types";
+import { isVendorPlayerType, type PlayerType } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +79,13 @@ export default async function NewOpportunityPage() {
             body="Nobody in Austin's music scene can see this post, or you, until your profile is published. Head over and hit Publish to go live."
             ctaHref={`/profile/${profile.profile_id}`}
             ctaLabel="Go to my profile"
+          />
+        ) : isVendorPlayerType(playerType) ? (
+          <BlockNotice
+            title="The feed is for shows and calls for artists"
+            body="Gear and rehearsal businesses don't post here. Members find you in Discover and reach you with a Connect request, and you can send one to anyone from their profile."
+            ctaHref="/search"
+            ctaLabel="Browse profiles"
           />
         ) : !isPostingPlayerType(playerType) ? (
           <BlockNotice

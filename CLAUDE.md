@@ -101,6 +101,8 @@ Canonical modules in this repo — read from these rather than re-deriving:
 | Concern | Canonical source |
 |---|---|
 | Player types & profile field shapes | `lib/types.ts` |
+| Each player type's detail table & display-name column | `lib/supabase/detailSource.ts` |
+| Gear/rental/studio option lists & labels | `lib/profile/vendorOptions.ts` |
 | Admin access | `lib/supabase/admin.ts` (`isAdminEmail`) |
 | Directory categories, labels, slugs | `lib/directory/categories.ts` |
 | Directory tiers & outreach states | `lib/supabase/adminDirectory.ts` |
@@ -145,6 +147,12 @@ Do not weaken security controls merely to make a feature easier to implement.
   which hides scraped contact emails and the outreach pipeline this way. Adding
   a new column to such a table means deciding, explicitly, whether it gets a
   grant.
+- **Permissions by player type are allowlists, in code and in SQL.** Write
+  "the types that may post", never "everyone except bands". step20/22 wrote
+  two policies as `player_type <> 'band'`, which every player type added
+  later would have passed silently (`PROGRESS.md` §2 #27). The per-type tests
+  in `marketplace.test.ts` and `messaging.test.ts` use `satisfies
+  Record<PlayerType, …>` so adding a type without deciding fails to compile.
 - **The service-role client bypasses RLS entirely.** Use it only in server-side
   code that has already established authorization. It must never be reachable
   from a client bundle.

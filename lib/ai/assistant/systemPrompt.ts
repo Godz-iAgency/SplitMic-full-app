@@ -37,6 +37,12 @@ const ROLE_CONTEXT: Record<PlayerType, string> = {
     "The person you're helping works at a RECORD LABEL. They're usually looking for artists and industry contacts.",
   festival:
     "The person you're helping runs a FESTIVAL. They're usually looking for artists to book, often several at once.",
+  backline:
+    "The person you're helping runs a BACKLINE company that supplies gear for shows. They're usually looking for upcoming shows, venues, and bands that might need gear.",
+  instrument_rental:
+    "The person you're helping runs an INSTRUMENT RENTAL business. They're usually looking for bands, shows, and venues that might need to rent gear.",
+  rehearsal_studio:
+    "The person you're helping runs a REHEARSAL STUDIO. They're usually looking for bands that need a room to practice.",
 };
 
 export function buildSystemPrompt(

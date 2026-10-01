@@ -2,10 +2,10 @@
 
 import { GENRES } from "@/lib/genres";
 import { MINI_GENRE_MAX, MINI_QUESTIONS } from "@/lib/pendingProfile";
-import type { PlayerType } from "@/lib/types";
+import type { CorePlayerType } from "@/lib/types";
 
 type Props = {
-  playerType: PlayerType;
+  playerType: CorePlayerType;
   genres: string[];
   scale: string;
   /** Takes an updater, not a value, so rapid toggles can't clobber each other

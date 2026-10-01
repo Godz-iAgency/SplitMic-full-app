@@ -18,7 +18,7 @@ import {
   type BrowseResult,
   type PostType,
 } from "@/lib/supabase/marketplace";
-import type { PlayerType } from "@/lib/types";
+import { isVendorPlayerType, type PlayerType } from "@/lib/types";
 
 // Event and open-mic posts are both anchored to a specific date.
 const DATE_BASED_TYPES: PostType[] = ["event", "open_mic"];
@@ -85,11 +85,13 @@ export async function createMarketplacePost(
 
   const playerType = profile.player_type as PlayerType;
 
-  // Bands cannot post.
+  // Bands and the gear/rehearsal businesses cannot post (an allowlist, so a
+  // newly added player type can't post until it is deliberately listed).
   if (!POSTING_PLAYER_TYPES.includes(playerType)) {
     return {
-      error:
-        "Bands cannot post directly. Reach out by sending a Connect request.",
+      error: isVendorPlayerType(playerType)
+        ? "Gear and rehearsal businesses don't post to the feed. Reach out by sending a Connect request."
+        : "Bands cannot post directly. Reach out by sending a Connect request.",
     };
   }
 

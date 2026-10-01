@@ -1,5 +1,11 @@
 import type { ProfilePayload } from "@/components/onboarding/ProfileStep";
-import { PLAYER_TYPE_OPTIONS } from "@/lib/types";
+import { PLAYER_TYPE_OPTIONS, type CorePlayerType } from "@/lib/types";
+import {
+  BACKLINE_EQUIPMENT,
+  RENTAL_INSTRUMENTS,
+  pickKnown,
+  type VendorOption,
+} from "@/lib/profile/vendorOptions";
 
 /**
  * The validation gap this closes: `GenreMultiSelect`'s `required` prop only
@@ -26,6 +32,24 @@ export function validateProfilePayload(payload: ProfilePayload): string | null {
       !PLAYER_TYPE_OPTIONS.some(({ value }) => value === payload.kind)) {
     return "Invalid profile details.";
   }
+
+  // Gear and rehearsal businesses have no genre: their required chip list is
+  // what they offer instead, and it has the same not-a-real-form-control gap.
+  // A rehearsal studio has no required list (bring-your-own-gear rooms are
+  // real), so it only needs the native fields its form already enforces.
+  switch (payload.kind) {
+    case "backline":
+      return hasKnownChoice(BACKLINE_EQUIPMENT, payload.specific.equipment)
+        ? null
+        : "Pick at least one thing you provide.";
+    case "instrument_rental":
+      return hasKnownChoice(RENTAL_INSTRUMENTS, payload.specific.instruments)
+        ? null
+        : "Pick at least one thing you rent.";
+    case "rehearsal_studio":
+      return null;
+  }
+
   const genres = genresFor(payload);
   if (!Array.isArray(genres) || genres.length === 0 ||
       genres.some((genre) => typeof genre !== "string" || !genre.trim())) {
@@ -34,7 +58,13 @@ export function validateProfilePayload(payload: ProfilePayload): string | null {
   return null;
 }
 
-function genresFor(payload: ProfilePayload): string[] {
+function hasKnownChoice(options: VendorOption[], values: unknown): boolean {
+  return pickKnown(options, values).length > 0;
+}
+
+function genresFor(
+  payload: Extract<ProfilePayload, { kind: CorePlayerType }>,
+): string[] {
   switch (payload.kind) {
     case "band":
       return payload.specific.genres;

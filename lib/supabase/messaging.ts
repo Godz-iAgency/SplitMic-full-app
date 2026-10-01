@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PlayerType } from "@/lib/types";
+import { fetchDisplayNames } from "@/lib/supabase/detailSource";
 
 const BUCKET = "profile-media";
 
@@ -98,7 +99,7 @@ export async function getIncomingRequests(
   );
 
   const [nameMap, avatarMap, typeMap, postTitleMap] = await Promise.all([
-    fetchProfileNames(supabase, requesterIds),
+    fetchDisplayNames(supabase, requesterIds),
     fetchAvatars(supabase, requesterIds),
     fetchPlayerTypes(supabase, requesterIds),
     postIds.length > 0
@@ -147,7 +148,7 @@ export async function getThreadSummaries(
 
   const [nameMap, avatarMap, typeMap, lastMsgMap, unreadMap] =
     await Promise.all([
-      fetchProfileNames(supabase, otherIds),
+      fetchDisplayNames(supabase, otherIds),
       fetchAvatars(supabase, otherIds),
       fetchPlayerTypes(supabase, otherIds),
       fetchLastMessages(supabase, threadIds),
@@ -230,7 +231,7 @@ export async function getConnections(
   );
 
   const [nameMap, avatarMap, typeMap] = await Promise.all([
-    fetchProfileNames(supabase, otherIds),
+    fetchDisplayNames(supabase, otherIds),
     fetchAvatars(supabase, otherIds),
     fetchPlayerTypes(supabase, otherIds),
   ]);
@@ -291,7 +292,7 @@ export async function getThreadDetail(
         .select("id, sender_profile_id, body, created_at, read_at")
         .eq("thread_id", threadId)
         .order("created_at", { ascending: true }),
-      fetchProfileNames(supabase, [otherProfileId]),
+      fetchDisplayNames(supabase, [otherProfileId]),
       fetchAvatars(supabase, [otherProfileId]),
       fetchPlayerTypes(supabase, [otherProfileId]),
     ]);
@@ -357,50 +358,6 @@ export async function getConnectionState(
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-async function fetchProfileNames(
-  supabase: SupabaseClient,
-  profileIds: string[],
-): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
-  if (profileIds.length === 0) return map;
-
-  const queries = await Promise.all([
-    supabase
-      .from("band_details")
-      .select("profile_id, band_name")
-      .in("profile_id", profileIds),
-    supabase
-      .from("venue_details")
-      .select("profile_id, venue_name")
-      .in("profile_id", profileIds),
-    supabase
-      .from("talent_buyer_details")
-      .select("profile_id, company_name")
-      .in("profile_id", profileIds),
-    supabase
-      .from("record_label_details")
-      .select("profile_id, label_name")
-      .in("profile_id", profileIds),
-    supabase
-      .from("festival_details")
-      .select("profile_id, festival_name")
-      .in("profile_id", profileIds),
-  ]);
-
-  for (const row of queries[0].data ?? [])
-    map.set(row.profile_id, row.band_name ?? "Band");
-  for (const row of queries[1].data ?? [])
-    map.set(row.profile_id, row.venue_name ?? "Venue");
-  for (const row of queries[2].data ?? [])
-    map.set(row.profile_id, row.company_name ?? "Talent buyer");
-  for (const row of queries[3].data ?? [])
-    map.set(row.profile_id, row.label_name ?? "Record label");
-  for (const row of queries[4].data ?? [])
-    map.set(row.profile_id, row.festival_name ?? "Festival");
-
-  return map;
-}
 
 async function fetchAvatars(
   supabase: SupabaseClient,

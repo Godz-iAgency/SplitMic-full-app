@@ -2,7 +2,11 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/motion/Reveal";
 import { PlayerTypeIcon } from "./PlayerTypeIcon";
-import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
+import {
+  PLAYER_TYPE_OPTIONS,
+  VENDOR_PLAYER_TYPES,
+  type PlayerType,
+} from "@/lib/types";
 import type { SearchCard } from "@/lib/supabase/search";
 
 export type TeaserCounts = Record<PlayerType | "all", number>;
@@ -31,6 +35,10 @@ export function SceneTeaserSection({ counts, cards }: Props) {
   // Nothing real to show yet.
   if (!counts || counts.all === 0) return null;
 
+  const vendorCount = VENDOR_PLAYER_TYPES.reduce(
+    (sum, t) => sum + (counts[t] ?? 0),
+    0,
+  );
   const countLine = [
     counts.band > 0 ? plural(counts.band, "band") : null,
     counts.venue > 0 ? plural(counts.venue, "venue") : null,
@@ -39,6 +47,11 @@ export function SceneTeaserSection({ counts, cards }: Props) {
       : null,
     counts.record_label > 0 ? plural(counts.record_label, "label") : null,
     counts.festival > 0 ? plural(counts.festival, "festival") : null,
+    // One combined figure for the three businesses that serve a show: the
+    // line is about who's in the room, and three more terms would bury it.
+    vendorCount > 0
+      ? `${vendorCount} gear & rehearsal ${vendorCount === 1 ? "business" : "businesses"}`
+      : null,
   ]
     .filter(Boolean)
     .join(" · ");

@@ -1,14 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PlayerType } from "@/lib/types";
 import { isAdminEmail } from "@/lib/supabase/admin";
-
-const TABLE_BY_TYPE: Record<PlayerType, string> = {
-  band: "band_details",
-  venue: "venue_details",
-  talent_buyer: "talent_buyer_details",
-  record_label: "record_label_details",
-  festival: "festival_details",
-};
+import { DETAIL_SOURCE } from "@/lib/supabase/detailSource";
 
 export type UserProfile = {
   // From users table
@@ -107,7 +100,7 @@ export async function getOnboardingStatus(
   }
 
   // Step 3: check that the detail table row exists
-  const table = TABLE_BY_TYPE[profileRow.player_type as PlayerType];
+  const table = tableForPlayerType(profileRow.player_type as PlayerType);
   const { data: detailRow } = await supabase
     .from(table)
     .select("id")
@@ -118,5 +111,5 @@ export async function getOnboardingStatus(
 }
 
 export function tableForPlayerType(playerType: PlayerType): string {
-  return TABLE_BY_TYPE[playerType];
+  return DETAIL_SOURCE[playerType].table;
 }

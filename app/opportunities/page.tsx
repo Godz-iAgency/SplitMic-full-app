@@ -14,7 +14,7 @@ import { PostTypeFilter } from "@/components/opportunities/PostTypeFilter";
 import { MarketplaceGenreFilter } from "@/components/opportunities/MarketplaceGenreFilter";
 import { MarketplaceSearchBox } from "@/components/opportunities/MarketplaceSearchBox";
 import { MarketplaceList } from "@/components/opportunities/MarketplaceList";
-import type { PlayerType } from "@/lib/types";
+import { isVendorPlayerType, type PlayerType } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -101,9 +101,9 @@ export default async function OpportunitiesPage({
               aria-hidden="true"
             />
             <span>
-              Bands browse the feed but don&apos;t post directly. Send a
-              Connect request to a venue, label, talent buyer, or festival to
-              start a conversation.
+              {isVendorPlayerType(profile.player_type)
+                ? "Gear and rehearsal businesses browse the feed but don't post to it. Members find you in Discover, and you can send anyone a Connect request from their profile."
+                : "Bands browse the feed but don't post directly. Send a Connect request to a venue, label, talent buyer, or festival to start a conversation."}
             </span>
           </p>
         ) : null}

@@ -14,13 +14,9 @@ export default async function AdminUsersPage({
   searchParams: { type?: string; status?: string; q?: string };
 }) {
   const supabase = await getAdminServiceClient();
-  const validTypes = new Set([
+  const validTypes = new Set<string>([
     "all",
-    "band",
-    "venue",
-    "talent_buyer",
-    "record_label",
-    "festival",
+    ...PLAYER_TYPE_OPTIONS.map((o) => o.value),
   ]);
   const type = (validTypes.has(searchParams.type ?? "")
     ? searchParams.type
