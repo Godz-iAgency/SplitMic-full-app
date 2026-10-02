@@ -3,15 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Check } from "lucide-react";
-import { writePendingProfile } from "@/lib/pendingProfile";
-import type { CorePlayerType } from "@/lib/types";
+import { writePendingProfile, writePendingType } from "@/lib/pendingProfile";
+import { isVendorPlayerType, type PlayerType } from "@/lib/types";
 import { MiniProfileBuilder } from "./MiniProfileBuilder";
 import { PlayerTypeIcon } from "./PlayerTypeIcon";
 
 export type PlayerTypeDetail = {
-  // The five roles only: the mini builder inside this modal asks about genre
-  // and scale, which the gear and rehearsal businesses don't have.
-  type: CorePlayerType;
+  // The gear and rehearsal businesses skip the mini builder (it asks about
+  // genre and scale, which they don't have) and go straight to signup.
+  type: PlayerType;
   name: string;
   headline: string;
   benefits: string[];
@@ -61,11 +61,17 @@ export function PlayerTypeModal({ detail, onClose }: Props) {
 
   const shortName = detail.name.replace(/s$/, "");
   const answered = genres.length > 0 || scale !== "";
+  const vendorType = isVendorPlayerType(detail.type) ? detail.type : null;
+  const coreType = isVendorPlayerType(detail.type) ? null : detail.type;
 
   /** Hand the answers to onboarding. Runs on the way out, for both the
    *  answered and skipped paths, so the player type is always carried. */
   function persist() {
     if (!detail) return;
+    if (vendorType) {
+      writePendingType(vendorType);
+      return;
+    }
     writePendingProfile({ type: detail.type, genres, scale });
   }
 
@@ -165,19 +171,31 @@ export function PlayerTypeModal({ detail, onClose }: Props) {
                 </ul>
 
                 <div className="mt-6 flex flex-col items-center pb-2">
-                  <button
-                    type="button"
-                    onClick={() => setPhase("build")}
-                    className="w-full rounded-xl bg-brand-orange px-8 py-4 text-center text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 sm:w-auto sm:min-w-[300px]"
-                  >
-                    Start My {shortName} Profile
-                  </button>
+                  {vendorType ? (
+                    <Link
+                      href={`/signup?type=${vendorType}`}
+                      onClick={persist}
+                      className="tappable w-full rounded-xl bg-brand-orange px-8 py-4 text-center text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 sm:w-auto sm:min-w-[300px]"
+                    >
+                      Start My {shortName} Profile
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setPhase("build")}
+                      className="w-full rounded-xl bg-brand-orange px-8 py-4 text-center text-lg font-bold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-orange-600 hover:shadow-brand-orange/50 sm:w-auto sm:min-w-[300px]"
+                    >
+                      Start My {shortName} Profile
+                    </button>
+                  )}
                   <p className="mt-4 text-xs text-brand-gray-400">
-                    Two quick questions first. Free · No credit card.
+                    {vendorType
+                      ? "Free · No credit card."
+                      : "Two quick questions first. Free · No credit card."}
                   </p>
                 </div>
               </>
-            ) : (
+            ) : coreType ? (
               <>
                 <button
                   type="button"
@@ -189,7 +207,7 @@ export function PlayerTypeModal({ detail, onClose }: Props) {
                 </button>
 
                 <MiniProfileBuilder
-                  playerType={detail.type}
+                  playerType={coreType}
                   genres={genres}
                   scale={scale}
                   onGenresChange={setGenres}
@@ -211,7 +229,7 @@ export function PlayerTypeModal({ detail, onClose }: Props) {
                   </p>
                 </div>
               </>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

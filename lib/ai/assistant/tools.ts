@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ToolDefinition, ToolCall } from "@/lib/ai/providers";
 import type { AssistantCard, AssistantAction } from "./contract";
-import type { PlayerType } from "@/lib/types";
+import { VENDOR_PLAYER_TYPES, isVendorPlayerType, type PlayerType } from "@/lib/types";
 import { GENRES } from "@/lib/genres";
 import { searchProfiles } from "@/lib/supabase/search";
 import {
@@ -65,13 +65,30 @@ export type ToolOutcome = {
 
 // ── Tool definitions ────────────────────────────────────────────────────────
 
+// Every member type, gear and rehearsal businesses included. They come from
+// lib/types so a type added there is searchable here without a second edit.
 const MEMBER_TYPES: PlayerType[] = [
   "band",
   "venue",
   "talent_buyer",
   "record_label",
   "festival",
+  ...VENDOR_PLAYER_TYPES,
 ];
+
+/**
+ * Backline, rental, and rehearsal members have no genre, so a genre filter
+ * excludes all of them (search.ts). A model asked for "backline for a punk
+ * show" will pass genre=Punk; honoring it would answer "none found" for a
+ * search that has plenty of matches. Dropped for those types instead.
+ */
+export function memberSearchGenre(
+  playerType: PlayerType,
+  genre: string | null,
+): string | undefined {
+  if (!genre || isVendorPlayerType(playerType)) return undefined;
+  return GENRES.includes(genre as (typeof GENRES)[number]) ? genre : undefined;
+}
 
 const POST_TYPES: PostType[] = ["event", "open_mic", "opportunity"];
 
@@ -85,7 +102,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "search_splitmic_members",
     description:
-      "Search real SplitMic member accounts: bands, venues, talent buyers, record labels, and festivals. These are signed-up users with profiles the viewer can open and contact. Prefer this over the directory when the user wants someone to work with, book, or contact. Does not cover rehearsal studios, backline, or instrument rental; those are directory-only.",
+      "Search real SplitMic member accounts: bands, venues, talent buyers, record labels, festivals, and the businesses that rent gear and space (backline, instrument_rental, rehearsal_studio). These are signed-up users with profiles the viewer can open and contact. Always try this FIRST, including for rehearsal studios, backline, and instrument rental. Only if it finds nothing for those three, fall back to search_austin_directory. Gear and rehearsal members have no genre, so leave genre out for them.",
     parameters: {
       type: "object",
       properties: {
@@ -112,7 +129,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "search_austin_directory",
     description:
-      "Search the curated Austin music-business directory. This is the ONLY source for rehearsal studios, backline companies, and instrument rental. Listings carry a name, website, phone, and description. They do NOT carry availability, pricing, or booking data, so never state or imply that a listing is available or bookable.",
+      "Search the curated Austin music-business directory of rehearsal studios, backline companies, and instrument rental. Use it AFTER search_splitmic_members comes back empty for those categories, or when the person asks for more options or for the wider directory. Listings carry a name, website, phone, and description. They do NOT carry availability, pricing, or booking data, so never state or imply that a listing is available or bookable.",
     parameters: {
       type: "object",
       properties: {
@@ -236,11 +253,10 @@ async function searchMembers(
     };
   }
 
-  const genre = asString(args.genre);
   const { cards: found } = await searchProfiles(ctx.supabase, {
     playerType,
     query: asString(args.query) ?? undefined,
-    genre: genre && GENRES.includes(genre as (typeof GENRES)[number]) ? genre : undefined,
+    genre: memberSearchGenre(playerType, asString(args.genre)),
   });
 
   const top = found.slice(0, MAX_RESULTS);
@@ -250,6 +266,11 @@ async function searchMembers(
       found: found.length,
       showing: top.length,
       player_type: playerType,
+      // A business's profile has no rates or calendar. Said outright so the
+      // model sends people to Connect instead of quoting or promising either.
+      ...(isVendorPlayerType(playerType)
+        ? { note: "Member profiles list what the business offers but not pricing or availability. The person can contact them from the profile." }
+        : {}),
       results: top.map((c) => ({
         name: c.display_name,
         description: c.one_liner,

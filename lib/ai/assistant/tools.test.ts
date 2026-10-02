@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { selectUpcomingOpportunities } from "./tools";
+import { selectUpcomingOpportunities, memberSearchGenre, TOOL_DEFINITIONS } from "./tools";
+import { buildSystemPrompt } from "./systemPrompt";
 import type { MarketplaceCard } from "@/lib/supabase/marketplace";
+import type { PlayerType } from "@/lib/types";
 
 // Midday Austin time on 2026-10-10, well clear of the 9am cycle boundary.
 const NOW = new Date("2026-10-10T17:00:00Z");
@@ -71,5 +73,51 @@ describe("selectUpcomingOpportunities", () => {
   it("keeps a post with no date, since nothing says it has passed", () => {
     const undated = post({ post_type: "opportunity", event_date: null, open_until: null });
     expect(selectUpcomingOpportunities([undated], NOW)).toHaveLength(1);
+  });
+});
+
+// Whether a genre filter applies to each member type. A Record, so a new
+// player type can't be added without deciding.
+const GENRE_APPLIES = {
+  band: true,
+  venue: true,
+  talent_buyer: true,
+  record_label: true,
+  festival: true,
+  backline: false,
+  instrument_rental: false,
+  rehearsal_studio: false,
+} satisfies Record<PlayerType, boolean>;
+
+describe("memberSearchGenre", () => {
+  it.each(Object.entries(GENRE_APPLIES))("%s: genre applies = %s", (type, applies) => {
+    expect(memberSearchGenre(type as PlayerType, "Rock")).toBe(applies ? "Rock" : undefined);
+  });
+
+  it("ignores a genre that isn't in the list, and an absent one", () => {
+    expect(memberSearchGenre("band", "Not A Genre")).toBeUndefined();
+    expect(memberSearchGenre("band", null)).toBeUndefined();
+  });
+});
+
+describe("assistant instructions for gear and rehearsal businesses", () => {
+  const members = TOOL_DEFINITIONS.find((t) => t.name === "search_splitmic_members")!;
+  const enumValues = members.parameters.properties.player_type.enum ?? [];
+
+  it("lets the model search every player type as a member", () => {
+    expect([...enumValues].sort()).toEqual(Object.keys(GENRE_APPLIES).sort());
+  });
+
+  it("tells the model to search members before the directory", () => {
+    const directory = TOOL_DEFINITIONS.find((t) => t.name === "search_austin_directory")!;
+    expect(members.description).toMatch(/FIRST/);
+    expect(directory.description).toMatch(/AFTER search_splitmic_members/);
+    expect(directory.description).not.toMatch(/ONLY source/);
+  });
+
+  it("no longer claims these businesses are directory-only", () => {
+    const prompt = buildSystemPrompt(null, new Date("2026-10-10T17:00:00Z"));
+    expect(prompt).not.toMatch(/only in the directory/);
+    expect(prompt).toMatch(/Search members first/);
   });
 });

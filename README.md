@@ -276,8 +276,8 @@ model writes prose around the results while the UI renders the rows as cards.
 
 | Tool | Backed by |
 |---|---|
-| `search_splitmic_members` | `searchProfiles` — the 5 real player types |
-| `search_austin_directory` | `directory_businesses` — the 8 scraped categories |
+| `search_splitmic_members` | `searchProfiles`: every player type, including backline, instrument rental, and rehearsal studio members. Tried first for those three. A genre filter is dropped for them (they have none), see `memberSearchGenre` |
+| `search_austin_directory` | `directory_businesses`, the 8 scraped categories. For gear and rehearsal it's the fallback when no member matches, or when the person wants more options |
 | `search_live_events` | `getUpcomingEvents` + the `/live` selectors |
 | `search_opportunities` | `browseMarketplace` (the `/opportunities` feed), minus re-shares and posts whose date has passed |
 

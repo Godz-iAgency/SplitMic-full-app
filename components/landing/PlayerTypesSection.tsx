@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PlayerTypeModal, type PlayerTypeDetail } from "./PlayerTypeModal";
-import { PLAYER_TYPE_DETAILS } from "./playerTypeDetails";
+import { PLAYER_TYPE_DETAILS, VENDOR_TYPE_DETAILS } from "./playerTypeDetails";
 import { PlayerTypeIcon } from "./PlayerTypeIcon";
 import { Reveal } from "@/components/motion/Reveal";
 
@@ -20,7 +20,7 @@ export function PlayerTypesSection() {
             Built for the <span className="text-brand-orange">whole scene</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-brand-gray-300">
-            One platform. Five player types. Tap your role to see what you get.
+            One platform. Five player types, plus the gear and space behind every show. Tap your role to see what you get.
           </p>
         </Reveal>
 
@@ -73,6 +73,56 @@ export function PlayerTypesSection() {
                     Tap to learn more →
                   </p>
                 </div>
+              </button>
+            </Reveal>
+          ))}
+        </div>
+
+        {/* The businesses behind a show. Same pop-up as the roles above, but
+            compact rows: they're a second tier of the scene, not five more
+            equal cards. */}
+        <Reveal className="mt-14">
+          <h3 className="text-center text-2xl font-black sm:text-3xl">
+            Gear <span className="text-brand-orange">&amp; space</span>
+          </h3>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-brand-gray-300">
+            Backline, instrument rental, and rehearsal rooms. Get listed on
+            shows and found by the bands who need you.
+          </p>
+        </Reveal>
+        <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {VENDOR_TYPE_DETAILS.map((type, i) => (
+            <Reveal key={type.type} delay={Math.min(i, 8) * 0.06} className="h-full">
+              <button
+                type="button"
+                onClick={() => setSelected(type)}
+                aria-label={`${type.name}: tap to learn more`}
+                className="tappable group flex h-full min-h-[88px] w-full items-center gap-4 overflow-hidden rounded-2xl border border-brand-gray-800 bg-brand-gray-900/50 text-left transition hover:border-brand-orange hover:bg-brand-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-orange/50"
+              >
+                {/* Absolutely positioned inside a stretched box so the photo fills
+                    the row however tall the text wraps. */}
+                <span className="relative w-24 flex-shrink-0 self-stretch">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={type.image}
+                    alt=""
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                </span>
+                <span className="min-w-0 flex-1 py-3 pr-4">
+                  <span className="flex items-center gap-2 text-lg font-bold text-white">
+                    <PlayerTypeIcon
+                      type={type.type}
+                      className="h-5 w-5 flex-shrink-0 text-brand-orange"
+                      strokeWidth={1.75}
+                    />
+                    {type.name}
+                  </span>
+                  <span className="mt-1 block text-sm text-brand-gray-300">
+                    {type.headline}
+                  </span>
+                </span>
               </button>
             </Reveal>
           ))}

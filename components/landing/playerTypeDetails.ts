@@ -1,5 +1,8 @@
 import type { PlayerTypeDetail } from "./PlayerTypeModal";
 
+// The five roles with a profile builder and a signup mini-quiz. The gear and
+// space businesses are separate (VENDOR_TYPE_DETAILS) because the landing page
+// shows them as their own row and they skip the quiz.
 export const PLAYER_TYPE_DETAILS: PlayerTypeDetail[] = [
   {
     type: "band",
@@ -54,6 +57,45 @@ export const PLAYER_TYPE_DETAILS: PlayerTypeDetail[] = [
       "Filter unsigned bands by genre, traction, and growth",
       "See which venues and festivals are booking them",
       "Direct messaging, no manager middlemen",
+    ],
+  },
+];
+
+// Backline, rental, and rehearsal businesses. Benefits only name things that
+// exist: Discover and Ask AI search them, a venue can list them on a show once
+// they accept, and contact goes through a Connect request.
+export const VENDOR_TYPE_DETAILS: PlayerTypeDetail[] = [
+  {
+    type: "backline",
+    name: "Backline",
+    headline: "Get your gear on more stages.",
+    image: "/players/backline.jpg",
+    benefits: [
+      "A profile listing the amps, drums, and stage gear you supply",
+      "Venues can list you on their shows; you accept before it goes public",
+      "Found in Discover and by SplitMic AI when a band needs gear",
+    ],
+  },
+  {
+    type: "instrument_rental",
+    name: "Instrument Rental",
+    headline: "Put your instruments in more hands.",
+    image: "/players/instrument_rental.jpg",
+    benefits: [
+      "A profile of what you rent and for how long",
+      "Get listed on shows and open mics that need a last-minute instrument",
+      "Found in Discover and by SplitMic AI; reach out with a Connect request",
+    ],
+  },
+  {
+    type: "rehearsal_studio",
+    name: "Rehearsal Studios",
+    headline: "Fill your rooms with working bands.",
+    image: "/players/rehearsal_studio.jpg",
+    benefits: [
+      "A profile for your space and the gear that comes with it",
+      "Bands looking for a room find you in Discover and SplitMic AI",
+      "Reach bands and venues with a Connect request, not a cold DM",
     ],
   },
 ];

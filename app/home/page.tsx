@@ -6,7 +6,10 @@ import { getOnboardingStatus } from "@/lib/supabase/profile";
 import { AppHeader } from "@/components/AppHeader";
 import { ProfileIncompleteBanner } from "@/components/ProfileIncompleteBanner";
 import { PlayerTypeIcon } from "@/components/landing/PlayerTypeIcon";
-import { PLAYER_TYPE_DETAILS } from "@/components/landing/playerTypeDetails";
+import {
+  PLAYER_TYPE_DETAILS,
+  VENDOR_TYPE_DETAILS,
+} from "@/components/landing/playerTypeDetails";
 
 export const dynamic = "force-dynamic";
 
@@ -71,7 +74,7 @@ export default async function HomePage() {
 
         {/* Player-type cards — single column until large desktop */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {PLAYER_TYPE_DETAILS.map((type) => (
+          {[...PLAYER_TYPE_DETAILS, ...VENDOR_TYPE_DETAILS].map((type) => (
             <Link
               key={type.type}
               href={`/search?type=${type.type}`}
