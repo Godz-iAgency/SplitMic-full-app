@@ -90,20 +90,6 @@ export function CommonFields({ values, onChange, mode = "full" }: Props) {
         values={values}
         onChange={(key, value) => onChange(key, value)}
       />
-
-      {/* A reach number, not a link, so it lives in the editor rather than in
-          the signup path. */}
-      {full ? (
-        <NumberField
-          id="instagram_followers"
-          label="Instagram Followers"
-          value={values.instagram_followers}
-          onChange={(v) => onChange("instagram_followers", v)}
-          min={0}
-          grouped
-          hint="Optional"
-        />
-      ) : null}
     </div>
   );
 }

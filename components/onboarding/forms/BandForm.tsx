@@ -5,7 +5,7 @@ import { NumberField } from "@/components/onboarding/fields/NumberField";
 import { SelectField } from "@/components/onboarding/fields/SelectField";
 import { GenreMultiSelect } from "@/components/onboarding/fields/GenreMultiSelect";
 import { Lock } from "lucide-react";
-import { DRAW_OPTIONS, VENUE_OPTIONS } from "@/lib/profile/bandOptions";
+import { DRAW_OPTIONS } from "@/lib/profile/bandOptions";
 import type { FormMode } from "./mode";
 
 /**
@@ -97,7 +97,7 @@ export function BandForm({ values, onChange, mode = "full" }: Props) {
       {full ? (
         <div className="pt-2">
           <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-brand-gray-400">
-            Draw &amp; Reach
+            Draw
           </h3>
           <p className="mb-3 inline-flex items-start gap-1.5 text-xs text-brand-gray-400">
             <Lock
@@ -119,46 +119,6 @@ export function BandForm({ values, onChange, mode = "full" }: Props) {
               options={DRAW_OPTIONS}
               hint="The #1 thing talent buyers ask. Most Austin bands starting out pick 25-75."
             />
-            <SelectField
-              id="largest_venue_capacity"
-              label="Largest Venue You've Played"
-              value={values.largest_venue_capacity}
-              onChange={(v) => onChange("largest_venue_capacity", v)}
-              options={VENUE_OPTIONS}
-              hint="By room capacity, your biggest stage so far."
-            />
-            <NumberField
-              id="email_list_size"
-              label="Email List Size"
-              value={values.email_list_size}
-              onChange={(v) => onChange("email_list_size", v)}
-              min={0}
-              grouped
-              placeholder="e.g., 1,200"
-              hint="Optional: direct reach to your fans."
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <NumberField
-                id="tiktok_followers"
-                label="TikTok Followers"
-                value={values.tiktok_followers}
-                onChange={(v) => onChange("tiktok_followers", v)}
-                min={0}
-                grouped
-                placeholder="e.g., 5,000"
-                hint="Optional"
-              />
-              <NumberField
-                id="youtube_followers"
-                label="YouTube Subscribers"
-                value={values.youtube_followers}
-                onChange={(v) => onChange("youtube_followers", v)}
-                min={0}
-                grouped
-                placeholder="e.g., 3,000"
-                hint="Optional"
-              />
-            </div>
           </div>
         </div>
       ) : null}
