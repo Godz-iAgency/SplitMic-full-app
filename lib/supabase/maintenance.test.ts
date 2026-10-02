@@ -8,14 +8,15 @@ import {
 } from "./maintenance";
 
 // ── Fake Supabase client ────────────────────────────────────────────────────
-// cleanupExpiredPosts issues: a select on marketplace_posts, two head-counts on
-// the cascade children, then a delete. The fake records what it was asked to do
+// cleanupExpiredPosts issues: a select on marketplace_posts, three head-counts
+// on the cascade children, then a delete. The fake records what it was asked to do
 // so the tests can assert the delete happened (or didn't).
 
 type FakeState = {
   postIds: string[];
   eventTagCount: number;
   openMicCount: number;
+  showVendorCount: number;
   selectError?: string;
   deleteError?: string;
   /** Ids the code actually asked to delete. Empty when no delete was issued. */
@@ -30,7 +31,12 @@ function fakeSupabase(
   overrides: Partial<
     Pick<
       FakeState,
-      "postIds" | "eventTagCount" | "openMicCount" | "selectError" | "deleteError"
+      | "postIds"
+      | "eventTagCount"
+      | "openMicCount"
+      | "showVendorCount"
+      | "selectError"
+      | "deleteError"
     >
   > = {},
 ) {
@@ -38,6 +44,7 @@ function fakeSupabase(
     postIds: [],
     eventTagCount: 0,
     openMicCount: 0,
+    showVendorCount: 0,
     deleted: [],
     cutoffUsed: null,
     limitUsed: null,
@@ -86,6 +93,9 @@ function fakeSupabase(
           if (table === "open_mic_signups") {
             return resolve({ count: state.openMicCount });
           }
+          if (table === "show_vendors") {
+            return resolve({ count: state.showVendorCount });
+          }
           return resolve({ data: [], error: null });
         },
       };
@@ -123,6 +133,7 @@ describe("cleanupExpiredPosts", () => {
       postIds: ["old-1", "old-2"],
       eventTagCount: 3,
       openMicCount: 7,
+      showVendorCount: 2,
     });
 
     const result = await cleanupExpiredPosts(client, { now: NOW });
@@ -133,6 +144,7 @@ describe("cleanupExpiredPosts", () => {
       postsDeleted: 2,
       eventTagsRemoved: 3,
       openMicSignupsRemoved: 7,
+      showVendorsRemoved: 2,
       dryRun: false,
       moreRemaining: false,
     });

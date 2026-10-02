@@ -113,9 +113,41 @@ export async function searchProfiles(
 
   const hasMore = rawProfiles.length > limit;
   const profiles = hasMore ? rawProfiles.slice(0, limit) : rawProfiles;
+
+  const cards = await buildCards(supabase, profiles);
+  return { cards, hasMore };
+}
+
+/**
+ * Cards for a known set of profiles, in the order given, built exactly the way
+ * Discover builds them. Used where the ids come from somewhere else, e.g. the
+ * businesses listed on a show. Visibility is RLS's call: a profile the caller
+ * can't see (unpublished, someone else's) simply has no card.
+ */
+export async function getCardsForProfiles(
+  supabase: SupabaseClient,
+  profileIds: string[],
+): Promise<SearchCard[]> {
+  if (profileIds.length === 0) return [];
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, player_type")
+    .in("id", profileIds);
+  const byId = new Map((data ?? []).map((p) => [p.id as string, p]));
+  const ordered = profileIds
+    .map((id) => byId.get(id))
+    .filter((p): p is NonNullable<typeof p> => !!p);
+  return buildCards(supabase, ordered);
+}
+
+async function buildCards(
+  supabase: SupabaseClient,
+  profiles: { id: string; player_type: unknown }[],
+): Promise<SearchCard[]> {
+  if (profiles.length === 0) return [];
   const profileIds = profiles.map((p) => p.id);
 
-  // 2. Group profile IDs by player_type so we can batch-fetch detail rows
+  // Group profile IDs by player_type so we can batch-fetch detail rows
   const idsByType = new Map<PlayerType, string[]>();
   for (const p of profiles) {
     const t = p.player_type as PlayerType;
@@ -123,7 +155,7 @@ export async function searchProfiles(
     idsByType.get(t)!.push(p.id);
   }
 
-  // 3. Fetch detail rows + avatars in parallel
+  // Fetch detail rows + avatars in parallel
   const detailFetches = Array.from(idsByType.entries()).map(([type, ids]) =>
     fetchDetailsForType(supabase, type, ids),
   );
@@ -147,7 +179,7 @@ export async function searchProfiles(
     avatarMap.set(a.profile_id, a.storage_path);
   }
 
-  const cards: SearchCard[] = profiles.map((p) => {
+  return profiles.map((p) => {
     const detail = detailMap.get(p.id);
     const storagePath = avatarMap.get(p.id) ?? null;
 
@@ -162,8 +194,6 @@ export async function searchProfiles(
         : null,
     };
   });
-
-  return { cards, hasMore };
 }
 
 /**

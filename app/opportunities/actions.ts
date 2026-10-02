@@ -11,6 +11,8 @@ import {
   MAX_ACTIVE_EVENT_POSTS,
   MAX_ACTIVE_OPPORTUNITY_POSTS,
   MAX_TAGGED_BANDS_PER_EVENT,
+  MAX_VENDORS_PER_SHOW,
+  canListShowVendors,
   countActivePosts,
   postExpiryDate,
   browseMarketplace,
@@ -18,7 +20,13 @@ import {
   type BrowseResult,
   type PostType,
 } from "@/lib/supabase/marketplace";
-import { isVendorPlayerType, type PlayerType } from "@/lib/types";
+import {
+  VENDOR_PLAYER_TYPES,
+  isVendorPlayerType,
+  type PlayerType,
+  type VendorPlayerType,
+} from "@/lib/types";
+import { searchProfiles, type SearchCard } from "@/lib/supabase/search";
 
 // Event and open-mic posts are both anchored to a specific date.
 const DATE_BASED_TYPES: PostType[] = ["event", "open_mic"];
@@ -725,5 +733,184 @@ export async function removeOpenMicSignup(
   if (error) return { error: error.message };
 
   revalidatePath(`/opportunities/${owned.postId}/roster`);
+  return {};
+}
+
+// ─── Gear & services on a show ──────────────────────────────────────────────
+// A show or open mic's owner lists backline, rental, and rehearsal businesses;
+// each one accepts or declines before it appears publicly. Every rule below is
+// also enforced by RLS and a trigger (migrations/step24_show_vendors.sql);
+// these checks exist to give a clear message instead of a policy error.
+
+/** The picker's search: published gear/rehearsal businesses by name. */
+export async function searchVendorsForShowAction(
+  query: string,
+  type: VendorPlayerType | "all",
+): Promise<SearchCard[]> {
+  const supabase = createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const types: VendorPlayerType[] =
+    type === "all"
+      ? [...VENDOR_PLAYER_TYPES]
+      : isVendorPlayerType(type)
+        ? [type]
+        : [];
+  const results = await Promise.all(
+    types.map((t) => searchProfiles(supabase, { playerType: t, query: query.slice(0, 80) })),
+  );
+  return results.flatMap((r) => r.cards).slice(0, 12);
+}
+
+export async function addVendorToShow(
+  postId: string,
+  vendorProfileId: string,
+): Promise<{ error?: string }> {
+  const supabase = createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("id, is_suspended, suspended_reason")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!me) return { error: "Complete your profile first." };
+  if (me.is_suspended)
+    return {
+      error: `Your account is suspended and can't add to shows: ${me.suspended_reason || "no reason given"}.`,
+    };
+
+  // Ownership is part of the query: someone else's post matches nothing.
+  const { data: post } = await supabase
+    .from("marketplace_posts")
+    .select("id, title, post_type, is_active, expires_at")
+    .eq("id", postId)
+    .eq("poster_user_id", user.id)
+    .maybeSingle();
+  if (!post) return { error: "Show not found." };
+  if (!canListShowVendors(post.post_type as PostType))
+    return { error: "Gear & services can only be added to shows and open mics." };
+  if (!post.is_active) return { error: "This post is closed." };
+  if (post.expires_at < new Date().toISOString().slice(0, 10))
+    return { error: "This show has already passed." };
+
+  const { data: vendor } = await supabase
+    .from("profiles")
+    .select("id, user_id, player_type, is_published")
+    .eq("id", vendorProfileId)
+    .maybeSingle();
+  if (!vendor || !vendor.is_published || !isVendorPlayerType(vendor.player_type))
+    return { error: "That business isn't available to add." };
+
+  const { count } = await supabase
+    .from("show_vendors")
+    .select("id", { count: "exact", head: true })
+    .eq("marketplace_post_id", post.id);
+  if ((count ?? 0) >= MAX_VENDORS_PER_SHOW)
+    return {
+      error: `A show can list up to ${MAX_VENDORS_PER_SHOW} gear and rehearsal businesses. Remove one to add another.`,
+    };
+
+  const { error } = await supabase.from("show_vendors").insert({
+    marketplace_post_id: post.id,
+    vendor_profile_id: vendor.id,
+    added_by_user_id: user.id,
+    status: "pending",
+  });
+  if (error) {
+    if (error.code === "23505") return { error: "They're already on this show." };
+    return { error: error.message };
+  }
+
+  await notifyByEmail({
+    recipientUserId: vendor.user_id,
+    senderProfileId: me.id,
+    kind: "show_vendor_request",
+    postTitle: post.title,
+    postId: post.id,
+  });
+
+  revalidatePath(`/opportunities/${post.id}`);
+  return {};
+}
+
+/** The business answers. Only its own listing, and only once. */
+export async function respondToShowVendor(
+  listingId: string,
+  decision: "accepted" | "declined",
+): Promise<{ error?: string }> {
+  if (decision !== "accepted" && decision !== "declined")
+    return { error: "Choose accept or decline." };
+  const supabase = createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("id, is_suspended, suspended_reason")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!me) return { error: "Profile not found." };
+  if (decision === "accepted" && me.is_suspended)
+    return {
+      error: `Your account is suspended and can't accept: ${me.suspended_reason || "no reason given"}.`,
+    };
+
+  // Scoped to this business and to a still-pending listing, so a second tap or
+  // a second tab matches nothing instead of flipping an answer already given.
+  // responded_at is stamped by the database trigger.
+  const { data: updated, error } = await supabase
+    .from("show_vendors")
+    .update({ status: decision })
+    .eq("id", listingId)
+    .eq("vendor_profile_id", me.id)
+    .eq("status", "pending")
+    .select("marketplace_post_id")
+    .maybeSingle();
+  if (error) return { error: error.message };
+  if (!updated) return { error: "This was already answered." };
+
+  revalidatePath(`/opportunities/${updated.marketplace_post_id}`);
+  return {};
+}
+
+/** The show's owner takes a business off, or the business removes itself. */
+export async function removeShowVendor(
+  listingId: string,
+): Promise<{ error?: string }> {
+  const supabase = createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!me) return { error: "Profile not found." };
+
+  // Either party, written into the delete itself: a listing this caller is on
+  // neither side of matches zero rows.
+  const { data: removed, error } = await supabase
+    .from("show_vendors")
+    .delete()
+    .eq("id", listingId)
+    .or(`added_by_user_id.eq.${user.id},vendor_profile_id.eq.${me.id}`)
+    .select("marketplace_post_id")
+    .maybeSingle();
+  if (error) return { error: error.message };
+  if (!removed) return { error: "Listing not found." };
+
+  revalidatePath(`/opportunities/${removed.marketplace_post_id}`);
   return {};
 }

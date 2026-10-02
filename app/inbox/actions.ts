@@ -202,6 +202,9 @@ export async function markThreadRead(threadId: string): Promise<void> {
 export async function initiateConnection(
   otherProfileId: string,
   initialMessage: string,
+  /** The show this contact is about, when it starts from a show's Gear &
+   *  services card. Kept on the request so the business sees "re: <show>". */
+  relatedPostId?: string | null,
 ): Promise<{ error?: string; threadId?: string; mode?: "thread" | "request" }> {
   const supabase = createServerSupabaseClient();
   const {
@@ -295,6 +298,22 @@ export async function initiateConnection(
     return { threadId: thread.id, mode: "thread" };
   }
 
+  // The show reference is context, not permission, so a bad one is dropped
+  // rather than blocking the request. It is only kept when the business is
+  // actually listed (accepted) on that show; otherwise anyone could stamp any
+  // post onto a cold request to make it look like the poster sent them.
+  let contextPostId: string | null = null;
+  if (relatedPostId) {
+    const { data: listing } = await supabase
+      .from("show_vendors")
+      .select("id")
+      .eq("marketplace_post_id", relatedPostId)
+      .eq("vendor_profile_id", otherProfile.id)
+      .eq("status", "accepted")
+      .maybeSingle();
+    if (listing) contextPostId = relatedPostId;
+  }
+
   // BAND or GEAR/REHEARSAL BUSINESS → ANYONE = connection request
   const { error: insertError } = await supabase
     .from("connection_requests")
@@ -304,6 +323,7 @@ export async function initiateConnection(
       recipient_profile_id: otherProfile.id,
       recipient_user_id: otherProfile.user_id,
       request_type: "connection",
+      related_post_id: contextPostId,
       message: trimmed || null,
       status: "pending",
     });

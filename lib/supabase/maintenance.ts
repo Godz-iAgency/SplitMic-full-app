@@ -11,9 +11,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  *   2. Retention (this file) — a year after that, the row is actually deleted.
  *
  * The gap between the two exists on purpose. A post is the ONLY place a show's
- * history lives: `event_band_tags` (which bands accepted the gig) and
- * `open_mic_signups` (the running order and who checked in) both hang off the
- * post with ON DELETE CASCADE. Deleting a post at soft expiry would wipe a
+ * history lives: `event_band_tags` (which bands accepted the gig),
+ * `open_mic_signups` (the running order and who checked in), and
+ * `show_vendors` (the gear and rehearsal businesses that worked it) all hang
+ * off the post with ON DELETE CASCADE. Deleting a post at soft expiry would wipe a
  * venue's open-mic roster one week after the night happened.
  *
  * So retention is deliberately long, and this job reports exactly how many
@@ -43,6 +44,7 @@ export type CleanupResult = {
   /** Child rows that went with them (or would have, on a dry run). */
   eventTagsRemoved: number;
   openMicSignupsRemoved: number;
+  showVendorsRemoved: number;
   dryRun: boolean;
   /** True when the batch filled up and more posts are still eligible. */
   moreRemaining: boolean;
@@ -62,6 +64,7 @@ const emptyResult = (cutoffDate: string, dryRun: boolean): CleanupResult => ({
   postsDeleted: 0,
   eventTagsRemoved: 0,
   openMicSignupsRemoved: 0,
+  showVendorsRemoved: 0,
   dryRun,
   moreRemaining: false,
 });
@@ -111,9 +114,10 @@ export async function cleanupExpiredPosts(
 
   // 2. Blast radius. Counted BEFORE deleting, because after the cascade there
   //    is nothing left to count and no way to report what was lost.
-  const [eventTags, openMicSignups] = await Promise.all([
+  const [eventTags, openMicSignups, showVendors] = await Promise.all([
     countChildren(supabase, "event_band_tags", "marketplace_post_id", ids),
     countChildren(supabase, "open_mic_signups", "post_id", ids),
+    countChildren(supabase, "show_vendors", "marketplace_post_id", ids),
   ]);
 
   if (dryRun) {
@@ -122,12 +126,13 @@ export async function cleanupExpiredPosts(
       postsDeleted: ids.length,
       eventTagsRemoved: eventTags,
       openMicSignupsRemoved: openMicSignups,
+      showVendorsRemoved: showVendors,
       dryRun: true,
       moreRemaining: ids.length === CLEANUP_BATCH_SIZE,
     };
   }
 
-  // 3. Delete. event_band_tags and open_mic_signups cascade automatically;
+  // 3. Delete. event_band_tags, open_mic_signups, and show_vendors cascade;
   //    connection_requests.related_post_id is ON DELETE SET NULL, so those
   //    requests survive and just lose the link to the post that prompted them.
   const { error: deleteError } = await supabase
@@ -144,6 +149,7 @@ export async function cleanupExpiredPosts(
     postsDeleted: ids.length,
     eventTagsRemoved: eventTags,
     openMicSignupsRemoved: openMicSignups,
+    showVendorsRemoved: showVendors,
     dryRun: false,
     moreRemaining: ids.length === CLEANUP_BATCH_SIZE,
   };

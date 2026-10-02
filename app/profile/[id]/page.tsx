@@ -31,7 +31,9 @@ import {
 } from "@/lib/supabase/messaging";
 import {
   getEventTagsForBand,
+  getShowsForVendor,
   formatEventDateRange,
+  type MarketplaceCard,
 } from "@/lib/supabase/marketplace";
 import { resolveVideoEmbed } from "@/lib/media/videoEmbed";
 import { VideoEmbedFrame } from "@/components/profile/VideoEmbedFrame";
@@ -42,7 +44,11 @@ import { PublishToggle } from "@/components/profile/PublishToggle";
 import { ProfileLiveStatus } from "@/components/profile/ProfileLiveStatus";
 import { ConnectButton } from "@/components/inbox/ConnectButton";
 import { ProfileIncompleteCard } from "@/components/ProfileIncompleteBanner";
-import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
+import {
+  PLAYER_TYPE_OPTIONS,
+  isVendorPlayerType,
+  type PlayerType,
+} from "@/lib/types";
 import { DETAIL_SOURCE } from "@/lib/supabase/detailSource";
 import {
   BACKLINE_EQUIPMENT,
@@ -181,13 +187,31 @@ export default async function ProfilePage({
   const media = mediaRows ?? [];
   const links = linkRows ?? [];
 
-  // Bands only: fetch accepted event tags ("Upcoming shows") + which ones the
-  // band has shared to the marketplace feed (used for the small share badge).
+  // "Upcoming shows": for a band, events it was tagged on and accepted (plus
+  // whether it shared each one to the feed, for the small badge); for a gear
+  // or rehearsal business, shows it accepted a listing on. Same block either
+  // way, so the two read as one kind of thing.
   const eventTags =
     playerType === "band"
       ? await getEventTagsForBand(supabase, profile.id)
       : [];
-  const acceptedShows = eventTags.filter((t) => t.status === "accepted");
+  const vendorShows = isVendorPlayerType(playerType)
+    ? await getShowsForVendor(supabase, profile.id)
+    : [];
+  const acceptedShows: { key: string; post: MarketplaceCard; shared: boolean }[] = [
+    ...eventTags
+      .filter((t) => t.status === "accepted")
+      .map((t) => ({ key: t.tag_id, post: t.post, shared: t.shared_to_feed })),
+    ...vendorShows
+      .filter((v) => v.status === "accepted")
+      .map((v) => ({ key: v.id, post: v.post, shared: false })),
+  ];
+  // Owner only (RLS returns pending rows to the business alone): shows that
+  // listed this business and are waiting on its answer. Without this, the
+  // only way to find an ask would be the email.
+  const showsAwaitingAnswer = isOwner
+    ? vendorShows.filter((v) => v.status === "pending")
+    : [];
 
   const banner = media.find((m) => m.kind === "banner");
   const avatar = media.find((m) => m.kind === "avatar");
@@ -542,53 +566,43 @@ export default async function ProfilePage({
           </section>
         ) : null}
 
-        {/* Upcoming shows (bands only) — events the band has been tagged on and accepted */}
-        {playerType === "band" && acceptedShows.length > 0 ? (
+        {/* Owner only: shows that listed this business, waiting on its answer */}
+        {showsAwaitingAnswer.length > 0 ? (
+          <section className="mt-12">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-orange">
+              Shows asking for you
+            </h2>
+            <ul className="flex flex-col gap-3">
+              {showsAwaitingAnswer.map((v) => (
+                <li key={v.id}>
+                  <ShowLink
+                    post={v.post}
+                    badge={
+                      <span className="inline-flex items-center rounded-full border border-brand-orange/40 bg-brand-orange/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-orange">
+                        Answer
+                      </span>
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {/* Upcoming shows: a band's accepted event tags, or the shows a gear
+            or rehearsal business accepted a listing on */}
+        {acceptedShows.length > 0 ? (
           <section className="mt-12">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-orange">
               Upcoming shows
             </h2>
             <ul className="flex flex-col gap-3">
               {acceptedShows.map((t) => (
-                <li key={t.tag_id}>
-                  <Link
-                    href={`/opportunities/${t.post.id}`}
-                    className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.05] via-white/[.03] to-transparent p-4 shadow-md shadow-black/30 transition hover:-translate-y-0.5 hover:border-brand-orange/40 hover:shadow-lg hover:shadow-brand-orange/10"
-                  >
-                    {/* Date block */}
-                    <div className="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-xl border border-brand-orange/30 bg-brand-orange/10 text-brand-orange">
-                      <Calendar
-                        className="h-4 w-4"
-                        strokeWidth={2.25}
-                        aria-hidden="true"
-                      />
-                    </div>
-                    {/* Title + venue + date */}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-base font-bold text-white transition group-hover:text-brand-orange">
-                        {t.post.title}
-                      </p>
-                      <p className="mt-0.5 truncate text-xs text-brand-gray-300">
-                        {t.post.poster_name}
-                        {t.post.event_location ? (
-                          <span className="text-brand-gray-400">
-                            {" "}
-                            · {t.post.event_location}
-                          </span>
-                        ) : null}
-                      </p>
-                      {t.post.event_date ? (
-                        <p className="mt-1 text-xs font-semibold text-brand-gray-200">
-                          {formatEventDateRange(
-                            t.post.event_date,
-                            t.post.event_end_date,
-                          )}
-                        </p>
-                      ) : null}
-                    </div>
-                    {/* Right side: share badge + chevron */}
-                    <div className="flex flex-shrink-0 items-center gap-3">
-                      {t.shared_to_feed ? (
+                <li key={t.key}>
+                  <ShowLink
+                    post={t.post}
+                    badge={
+                      t.shared ? (
                         <span
                           title="Shared to your feed"
                           className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300"
@@ -600,14 +614,9 @@ export default async function ProfilePage({
                           />
                           Shared
                         </span>
-                      ) : null}
-                      <ArrowRight
-                        className="h-4 w-4 text-brand-gray-400 transition group-hover:translate-x-1 group-hover:text-brand-orange"
-                        strokeWidth={2}
-                        aria-hidden="true"
-                      />
-                    </div>
-                  </Link>
+                      ) : null
+                    }
+                  />
                 </li>
               ))}
             </ul>
@@ -664,6 +673,53 @@ export default async function ProfilePage({
         </section>
       </div>
     </main>
+  );
+}
+
+/** One show in a profile's show list: date block, title, who and where, when. */
+function ShowLink({
+  post,
+  badge,
+}: {
+  post: MarketplaceCard;
+  badge: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={`/opportunities/${post.id}`}
+      className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.05] via-white/[.03] to-transparent p-4 shadow-md shadow-black/30 transition hover:-translate-y-0.5 hover:border-brand-orange/40 hover:shadow-lg hover:shadow-brand-orange/10"
+    >
+      {/* Date block */}
+      <div className="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-xl border border-brand-orange/30 bg-brand-orange/10 text-brand-orange">
+        <Calendar className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
+      </div>
+      {/* Title + venue + date */}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-base font-bold text-white transition group-hover:text-brand-orange">
+          {post.title}
+        </p>
+        <p className="mt-0.5 truncate text-xs text-brand-gray-300">
+          {post.poster_name}
+          {post.event_location ? (
+            <span className="text-brand-gray-400"> · {post.event_location}</span>
+          ) : null}
+        </p>
+        {post.event_date ? (
+          <p className="mt-1 text-xs font-semibold text-brand-gray-200">
+            {formatEventDateRange(post.event_date, post.event_end_date)}
+          </p>
+        ) : null}
+      </div>
+      {/* Right side: badge + chevron */}
+      <div className="flex flex-shrink-0 items-center gap-3">
+        {badge}
+        <ArrowRight
+          className="h-4 w-4 text-brand-gray-400 transition group-hover:translate-x-1 group-hover:text-brand-orange"
+          strokeWidth={2}
+          aria-hidden="true"
+        />
+      </div>
+    </Link>
   );
 }
 

@@ -27,7 +27,11 @@ const APP_URL = (
   process.env.NEXT_PUBLIC_APP_URL ?? "https://splitmic.com"
 ).replace(/\/$/, "");
 
-export type NotifyKind = "connection_request" | "post_response" | "message";
+export type NotifyKind =
+  | "connection_request"
+  | "post_response"
+  | "message"
+  | "show_vendor_request";
 
 export async function notifyByEmail(params: {
   recipientUserId: string;
@@ -37,6 +41,8 @@ export async function notifyByEmail(params: {
   messagePreview?: string | null;
   /** Required for `message` — deep-links the CTA to this specific thread. */
   threadId?: string | null;
+  /** Required for `show_vendor_request` — the show to accept or decline on. */
+  postId?: string | null;
 }): Promise<void> {
   try {
     const apiKey = process.env.RESEND_API_KEY;
@@ -63,7 +69,11 @@ export async function notifyByEmail(params: {
       params.postTitle ?? null,
       params.messagePreview ?? null,
     );
-    const ctaPath = buildCtaPath(params.kind, params.threadId ?? null);
+    const ctaPath = buildCtaPath(
+      params.kind,
+      params.threadId ?? null,
+      params.postId ?? null,
+    );
     const ctaUrl = `${APP_URL}${ctaPath}`;
 
     const resend = new Resend(apiKey);
@@ -82,13 +92,20 @@ export async function notifyByEmail(params: {
 }
 
 // Where the email's CTA should land, per notification kind.
-function buildCtaPath(kind: NotifyKind, threadId: string | null): string {
+function buildCtaPath(
+  kind: NotifyKind,
+  threadId: string | null,
+  postId: string | null,
+): string {
   switch (kind) {
     case "message":
       return threadId ? `/inbox/${threadId}` : "/inbox";
     case "connection_request":
     case "post_response":
       return "/inbox?tab=requests";
+    // The accept/decline buttons live on the show itself, not in the inbox.
+    case "show_vendor_request":
+      return postId ? `/opportunities/${postId}` : "/opportunities";
   }
 }
 
@@ -134,6 +151,14 @@ function buildContent(
         line: postTitle
           ? `Re: "${postTitle}". Open your inbox to respond.`
           : "Open your inbox to respond.",
+      };
+    case "show_vendor_request":
+      return {
+        subject: `${senderName} wants to list you on a show`,
+        heading: `${senderName} wants to list you on a show`,
+        line: postTitle
+          ? `They added you under Gear & services on "${postTitle}". You only show up on it once you accept. Open the show to accept or decline.`
+          : "You only show up on it once you accept. Open the show to accept or decline.",
       };
     case "message":
     default:

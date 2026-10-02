@@ -56,7 +56,8 @@ export async function GET(request: Request) {
   console.log(
     `[cron/cleanup-posts]${result.dryRun ? " (dry run)" : ""} cutoff ${result.cutoffDate}: ` +
       `${result.postsDeleted} posts, ${result.eventTagsRemoved} event tags, ` +
-      `${result.openMicSignupsRemoved} open mic signups` +
+      `${result.openMicSignupsRemoved} open mic signups, ` +
+      `${result.showVendorsRemoved} gear & services listings` +
       (result.moreRemaining ? " — more remaining, will continue next run" : ""),
   );
 

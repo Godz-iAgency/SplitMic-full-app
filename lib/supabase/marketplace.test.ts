@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  canListShowVendors,
   canPostEvents,
   canPostOpenMic,
   isPostingPlayerType,
   postExpiryDate,
+  showContactMessage,
+  type PostType,
 } from "./marketplace";
 import { PLAYER_TYPE_OPTIONS, type PlayerType } from "@/lib/types";
 
@@ -52,5 +55,38 @@ describe("who can post", () => {
     expect(Object.keys(EXPECTED).sort()).toEqual(
       PLAYER_TYPE_OPTIONS.map((o) => o.value).sort(),
     );
+  });
+});
+
+describe("which posts can list gear & services", () => {
+  // `satisfies` makes a new post type a compile error until someone decides.
+  // Must match the post_type list in the sv_poster_insert policy
+  // (migrations/step24_show_vendors.sql).
+  const EXPECTED = {
+    event: true,
+    open_mic: true,
+    opportunity: false,
+  } satisfies Record<PostType, boolean>;
+
+  it.each(Object.entries(EXPECTED))("%s → %s", (type, allowed) => {
+    expect(canListShowVendors(type as PostType)).toBe(allowed);
+  });
+});
+
+describe("showContactMessage", () => {
+  it("names the show and its date, ready to keep typing after", () => {
+    expect(showContactMessage("Friday Open Mic", "2026-10-23")).toBe(
+      "About Friday Open Mic on Oct 23, 2026: ",
+    );
+  });
+
+  it("uses the full range for a multi-day show", () => {
+    expect(showContactMessage("Fest", "2026-10-23", "2026-10-25")).toBe(
+      "About Fest on Oct 23 – 25, 2026: ",
+    );
+  });
+
+  it("leaves the date out when the post has none", () => {
+    expect(showContactMessage("  Late Set  ", null)).toBe("About Late Set: ");
   });
 });

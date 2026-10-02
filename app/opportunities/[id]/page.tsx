@@ -10,15 +10,24 @@ import {
   Info,
   Clock,
   ListOrdered,
+  Wrench,
 } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingStatus } from "@/lib/supabase/profile";
 import {
   getPostDetail,
   getOpenMicRoster,
+  getShowVendors,
+  canListShowVendors,
+  showContactMessage,
+  MAX_VENDORS_PER_SHOW,
   formatPostDate,
   formatEventDateRange,
 } from "@/lib/supabase/marketplace";
+import {
+  getConnectionState,
+  isIndustryPlayerType,
+} from "@/lib/supabase/messaging";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
 import { ProfileIncompleteCard } from "@/components/ProfileIncompleteBanner";
@@ -26,8 +35,17 @@ import { RespondPanel } from "@/components/opportunities/RespondPanel";
 import { BandTagActions } from "@/components/opportunities/BandTagActions";
 import { DeletePostButton } from "@/components/opportunities/DeletePostButton";
 import { OpenMicSignupButton } from "@/components/opportunities/OpenMicSignupButton";
+import { ShowVendorPicker } from "@/components/opportunities/ShowVendorPicker";
+import { ShowVendorResponse } from "@/components/opportunities/ShowVendorResponse";
+import { RemoveShowVendorButton } from "@/components/opportunities/RemoveShowVendorButton";
+import { ConnectButton } from "@/components/inbox/ConnectButton";
 import { PlayerTypeIcon } from "@/components/landing/PlayerTypeIcon";
-import { PLAYER_TYPE_OPTIONS } from "@/lib/types";
+import {
+  PLAYER_TYPE_OPTIONS,
+  VENDOR_PLAYER_TYPES,
+  type PlayerType,
+} from "@/lib/types";
+import { CATEGORY_META } from "@/lib/directory/categories";
 
 export const dynamic = "force-dynamic";
 
@@ -66,7 +84,9 @@ export default async function OpportunityDetailPage({
     ? taggedBands.find((t) => t.band_profile_id === myProfileId)
     : undefined;
 
-  // Check if I've already responded to this post
+  // Check if I've already responded to this post. Only post_response rows
+  // count: a Connect request sent to a business listed on this show also
+  // carries this post id (as context), and is not a response to the poster.
   let alreadyResponded = false;
   if (myProfileId && !isOwner) {
     const { data: existing } = await supabase
@@ -74,8 +94,9 @@ export default async function OpportunityDetailPage({
       .select("id")
       .eq("requester_profile_id", myProfileId)
       .eq("related_post_id", post.id)
-      .maybeSingle();
-    alreadyResponded = !!existing;
+      .eq("request_type", "post_response")
+      .limit(1);
+    alreadyResponded = (existing ?? []).length > 0;
   }
 
   // Pending response count (owner only)
@@ -85,9 +106,52 @@ export default async function OpportunityDetailPage({
       .from("connection_requests")
       .select("id", { count: "exact", head: true })
       .eq("related_post_id", post.id)
+      .eq("request_type", "post_response")
       .eq("status", "pending");
     pendingResponseCount = count ?? 0;
   }
+
+  // ── Gear & services (shows and open mics only) ──────────────────────────
+  // RLS already narrows the rows: everyone gets accepted listings; the owner
+  // and the business itself also get pending/declined ones.
+  const listsVendors = canListShowVendors(post.post_type);
+  const showVendors = listsVendors ? await getShowVendors(supabase, post.id) : [];
+  const acceptedVendors = showVendors.filter((v) => v.status === "accepted");
+  const myListing = myProfileId
+    ? showVendors.find((v) => v.card.profile_id === myProfileId)
+    : undefined;
+
+  // Contact buttons need the viewer to be live, and each one's current state
+  // (already connected → Message, request out → waiting). At most
+  // MAX_VENDORS_PER_SHOW lookups, run together.
+  let contactMode: "industry" | "band" | null = null;
+  const contactStates = new Map<
+    string,
+    Awaited<ReturnType<typeof getConnectionState>>
+  >();
+  if (!isOwner && myProfileId && acceptedVendors.length > 0) {
+    const { data: me } = await supabase
+      .from("profiles")
+      .select("is_published, player_type")
+      .eq("id", myProfileId)
+      .maybeSingle();
+    if (me?.is_published) {
+      contactMode = isIndustryPlayerType(me.player_type as PlayerType)
+        ? "industry"
+        : "band";
+      const others = acceptedVendors.filter((v) => v.card.profile_id !== myProfileId);
+      const states = await Promise.all(
+        others.map((v) =>
+          getConnectionState(supabase, myProfileId, user.id, v.card.profile_id),
+        ),
+      );
+      others.forEach((v, i) => contactStates.set(v.card.profile_id, states[i]));
+    }
+  }
+
+  // A band playing this show gets pointed at gear and rehearsal help.
+  const bandIsOnShow =
+    isBand && (myTag?.status === "accepted" || !!mySignup);
 
   const playerOption = PLAYER_TYPE_OPTIONS.find(
     (o) => o.value === post.poster_player_type,
@@ -371,6 +435,107 @@ export default async function OpportunityDetailPage({
               </SectionCard>
             ) : null}
 
+            {/* Gear & services: accepted businesses for everyone; the owner
+                also sees pending/declined ones and adds more here. */}
+            {listsVendors && (isOwner || acceptedVendors.length > 0) ? (
+              <SectionCard
+                id="gear-services"
+                icon={<Wrench className="h-4 w-4" />}
+                title="Gear & services"
+              >
+                {isOwner ? (
+                  <p className="mb-3 text-sm text-brand-gray-300">
+                    List the backline, rental, or rehearsal businesses working
+                    this {isOpenMic ? "open mic" : "show"}. Each one is asked
+                    first and only appears here once they accept.
+                  </p>
+                ) : null}
+
+                {(isOwner ? showVendors : acceptedVendors).length > 0 ? (
+                  <ul className="space-y-2">
+                    {(isOwner ? showVendors : acceptedVendors).map((v) => {
+                      const typeLabel =
+                        PLAYER_TYPE_OPTIONS.find((o) => o.value === v.card.player_type)
+                          ?.label ?? v.card.player_type;
+                      const state = contactStates.get(v.card.profile_id);
+                      return (
+                        <li
+                          key={v.id}
+                          className="rounded-xl border border-white/10 bg-black/40 p-3"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Link
+                              href={`/profile/${v.card.profile_id}`}
+                              className="flex min-w-0 flex-1 items-center gap-3"
+                            >
+                              {v.card.avatar_url ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={v.card.avatar_url}
+                                  alt=""
+                                  className="h-10 w-10 flex-shrink-0 rounded-lg object-cover ring-1 ring-white/10"
+                                />
+                              ) : (
+                                <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand-orange/10 text-brand-orange ring-1 ring-white/10">
+                                  <PlayerTypeIcon
+                                    type={v.card.player_type}
+                                    className="h-5 w-5"
+                                    strokeWidth={2}
+                                  />
+                                </span>
+                              )}
+                              <span className="min-w-0">
+                                <span className="block truncate text-sm font-semibold text-white">
+                                  {v.card.display_name}
+                                </span>
+                                <span className="block truncate text-xs text-brand-gray-400">
+                                  {typeLabel}
+                                  {v.card.one_liner ? ` · ${v.card.one_liner}` : ""}
+                                </span>
+                              </span>
+                            </Link>
+                            {isOwner ? <TagStatusBadge status={v.status} /> : null}
+                          </div>
+
+                          {isOwner ? (
+                            <div className="mt-2 flex justify-end">
+                              <RemoveShowVendorButton listingId={v.id} />
+                            </div>
+                          ) : contactMode && state ? (
+                            <div className="mt-3">
+                              <ConnectButton
+                                otherProfileId={v.card.profile_id}
+                                myMode={contactMode}
+                                initialState={state.state}
+                                initialThreadId={state.threadId}
+                                label="Contact"
+                                suggestedMessage={showContactMessage(
+                                  post.title,
+                                  post.event_date,
+                                  post.event_end_date,
+                                )}
+                                relatedPostId={post.id}
+                              />
+                            </div>
+                          ) : null}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : null}
+
+                {isOwner ? (
+                  <div className={showVendors.length > 0 ? "mt-4" : ""}>
+                    <ShowVendorPicker
+                      postId={post.id}
+                      listedIds={showVendors.map((v) => v.card.profile_id)}
+                      remaining={MAX_VENDORS_PER_SHOW - showVendors.length}
+                    />
+                  </div>
+                ) : null}
+              </SectionCard>
+            ) : null}
+
             {/* Owner-only: pending tags status */}
             {isOwner && post.post_type === "event" && taggedBands.length > 0 ? (
               <SectionCard
@@ -408,6 +573,53 @@ export default async function OpportunityDetailPage({
 
           {/* Right column: action */}
           <aside className="space-y-4">
+            {myListing ? (
+              <ShowVendorResponse
+                listingId={myListing.id}
+                initialStatus={myListing.status}
+                posterName={post.poster_name}
+              />
+            ) : null}
+
+            {bandIsOnShow && listsVendors ? (
+              <div className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
+                <h3 className="inline-flex items-center gap-2 text-sm font-semibold text-white">
+                  <Wrench
+                    className="h-3.5 w-3.5 text-brand-orange"
+                    strokeWidth={2.5}
+                    aria-hidden="true"
+                  />
+                  You&apos;re on this show
+                </h3>
+                <p className="mt-1 text-xs text-brand-gray-300">
+                  Need gear or a rehearsal room?{" "}
+                  {acceptedVendors.length > 0 ? (
+                    <>
+                      Contact the ones under{" "}
+                      <a href="#gear-services" className="font-semibold text-brand-orange hover:underline">
+                        Gear &amp; services
+                      </a>
+                      , or browse SplitMic:
+                    </>
+                  ) : (
+                    "Browse who's on SplitMic:"
+                  )}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {VENDOR_PLAYER_TYPES.map((t) => (
+                    <Link
+                      key={t}
+                      href={`/search?type=${t}`}
+                      className="tappable inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 text-xs font-semibold text-white hover:border-brand-orange/40"
+                    >
+                      <PlayerTypeIcon type={t} className="h-3.5 w-3.5" strokeWidth={2} />
+                      {CATEGORY_META[t].plural}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             {myTag ? (
               <BandTagActions
                 tagId={myTag.tag_id}
@@ -481,6 +693,13 @@ export default async function OpportunityDetailPage({
                           />
                           Manage lineup
                         </Link>
+                        <a
+                          href="#gear-services"
+                          className="flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10"
+                        >
+                          <Wrench className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
+                          Add gear &amp; services
+                        </a>
                         <Link
                           href={`/opportunities/${post.id}/edit`}
                           className="flex w-full items-center justify-center gap-2 rounded-full border border-brand-orange/40 bg-brand-orange/10 px-4 py-2.5 text-sm font-bold text-brand-orange transition hover:bg-brand-orange hover:text-white"
@@ -509,6 +728,15 @@ export default async function OpportunityDetailPage({
                       </p>
 
                       <div className="mt-5 space-y-2">
+                        {listsVendors ? (
+                          <a
+                          href="#gear-services"
+                          className="flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10"
+                        >
+                          <Wrench className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
+                          Add gear &amp; services
+                        </a>
+                        ) : null}
                         <Link
                           href={`/opportunities/${post.id}/edit`}
                           className="flex w-full items-center justify-center gap-2 rounded-full border border-brand-orange/40 bg-brand-orange/10 px-4 py-2.5 text-sm font-bold text-brand-orange transition hover:bg-brand-orange hover:text-white"
@@ -538,11 +766,14 @@ export default async function OpportunityDetailPage({
 // Section card — wraps each content block (About, Location, etc.)
 // ────────────────────────────────────────────────────────────────────
 function SectionCard({
+  id,
   icon,
   title,
   children,
   accent = "orange",
 }: {
+  /** Anchor target, e.g. the owner tools' "Add gear & services" link. */
+  id?: string;
   icon: React.ReactNode;
   title: string;
   children: React.ReactNode;
@@ -551,7 +782,10 @@ function SectionCard({
   const accentColor =
     accent === "emerald" ? "text-emerald-300" : "text-brand-orange";
   return (
-    <section className="rounded-xl border border-white/10 bg-white/[.03] p-5 transition hover:border-white/20 sm:p-6">
+    <section
+      id={id}
+      className="scroll-mt-6 rounded-xl border border-white/10 bg-white/[.03] p-5 transition hover:border-white/20 sm:p-6"
+    >
       <h2
         className={`mb-3 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.15em] ${accentColor}`}
       >

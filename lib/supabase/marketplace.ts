@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PlayerType } from "@/lib/types";
 import { fetchDisplayNames } from "@/lib/supabase/detailSource";
+import { getCardsForProfiles, type SearchCard } from "@/lib/supabase/search";
 
 const BUCKET = "profile-media";
 
@@ -28,6 +29,23 @@ export const MAX_ACTIVE_OPPORTUNITY_POSTS = 3;
 export const MAX_TAGGED_BANDS_PER_EVENT = 10;
 
 export type PostType = "event" | "opportunity" | "open_mic";
+
+/** Every column a post card reads, in one place. */
+const POST_COLUMNS =
+  "id, poster_profile_id, poster_user_id, post_type, title, description, event_date, event_end_date, event_location, open_until, genres, pay_info, player_types_wanted, expires_at, is_active, created_at, updated_at";
+
+// Gear & services can be listed on shows and open mics: the posts where a
+// night is actually happening. An opportunity post is a call for artists, with
+// no stage to bring gear to yet (PROGRESS.md §2 #28). Must match the post_type
+// list in the sv_poster_insert policy (migrations/step24_show_vendors.sql).
+export const SHOW_VENDOR_POST_TYPES: readonly PostType[] = ["event", "open_mic"];
+
+// Most gear/rehearsal businesses one show can list, counting pending ones.
+export const MAX_VENDORS_PER_SHOW = 10;
+
+export function canListShowVendors(postType: PostType): boolean {
+  return SHOW_VENDOR_POST_TYPES.includes(postType);
+}
 
 /** Shared by create and edit: open mics expire from their event date too. */
 export function postExpiryDate(
@@ -120,9 +138,7 @@ export async function browseMarketplace(
   // ── 1. Direct posts ────────────────────────────────────────────────
   let directQuery = supabase
     .from("marketplace_posts")
-    .select(
-      "id, poster_profile_id, poster_user_id, post_type, title, description, event_date, event_end_date, event_location, open_until, genres, pay_info, player_types_wanted, expires_at, is_active, created_at, updated_at",
-    )
+    .select(POST_COLUMNS)
     .eq("is_active", true)
     .gte("expires_at", today)
     .order("created_at", { ascending: false });
@@ -260,9 +276,7 @@ async function fetchSharedEventCards(
 
   let postsQuery = supabase
     .from("marketplace_posts")
-    .select(
-      "id, poster_profile_id, poster_user_id, post_type, title, description, event_date, event_end_date, event_location, open_until, genres, pay_info, player_types_wanted, expires_at, is_active, created_at, updated_at",
-    )
+    .select(POST_COLUMNS)
     .in("id", postIds)
     .eq("is_active", true)
     .gte("expires_at", opts.today);
@@ -353,9 +367,7 @@ export async function getPostDetail(
 }> {
   const { data: post } = await supabase
     .from("marketplace_posts")
-    .select(
-      "id, poster_profile_id, poster_user_id, post_type, title, description, event_date, event_end_date, event_location, open_until, genres, pay_info, player_types_wanted, expires_at, is_active, created_at, updated_at",
-    )
+    .select(POST_COLUMNS)
     .eq("id", postId)
     .maybeSingle();
 
@@ -517,9 +529,7 @@ export async function getEventTagsForBand(
   const postIds = tags.map((t) => t.marketplace_post_id);
   const { data: posts } = await supabase
     .from("marketplace_posts")
-    .select(
-      "id, poster_profile_id, poster_user_id, post_type, title, description, event_date, event_end_date, event_location, open_until, genres, pay_info, player_types_wanted, expires_at, is_active, created_at, updated_at",
-    )
+    .select(POST_COLUMNS)
     .in("id", postIds);
 
   if (!posts || posts.length === 0) return [];
@@ -694,4 +704,92 @@ export async function getOpenMicRoster(
     band_name: nameMap.get(s.band_profile_id) ?? "Band",
     band_avatar_url: avatarMap.get(s.band_profile_id) ?? null,
   }));
+}
+
+// ── Gear & services on a show ───────────────────────────────────────────────
+
+export type ShowVendorStatus = "pending" | "accepted" | "declined";
+
+export type ShowVendor = {
+  id: string;
+  status: ShowVendorStatus;
+  /** The business, built the same way as a Discover card. */
+  card: SearchCard;
+};
+
+/**
+ * The gear and rehearsal businesses on a show, oldest first. RLS decides what
+ * the caller sees: everyone gets the accepted ones, the post's owner and the
+ * business itself also get pending and declined. A business whose profile the
+ * caller can't see (unpublished since, say) is left out rather than shown
+ * nameless.
+ */
+export async function getShowVendors(
+  supabase: SupabaseClient,
+  postId: string,
+): Promise<ShowVendor[]> {
+  const { data: rows } = await supabase
+    .from("show_vendors")
+    .select("id, vendor_profile_id, status")
+    .eq("marketplace_post_id", postId)
+    .order("created_at", { ascending: true });
+  if (!rows || rows.length === 0) return [];
+
+  const cards = await getCardsForProfiles(
+    supabase,
+    rows.map((r) => r.vendor_profile_id as string),
+  );
+  const cardById = new Map(cards.map((c) => [c.profile_id, c]));
+
+  return rows.flatMap((r) => {
+    const card = cardById.get(r.vendor_profile_id as string);
+    return card
+      ? [{ id: r.id as string, status: r.status as ShowVendorStatus, card }]
+      : [];
+  });
+}
+
+/**
+ * Shows a business is listed on, newest first, for its profile page: accepted
+ * ones are public, pending ones are its own to answer. Posts the caller can't
+ * read (closed since) drop out.
+ */
+export async function getShowsForVendor(
+  supabase: SupabaseClient,
+  vendorProfileId: string,
+): Promise<{ id: string; status: ShowVendorStatus; post: MarketplaceCard }[]> {
+  const { data: rows } = await supabase
+    .from("show_vendors")
+    .select("id, status, marketplace_post_id")
+    .eq("vendor_profile_id", vendorProfileId)
+    .order("created_at", { ascending: false });
+  if (!rows || rows.length === 0) return [];
+
+  const { data: posts } = await supabase
+    .from("marketplace_posts")
+    .select(POST_COLUMNS)
+    .in("id", rows.map((r) => r.marketplace_post_id as string));
+  const cards = await hydrateDirectCards(supabase, (posts ?? []) as MarketplacePost[]);
+  const postById = new Map(cards.map((c) => [c.id, c]));
+
+  return rows.flatMap((r) => {
+    const post = postById.get(r.marketplace_post_id as string);
+    return post
+      ? [{ id: r.id as string, status: r.status as ShowVendorStatus, post }]
+      : [];
+  });
+}
+
+/**
+ * The opening line offered when someone contacts a business from a show, so
+ * the first thing it reads is which night this is about. Editable before
+ * sending; it only fills the box.
+ */
+export function showContactMessage(
+  title: string,
+  eventDate: string | null,
+  eventEndDate: string | null = null,
+): string {
+  const when = eventDate ? ` on ${formatEventDateRange(eventDate, eventEndDate)}` : "";
+  return `About ${title.trim()}${when}: `;
 }

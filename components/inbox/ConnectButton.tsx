@@ -16,6 +16,12 @@ type Props = {
   initialState: "none" | "pending_outbound" | "pending_inbound" | "connected";
   /** If already connected, the thread id. */
   initialThreadId: string | null;
+  /** Button text in place of "Connect" / "Send message" (e.g. "Contact"). */
+  label?: string;
+  /** Pre-fills the message box, e.g. which show this is about. Editable. */
+  suggestedMessage?: string;
+  /** The show this is about; stored on the request (see initiateConnection). */
+  relatedPostId?: string;
 };
 
 export function ConnectButton({
@@ -23,10 +29,13 @@ export function ConnectButton({
   myMode,
   initialState,
   initialThreadId,
+  label,
+  suggestedMessage = "",
+  relatedPostId,
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(suggestedMessage);
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState(initialState);
   const [threadId, setThreadId] = useState(initialThreadId);
@@ -72,7 +81,11 @@ export function ConnectButton({
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const result = await initiateConnection(otherProfileId, message);
+      const result = await initiateConnection(
+        otherProfileId,
+        message,
+        relatedPostId,
+      );
       if (result.error) {
         setError(result.error);
         return;
@@ -98,12 +111,12 @@ export function ConnectButton({
         {myMode === "industry" ? (
           <>
             <MessageCircle className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
-            Send message
+            {label ?? "Send message"}
           </>
         ) : (
           <>
             <Handshake className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
-            Connect
+            {label ?? "Connect"}
           </>
         )}
       </button>
