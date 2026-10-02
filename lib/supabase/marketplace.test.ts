@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canListShowVendors,
+  pickTaggableBands,
   canPostEvents,
   canPostOpenMic,
   isPostingPlayerType,
@@ -88,5 +89,46 @@ describe("showContactMessage", () => {
 
   it("leaves the date out when the post has none", () => {
     expect(showContactMessage("  Late Set  ", null)).toBe("About Late Set: ");
+  });
+});
+
+describe("pickTaggableBands", () => {
+  const band = (id: string, over: Partial<{ player_type: string; is_published: boolean; is_suspended: boolean }> = {}) => ({
+    id,
+    user_id: `user-${id}`,
+    player_type: "band",
+    is_published: true,
+    is_suspended: false,
+    ...over,
+  });
+
+  it("keeps the order asked and returns each band's owner for the email", () => {
+    const out = pickTaggableBands(["b", "a"], [band("a"), band("b")]);
+    expect(out).toEqual([
+      { id: "b", user_id: "user-b" },
+      { id: "a", user_id: "user-a" },
+    ]);
+  });
+
+  it.each([
+    ["a venue", { player_type: "venue" }],
+    ["a backline business", { player_type: "backline" }],
+    ["an unpublished band", { is_published: false }],
+    ["a suspended band", { is_suspended: true }],
+  ])("skips %s", (_label, over) => {
+    expect(pickTaggableBands(["x"], [band("x", over)])).toEqual([]);
+  });
+
+  it("skips an id that matches no profile instead of failing the rest", () => {
+    expect(pickTaggableBands(["ghost", "a"], [band("a")]).map((b) => b.id)).toEqual(["a"]);
+  });
+
+  it("lists a band once however many times it was sent", () => {
+    expect(pickTaggableBands(["a", "a", "a"], [band("a")])).toHaveLength(1);
+  });
+
+  it("stops at the cap", () => {
+    const ids = ["a", "b", "c", "d"];
+    expect(pickTaggableBands(ids, ids.map((i) => band(i)), 2).map((b) => b.id)).toEqual(["a", "b"]);
   });
 });

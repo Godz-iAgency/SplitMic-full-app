@@ -206,11 +206,18 @@ export default async function ProfilePage({
       .filter((v) => v.status === "accepted")
       .map((v) => ({ key: v.id, post: v.post, shared: false })),
   ];
-  // Owner only (RLS returns pending rows to the business alone): shows that
-  // listed this business and are waiting on its answer. Without this, the
-  // only way to find an ask would be the email.
+  // Owner only (RLS returns pending rows to the tagged profile alone): shows
+  // that tagged a band or listed a business and are waiting on its answer.
+  // Without this, the only way to find an ask would be the email.
   const showsAwaitingAnswer = isOwner
-    ? vendorShows.filter((v) => v.status === "pending")
+    ? [
+        ...eventTags
+          .filter((t) => t.status === "pending")
+          .map((t) => ({ id: t.tag_id, post: t.post })),
+        ...vendorShows
+          .filter((v) => v.status === "pending")
+          .map((v) => ({ id: v.id, post: v.post })),
+      ]
     : [];
 
   const banner = media.find((m) => m.kind === "banner");
@@ -566,7 +573,8 @@ export default async function ProfilePage({
           </section>
         ) : null}
 
-        {/* Owner only: shows that listed this business, waiting on its answer */}
+        {/* Owner only: shows that tagged this band or listed this business,
+            waiting on its answer */}
         {showsAwaitingAnswer.length > 0 ? (
           <section className="mt-12">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-orange">

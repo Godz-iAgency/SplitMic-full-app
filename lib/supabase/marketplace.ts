@@ -28,6 +28,43 @@ export const MAX_ACTIVE_OPPORTUNITY_POSTS = 3;
 // Max bands a venue/festival can tag on a single event post.
 export const MAX_TAGGED_BANDS_PER_EVENT = 10;
 
+/**
+ * Which requested band ids can really be tagged on an event, in the order
+ * asked, de-duplicated, capped. The client sends ids from a search box, so
+ * they're untrusted: only a published, unsuspended band qualifies (the same
+ * rule the database policy enforces in step26, checked here so one bad id
+ * can't fail the whole batch insert). Returns the owner's user id too, which
+ * the notification needs.
+ */
+export function pickTaggableBands(
+  requestedIds: string[],
+  profiles: {
+    id: string;
+    user_id: string;
+    player_type: string;
+    is_published: boolean;
+    is_suspended: boolean;
+  }[],
+  max: number = MAX_TAGGED_BANDS_PER_EVENT,
+): { id: string; user_id: string }[] {
+  const byId = new Map(profiles.map((p) => [p.id, p]));
+  const out: { id: string; user_id: string }[] = [];
+  for (const id of requestedIds) {
+    const p = byId.get(id);
+    if (
+      p &&
+      p.player_type === "band" &&
+      p.is_published &&
+      !p.is_suspended &&
+      !out.some((o) => o.id === id)
+    ) {
+      out.push({ id: p.id, user_id: p.user_id });
+    }
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
 export type PostType = "event" | "opportunity" | "open_mic";
 
 /** Every column a post card reads, in one place. */

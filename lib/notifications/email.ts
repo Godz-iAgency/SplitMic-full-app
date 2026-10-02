@@ -31,7 +31,8 @@ export type NotifyKind =
   | "connection_request"
   | "post_response"
   | "message"
-  | "show_vendor_request";
+  | "show_vendor_request"
+  | "band_tag_request";
 
 export async function notifyByEmail(params: {
   recipientUserId: string;
@@ -41,7 +42,7 @@ export async function notifyByEmail(params: {
   messagePreview?: string | null;
   /** Required for `message` — deep-links the CTA to this specific thread. */
   threadId?: string | null;
-  /** Required for `show_vendor_request` — the show to accept or decline on. */
+  /** Required for `show_vendor_request` and `band_tag_request`: the show to accept or decline on. */
   postId?: string | null;
 }): Promise<void> {
   try {
@@ -105,6 +106,7 @@ function buildCtaPath(
       return "/inbox?tab=requests";
     // The accept/decline buttons live on the show itself, not in the inbox.
     case "show_vendor_request":
+    case "band_tag_request":
       return postId ? `/opportunities/${postId}` : "/opportunities";
   }
 }
@@ -159,6 +161,14 @@ function buildContent(
         line: postTitle
           ? `They added you under Gear & services on "${postTitle}". You only show up on it once you accept. Open the show to accept or decline.`
           : "You only show up on it once you accept. Open the show to accept or decline.",
+      };
+    case "band_tag_request":
+      return {
+        subject: `${senderName} tagged you on a show`,
+        heading: `${senderName} tagged you on a show`,
+        line: postTitle
+          ? `They listed you on "${postTitle}". You only appear in its lineup once you accept. Open the show to accept or decline.`
+          : "You only appear in the lineup once you accept. Open the show to accept or decline.",
       };
     case "message":
     default:

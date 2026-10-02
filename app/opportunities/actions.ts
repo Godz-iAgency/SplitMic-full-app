@@ -10,9 +10,9 @@ import {
   OPEN_MIC_POSTING_PLAYER_TYPES,
   MAX_ACTIVE_EVENT_POSTS,
   MAX_ACTIVE_OPPORTUNITY_POSTS,
-  MAX_TAGGED_BANDS_PER_EVENT,
   MAX_VENDORS_PER_SHOW,
   canListShowVendors,
+  pickTaggableBands,
   countActivePosts,
   postExpiryDate,
   browseMarketplace,
@@ -213,19 +213,44 @@ export async function createMarketplacePost(
 
   // Insert band tags (event posts only)
   if (payload.post_type === "event" && payload.tagged_band_profile_ids?.length) {
-    const tagIds = payload.tagged_band_profile_ids.slice(
-      0,
-      MAX_TAGGED_BANDS_PER_EVENT,
+    const { data: candidates } = await supabase
+      .from("profiles")
+      .select("id, user_id, player_type, is_published, is_suspended")
+      .in("id", payload.tagged_band_profile_ids);
+    const bands = pickTaggableBands(
+      payload.tagged_band_profile_ids,
+      candidates ?? [],
     );
-    const tagRows = tagIds.map((bandProfileId) => ({
-      marketplace_post_id: inserted.id,
-      band_profile_id: bandProfileId,
-      tagged_by_user_id: user.id,
-      status: "pending" as const,
-    }));
-    // Best-effort — don't fail post creation if tag insert hits a unique
-    // constraint or RLS. The poster can re-tag from the detail page later.
-    await supabase.from("event_band_tags").insert(tagRows);
+    if (bands.length > 0) {
+      // Best-effort: a failed tag insert doesn't fail post creation. Only the
+      // rows that really landed get an email, so a band is never told about a
+      // tag that doesn't exist.
+      const { data: tagged } = await supabase
+        .from("event_band_tags")
+        .insert(
+          bands.map((b) => ({
+            marketplace_post_id: inserted.id,
+            band_profile_id: b.id,
+            tagged_by_user_id: user.id,
+            status: "pending" as const,
+          })),
+        )
+        .select("band_profile_id");
+      const landed = new Set((tagged ?? []).map((t) => t.band_profile_id));
+      await Promise.all(
+        bands
+          .filter((b) => landed.has(b.id))
+          .map((b) =>
+            notifyByEmail({
+              recipientUserId: b.user_id,
+              senderProfileId: profile.id,
+              kind: "band_tag_request",
+              postTitle: title,
+              postId: inserted.id,
+            }),
+          ),
+      );
+    }
   }
 
   revalidatePath("/opportunities");
@@ -376,22 +401,33 @@ export async function respondToBandTag(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated." };
 
-  const { data: band } = await supabase.from("profiles").select("id")
+  const { data: band } = await supabase.from("profiles")
+    .select("id, is_suspended, suspended_reason")
     .eq("user_id", user.id).eq("player_type", "band").maybeSingle();
   if (!band) return { error: "Band profile not found." };
+  if (decision === "accepted" && band.is_suspended)
+    return {
+      error: `Your account is suspended and can't accept: ${band.suspended_reason || "no reason given"}.`,
+    };
 
-  const { error } = await supabase
+  // Scoped to this band and a still-pending tag, so a second tap or tab
+  // matches nothing instead of flipping an answer already given. The step26
+  // trigger stamps responded_at itself; it's set here too so the app doesn't
+  // depend on that migration having run.
+  const { data: updated, error } = await supabase
     .from("event_band_tags")
-    .update({
-      status: decision,
-      responded_at: new Date().toISOString(),
-    })
+    .update({ status: decision, responded_at: new Date().toISOString() })
     .eq("id", tagId)
-    .eq("band_profile_id", band.id);
+    .eq("band_profile_id", band.id)
+    .eq("status", "pending")
+    .select("marketplace_post_id")
+    .maybeSingle();
 
   if (error) return { error: error.message };
+  if (!updated) return { error: "This was already answered." };
 
   revalidatePath("/opportunities");
+  revalidatePath(`/opportunities/${updated.marketplace_post_id}`);
   return {};
 }
 
